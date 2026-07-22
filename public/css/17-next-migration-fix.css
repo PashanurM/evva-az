@@ -1,0 +1,130 @@
+/* Next.js migration overrides loaded after the legacy CSS stack. */
+body.evva-next-ui .top-bar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30000 !important;
+}
+
+body.evva-next-ui .top-bar .nav-shell {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  gap: 14px !important;
+  min-height: 66px !important;
+}
+
+body.evva-next-ui .top-bar .logo {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+}
+
+body.evva-next-ui .top-bar .header-actions {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  width: auto !important;
+  height: auto !important;
+  margin-left: auto !important;
+  padding: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.evva-next-ui .discover-pills {
+  display: flex !important;
+  align-items: center !important;
+  flex: 0 1 auto !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+body.evva-next-ui .discover-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 40px !important;
+  padding: 0 12px !important;
+  white-space: nowrap !important;
+}
+
+body.evva-next-ui .top-bar .auth-btn,
+body.evva-next-ui .top-bar .theme-toggle {
+  flex: 0 0 auto !important;
+}
+
+body.evva-next-ui .evva-footer-logo {
+  display: block !important;
+  width: 180px !important;
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+body.evva-next-ui .evva-footer-grid {
+  display: grid !important;
+  grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(150px, 1fr)) !important;
+  gap: 20px !important;
+  align-items: start !important;
+}
+
+body.evva-next-ui .evva-footer-grid a,
+body.evva-next-ui .evva-footer-grid span {
+  display: block !important;
+  margin-top: 8px !important;
+}
+
+@media (max-width: 980px) {
+  body.evva-next-ui .top-bar .nav-shell {
+    gap: 10px !important;
+  }
+
+  body.evva-next-ui .top-bar .header-actions {
+    min-width: 0 !important;
+    scrollbar-width: none !important;
+  }
+
+  body.evva-next-ui .top-bar .header-actions::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  body.evva-next-ui .discover-pill {
+    min-width: 42px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+  }
+
+  body.evva-next-ui .discover-pill i {
+    margin-right: 0 !important;
+  }
+
+  body.evva-next-ui .evva-footer-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.evva-next-ui .top-bar .nav-shell {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  body.evva-next-ui .top-bar .header-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+
+  body.evva-next-ui .discover-pills {
+    order: 1 !important;
+  }
+}

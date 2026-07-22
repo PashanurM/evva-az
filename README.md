@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EVVA Next.js Frontend
 
-## Getting Started
+Modern frontend for EVVA.AZ, consuming the PHP API at `/api/v1`.
 
-First, run the development server:
+API requests to `https://evva.az/api/v1/*` are proxied by `src/app/api/v1/[...path]/route.ts` to the PHP backend on Alwaysdata.
+
+## Setup
 
 ```bash
+cd frontend
+cp .env.local.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_API_URL` | Client API base (default `/api/v1`) |
+| `API_PROXY_URL` | PHP backend for Next.js rewrites (build-time on Vercel) |
+| `INTERNAL_API_URL` | Server-side fetch URL in `server-api.ts` |
 
-## Learn More
+**Local dev:** `API_PROXY_URL=http://localhost/evva`
 
-To learn more about Next.js, take a look at the following resources:
+**Vercel production:** set in Project → Settings → Environment Variables:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+API_PROXY_URL=https://pashanur.alwaysdata.net
+INTERNAL_API_URL=https://pashanur.alwaysdata.net
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+If unset on Vercel, the app defaults to `https://pashanur.alwaysdata.net` automatically.
 
-## Deploy on Vercel
+**Note:** `/restaurants` loads data on the **server** (SSR). You will not see `/api/v1/restaurants` in the browser Network tab — test instead:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+https://evva.az/api/v1/restaurants
+https://pashanur.alwaysdata.net/api/v1/restaurants
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Structure
+
+```
+frontend/
+  src/
+    app/              # Next.js App Router pages
+    components/       # UI components (Header, PropertyCard, SearchForm)
+    lib/              # API client + types + server fetch helpers
+    providers/        # Auth context
+  public/
+    css/              # Legacy EVVA stylesheets (copied from root css/)
+    assets/           # Static assets
+```
+
+## Pages (Phase 1)
+
+- `/` — Homepage with search + property grid
+- `/property/[id]` — Property detail
+- `/login` — Login
+- `/register` — Registration
+
+Legacy PHP pages (booking, chat, admin, owner) still link to old URLs until migrated.
+
+## Production
+
+Deploy Next.js separately or alongside PHP. Ensure:
+1. `/api/v1/*` routes to `backend/public/index.php`
+2. CORS / cookies work on same domain (`evva.az`)
+3. Set `EVVA_CORS_ORIGINS` on PHP backend

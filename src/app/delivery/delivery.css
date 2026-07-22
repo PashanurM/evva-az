@@ -1,0 +1,192 @@
+/* Delivery module — imported by delivery routes (avoids Tailwind purge). */
+
+.delivery-hero {
+  padding-bottom: 8px;
+}
+
+.delivery-hero-panel {
+  padding: 32px;
+  border-radius: 32px;
+  background: linear-gradient(135deg, var(--forest-deep) 0%, var(--primary-dark) 48%, #4a7c59 100%);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+}
+
+.delivery-hero-panel h1 {
+  margin: 10px 0 12px;
+  font-size: clamp(32px, 4vw, 46px);
+  color: #fff;
+}
+
+.delivery-hero-panel p {
+  margin: 0;
+  max-width: 760px;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.delivery-kicker {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.delivery-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 22px;
+}
+
+.delivery-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.delivery-search-card {
+  margin-top: 22px;
+  padding: 20px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--text-primary);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+
+.delivery-search-card h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.delivery-search-card p {
+  margin: 0 0 14px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.delivery-search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+}
+
+.delivery-search-form input {
+  width: 100%;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  padding: 0 14px;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.delivery-house-image {
+  background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
+}
+
+.delivery-fee-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 800;
+  margin: 12px 0 16px;
+}
+
+.delivery-order-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.delivery-order-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.delivery-detail-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  padding: 28px;
+  border-radius: 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.delivery-detail-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.delivery-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .delivery-hero-panel {
+    padding: 24px 20px;
+    border-radius: 24px;
+  }
+
+  .delivery-search-form {
+    grid-template-columns: 1fr;
+  }
+
+  .delivery-search-card {
+    padding: 16px;
+  }
+
+  .delivery-detail-card {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .delivery-detail-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .delivery-detail-actions {
+    width: 100%;
+  }
+
+  .delivery-detail-actions a,
+  .delivery-detail-actions button {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+.dark .delivery-search-card {
+  background: rgba(26, 40, 32, 0.98);
+  color: var(--text-primary);
+}

@@ -1,0 +1,3 @@
+/* Home page overrides */
+.tag-checkbox span { color: #334155 !important; background: #fff !important; border-color: #dbe3ef !important; }
+.tag-checkbox input:checked + span { color: #0e6f44 !important; }

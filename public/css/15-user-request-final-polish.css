@@ -1,0 +1,126 @@
+/* Final request polish: simple property cards, light search, clean ratings, visible back button */
+:root{--evva-calm-line:#e2e8f0;--evva-calm-bg:#f8fafc;--evva-calm-text:#0f172a;--evva-muted:#64748b;--evva-green:#0f766e;}
+
+/* Search/filter panel: calm, light, modern */
+.hero .search-box,
+.hero .search-box-premium,
+.search-box.search-box-premium{
+  background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%)!important;
+  color:var(--evva-calm-text)!important;
+  border:1px solid var(--evva-calm-line)!important;
+  box-shadow:0 18px 46px rgba(15,23,42,.075)!important;
+}
+.search-box-head h3,.search-box-head p,.search-small-note{color:var(--evva-calm-text)!important;}
+.search-box-head p,.search-small-note{color:var(--evva-muted)!important;}
+.search-input-group input,
+.premium-select-wrap select,
+.premium-input-wrap input{
+  background:#fff!important;
+  color:var(--evva-calm-text)!important;
+  border:1px solid #dbe3ef!important;
+  box-shadow:none!important;
+}
+.search-input-group input:focus,
+.premium-select-wrap select:focus,
+.premium-input-wrap input:focus{
+  border-color:#99f6e4!important;
+  box-shadow:0 0 0 4px rgba(20,184,166,.12)!important;
+  background:#fff!important;
+}
+.search-input-group i,.premium-select-wrap i,.premium-input-wrap i{color:var(--evva-green)!important;}
+
+/* Property card: remove premium text from info area and make meta simple */
+.property-card.premium-property-card .card-content h3::after,
+.property-card.premium-property-card .card-content h3:after,
+.premium-inline-badge{display:none!important;content:none!important;}
+.property-card .card-meta{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:12px 18px!important;
+  flex-wrap:wrap!important;
+  margin:14px 0!important;
+  padding:0!important;
+}
+.property-card .card-meta span{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+  border-radius:0!important;
+  color:#475569!important;
+  font-weight:800!important;
+  min-height:auto!important;
+}
+.property-card .card-meta i{color:var(--evva-green)!important;}
+.property-card .reserve-btn,
+.reserve-btn{
+  background:linear-gradient(135deg,#0f766e,#14b8a6)!important;
+  color:#fff!important;
+  border-color:transparent!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.18)!important;
+}
+.property-card .reserve-btn *, .reserve-btn *{color:#fff!important;}
+
+/* Property.php buttons and rating/review section */
+.big-btn.secondary,.booking-direct-btn{
+  background:linear-gradient(135deg,#0f766e,#14b8a6)!important;
+  color:#fff!important;
+  border:0!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.15)!important;
+}
+.big-btn.secondary *, .booking-direct-btn *{color:#fff!important;}
+.review-premium-section,
+.review-card-premium,
+.rating-card,
+.rating-summary-panel,
+.rating-overview-card,
+.rating-breakdown,
+.category-score-card,
+.review-total-card,
+.review-note-card,
+.review-comment-card{
+  background:#fff!important;
+  color:#0f172a!important;
+  border-color:#e2e8f0!important;
+}
+.rating-breakdown{display:grid!important;}
+.rating-click-hint{display:none!important;}
+.rating-overview-card{cursor:default!important;}
+.review-premium-section.glass,
+.section-block.review-premium-section{
+  background:linear-gradient(180deg,#ffffff,#f8fafc)!important;
+  border:1px solid #e2e8f0!important;
+  box-shadow:0 18px 44px rgba(15,23,42,.06)!important;
+}
+
+/* Tags: cleaner, lighter */
+.tag-pill,
+.card-tags .tag{
+  background:#fff!important;
+  border:1px solid #e2e8f0!important;
+  color:#334155!important;
+  box-shadow:none!important;
+}
+
+/* Back button must not stay behind topbar */
+body.has-floating-back .floating-back-btn,
+.floating-back-btn.premium-back-btn{
+  position:fixed!important;
+  top:calc(var(--evva-topbar-h,64px) + 14px)!important;
+  left:18px!important;
+  z-index:3000!important;
+  background:#fff!important;
+  color:#0f172a!important;
+  border:1px solid #e2e8f0!important;
+  box-shadow:0 18px 42px rgba(15,23,42,.15)!important;
+}
+body.has-floating-back .property-shell{padding-top:64px!important;}
+.crumbs .back-btn{display:none!important;}
+
+@media(max-width:640px){
+  body.has-floating-back .floating-back-btn,
+  .floating-back-btn.premium-back-btn{top:calc(var(--evva-topbar-h,64px) + 10px)!important;left:10px!important;}
+  body.has-floating-back .property-shell{padding-top:58px!important;}
+  .property-card .card-meta{gap:10px 14px!important;}
+}
