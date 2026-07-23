@@ -48,6 +48,7 @@ import { useAdmin } from "@/providers/AdminProvider";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPropertyForm } from "@/components/admin/AdminPropertyForm";
 import { AdminModuleForm } from "@/components/admin/AdminModuleForm";
+import { BusyDaysPicker } from "@/components/property/BusyDaysPicker";
 
 type FieldType = "text" | "number" | "date" | "textarea" | "boolean" | "select";
 
@@ -261,6 +262,54 @@ function PropertyMetric({
 }
 
 function PropertyDetailView({ entity }: { entity: Record<string, unknown> }) {
+  const propertyId = Number(entity.id) || 0;
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [bookedRanges, setBookedRanges] = useState<
+    Array<{ check_in: string; check_out: string; source?: string }>
+  >([]);
+  const [calendarLoading, setCalendarLoading] = useState(propertyId > 0);
+  const [savingBlocked, setSavingBlocked] = useState(false);
+
+  useEffect(() => {
+    if (propertyId <= 0) {
+      setCalendarLoading(false);
+      return;
+    }
+    let active = true;
+    setCalendarLoading(true);
+    void adminApi.getPropertyBlockedDates(propertyId).then((res) => {
+      if (!active) return;
+      if (res.success && res.data) {
+        setBlockedDates(res.data.items || []);
+        setBookedRanges(
+          (res.data.occupied_ranges || []).filter(
+            (range) => (range.source || "booking") === "booking",
+          ),
+        );
+      } else {
+        setBlockedDates([]);
+        setBookedRanges([]);
+      }
+      setCalendarLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [propertyId]);
+
+  async function handleSaveBlocked() {
+    if (propertyId <= 0) return;
+    setSavingBlocked(true);
+    const res = await adminApi.savePropertyBlockedDates(propertyId, blockedDates);
+    setSavingBlocked(false);
+    if (!res.success) {
+      toast.error(res.error || "Dolu günlər saxlanmadı");
+      return;
+    }
+    setBlockedDates(res.data?.items || blockedDates);
+    toast.success(res.data?.message || "Dolu günlər yeniləndi");
+  }
+
   const amenities = [
     { key: "wifi", label: "Wi-Fi", icon: <Wifi size={18} /> },
     { key: "parking", label: "Parking", icon: <Car size={18} /> },
@@ -348,9 +397,6 @@ function PropertyDetailView({ entity }: { entity: Record<string, unknown> }) {
               ) : (
                 <strong>{String(entity.owner_name || entity.owner_username || "—")}</strong>
               )}
-              {entity.owner_username && String(entity.owner_name || "") !== String(entity.owner_username) ? (
-                <p>@{String(entity.owner_username)}</p>
-              ) : null}
             </div>
           </div>
         </section>
@@ -366,6 +412,33 @@ function PropertyDetailView({ entity }: { entity: Record<string, unknown> }) {
           <PropertyMetric icon={<Clock size={20} />} label="Check-in" value={String(entity.check_in_time || "—")} />
           <PropertyMetric icon={<Clock size={20} />} label="Check-out" value={String(entity.check_out_time || "—")} />
         </div>
+      </section>
+
+      <section className="admin-panel-card admin-property-section">
+        <h2><CalendarCheck size={20} /> Dolu günlər</h2>
+        <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--text-muted)" }}>
+          Boş günlərə klikləyib sahib dolu günü seçin (narıncı). Qırmızı günlər rezervdir — onları dəyişmək olmur.
+        </p>
+        {calendarLoading ? (
+          <p style={{ margin: 0, fontSize: 14, color: "var(--text-muted)" }}>Təqvim yüklənir...</p>
+        ) : (
+          <>
+            <BusyDaysPicker
+              blockedDates={blockedDates}
+              bookedRanges={bookedRanges}
+              onChange={setBlockedDates}
+            />
+            <button
+              type="button"
+              className="admin-btn admin-btn--primary"
+              style={{ marginTop: 12 }}
+              disabled={savingBlocked || propertyId <= 0}
+              onClick={() => void handleSaveBlocked()}
+            >
+              {savingBlocked ? "Saxlanılır..." : "Dolu günləri saxla"}
+            </button>
+          </>
+        )}
       </section>
 
       <section className="admin-panel-card admin-property-section">

@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { MessageCircle } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { api } from "@/lib/api";
+import { AuthRequiredGate } from "@/components/auth/AuthRequiredGate";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
+import "@/app/chat/chat-page.css";
 
 type ConversationItem = {
   id: number;
@@ -16,12 +17,12 @@ type ConversationItem = {
   owner_name: string;
   last_message: string;
   updated_at: string;
+  unread_count?: number;
 };
 
 export function MessagesPageClient() {
   const { t } = useLocale();
   const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [items, setItems] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -49,8 +50,10 @@ export function MessagesPageClient() {
 
   if (authLoading || (user && loading)) {
     return (
-      <section className="page-hero">
-        <div className="container">
+      <section className="chat-page">
+        <div className="chat-page-glow" aria-hidden />
+        <div className="chat-panel chat-panel--status">
+          <Loader2 className="chat-spinner" size={28} aria-hidden />
           <p>{t("common.wait")}</p>
         </div>
       </section>
@@ -59,53 +62,48 @@ export function MessagesPageClient() {
 
   if (!user) {
     return (
-      <section className="page-hero">
-        <div className="container">
-          <span className="section-kicker">{t("messages.contactKicker")}</span>
-          <h1>{t("messages.title")}</h1>
-          <p>{t("messages.intro")}</p>
-          <div className="discover-card" style={{ maxWidth: 520, marginTop: 24, textAlign: "center" }}>
-            <MessageCircle size={40} style={{ margin: "0 auto 16px", color: "var(--primary)" }} />
-            <p>{t("messages.loginRequired")}</p>
-            <Link
-              href="/login?return=/messages"
-              className="auth-btn primary"
-              style={{ marginTop: 12 }}
-              onClick={() => router.push("/login?return=/messages")}
-            >
-              {t("common.login")}
-            </Link>
-          </div>
-        </div>
-      </section>
+      <AuthRequiredGate
+        kicker={t("messages.contactKicker")}
+        title={t("messages.title")}
+        description={t("messages.loginRequired")}
+        loginHref={`/login?return=${encodeURIComponent("/messages")}`}
+        registerHref={`/register?return=${encodeURIComponent("/messages")}`}
+        backHref="/"
+        backLabel={t("common.back")}
+      />
     );
   }
 
   return (
-    <section className="page-hero">
-      <div className="container">
-        <span className="section-kicker">{t("messages.contactKicker")}</span>
-        <h1>{t("messages.title")}</h1>
-        <p>{t("messages.intro")}</p>
+    <section className="chat-page">
+      <div className="chat-page-glow" aria-hidden />
+      <div className="chat-panel chat-panel--room" style={{ minHeight: "auto" }}>
+        <header className="chat-room-head" style={{ gridTemplateColumns: "1fr" }}>
+          <div className="chat-room-meta">
+            <p className="chat-kicker">{t("messages.contactKicker")}</p>
+            <h1>{t("messages.title")}</h1>
+            <p>{t("messages.subtitle")}</p>
+          </div>
+        </header>
 
         {error ? (
-          <div className="auth-notice auth-notice-error" role="alert" style={{ marginTop: 16 }}>
+          <div className="chat-alert" role="alert">
             {error}
           </div>
         ) : null}
 
         {!error && items.length === 0 ? (
-          <div className="discover-card" style={{ marginTop: 24, textAlign: "center" }}>
-            <MessageCircle size={40} style={{ margin: "0 auto 12px", color: "var(--primary)" }} />
-            <p>Hələ söhbət yoxdur.</p>
-            <Link href="/" className="auth-btn" style={{ marginTop: 12 }}>
+          <div className="chat-empty">
+            <MessageCircle size={28} aria-hidden />
+            <p>{t("messages.empty")}</p>
+            <Link href="/#properties" className="chat-btn chat-btn--primary" style={{ marginTop: 8 }}>
               Evlərə bax
             </Link>
           </div>
         ) : null}
 
         {items.length > 0 ? (
-          <div className="messages-list">
+          <div className="messages-list messages-list--panel">
             {items.map((item) => {
               const peer =
                 user.role === "owner" || user.role === "admin"
@@ -122,7 +120,10 @@ export function MessagesPageClient() {
                     <span>{peer}</span>
                   </div>
                   <p>{item.last_message || "Mesaj yoxdur"}</p>
-                  <small>{item.updated_at}</small>
+                  <small>
+                    {item.updated_at}
+                    {(item.unread_count || 0) > 0 ? ` · ${item.unread_count} yeni` : ""}
+                  </small>
                 </Link>
               );
             })}

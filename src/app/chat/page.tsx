@@ -4,6 +4,7 @@ import { getProperty } from "@/lib/server-api";
 import { mapApiProperty } from "@/lib/mappers";
 import { pageMetadata } from "@/lib/site-metadata";
 import { ChatPageClient } from "./ChatPageClient";
+import "./chat-page.css";
 
 interface PageProps {
   searchParams: Promise<{ property_id?: string; conversation_id?: string }>;
@@ -19,7 +20,15 @@ export default async function ChatPage({ searchParams }: PageProps) {
   if (property_id && !property) notFound();
 
   return (
-    <Suspense fallback={<div className="auth-shell"><div className="auth-card"><p>…</p></div></div>}>
+    <Suspense
+      fallback={
+        <section className="chat-page">
+          <div className="chat-panel chat-panel--status">
+            <p>…</p>
+          </div>
+        </section>
+      }
+    >
       <ChatPageClient property={property} />
     </Suspense>
   );

@@ -1,6 +1,7 @@
 import { getApiBackendBase } from "@/lib/api-base";
 import { backendFetch, forwardBackendHeaders } from "@/lib/backend-fetch";
 import { loadGalleryViaPhpCli } from "@/lib/gallery-cli";
+import { loadInboxViaPhpCli } from "@/lib/inbox-cli";
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
@@ -111,9 +112,9 @@ async function fetchPropertyFromList(id: number, headers: Headers): Promise<Resp
 
     const detail = {
       ...item,
-      occupied_ranges: [],
-      blocked_dates: [],
-      booked_ranges: [],
+      occupied_ranges: Array.isArray(item.occupied_ranges) ? item.occupied_ranges : [],
+      blocked_dates: Array.isArray(item.blocked_dates) ? item.blocked_dates : [],
+      booked_ranges: Array.isArray(item.booked_ranges) ? item.booked_ranges : [],
       images,
     };
 
@@ -232,6 +233,49 @@ async function proxyRequest(request: Request, context: RouteContext) {
           headers: { "content-type": "application/json; charset=utf-8" },
         },
       );
+    }
+
+    // Chat inbox: Alwaysdata may return empty items due to broken dbTableExists.
+    // Rebuild from remote DB via local PHP CLI when the live API list is empty.
+    if (
+      (request.method === "GET" || request.method === "HEAD") &&
+      path.length === 2 &&
+      path[0] === "chat" &&
+      path[1] === "conversations" &&
+      looksLikeJson(body, contentType)
+    ) {
+      const parsed = await parseJson(body);
+      const data = parsed?.data as { items?: unknown[]; total?: number } | undefined;
+      const items = Array.isArray(data?.items) ? data.items : null;
+      if (parsed?.success && items && items.length === 0) {
+        try {
+          const meRes = await backendFetch(`${backend}/api/v1/auth/me`, {
+            method: "GET",
+            headers,
+          });
+          const meBuf = await meRes.arrayBuffer();
+          const meType = meRes.headers.get("content-type") || "";
+          if (looksLikeJson(meBuf, meType)) {
+            const meJson = await parseJson(meBuf);
+            const meData = meJson?.data as { id?: number } | null;
+            const userId = Number(meData?.id || 0);
+            if (userId > 0) {
+              const fromCli = await loadInboxViaPhpCli(userId);
+              if (fromCli.length > 0) {
+                return Response.json(
+                  { success: true, data: { items: fromCli, total: fromCli.length } },
+                  {
+                    status: 200,
+                    headers: { "content-type": "application/json; charset=utf-8" },
+                  },
+                );
+              }
+            }
+          }
+        } catch {
+          // fall through to original empty response
+        }
+      }
     }
 
     // Dedicated gallery route: never leak backend 404s to the browser console.

@@ -2206,12 +2206,23 @@ a.admin-stat-card:focus-visible {
     z-index: 60;
   }
 
+  .admin-app--menu-open .admin-app-header {
+    z-index: 80;
+  }
+
+  .admin-app-header-top {
+    position: relative;
+    z-index: 3;
+  }
+
   .admin-nav--desktop {
     display: none;
   }
 
   .admin-nav-menu-toggle {
     display: inline-flex;
+    position: relative;
+    z-index: 3;
   }
 
   .admin-nav-menu-toggle span {
@@ -2222,8 +2233,11 @@ a.admin-stat-card:focus-visible {
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 40;
+    z-index: 1;
     border: 0;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
     background: rgba(15, 23, 42, 0.35);
   }
 
@@ -2233,7 +2247,7 @@ a.admin-stat-card:focus-visible {
     top: 60px;
     left: 14px;
     right: 14px;
-    z-index: 50;
+    z-index: 2;
     max-height: calc(100dvh - 76px - env(safe-area-inset-bottom, 0px));
     padding: 0;
     border: 1px solid var(--border-color);

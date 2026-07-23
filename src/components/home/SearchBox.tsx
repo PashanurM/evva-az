@@ -113,65 +113,80 @@ export function SearchBox({
 
           <form onSubmit={handleSubmit} id="searchForm" key={searchParams.toString()}>
             <div className="evva-filter-core evva-filter-core-simple">
-              <div className="premium-select-wrap filter-location-main">
-                <MapPin size={16} />
-                <select
-                  name="location"
-                  aria-label={t("home.selectLocation")}
-                  defaultValue={searchParams.get("location") ?? ""}
-                >
-                  <option value="">{t("home.selectLocation")}</option>
-                  {locationOptions.map((loc) => (
-                    <option key={loc} value={loc}>
-                      {loc}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="premium-input-wrap search-date-field">
-                <CalendarDays size={16} />
-                <input
-                  type="date"
-                  name="check_in"
-                  aria-label={t("home.availableFrom")}
-                  title={t("home.availableFrom")}
-                  defaultValue={searchParams.get("check_in") ?? ""}
-                />
-              </div>
-              <div className="premium-input-wrap search-date-field">
-                <CalendarDays size={16} />
-                <input
-                  type="date"
-                  name="check_out"
-                  aria-label={t("home.availableTo")}
-                  title={t("home.availableTo")}
-                  defaultValue={searchParams.get("check_out") ?? ""}
-                />
-              </div>
-              <div className="premium-input-wrap">
-                <Banknote size={16} />
-                <input
-                  type="number"
-                  name="min_price"
-                  min={0}
-                  step={1}
-                  inputMode="numeric"
-                  placeholder={t("home.minPrice")}
-                  defaultValue={searchParams.get("min_price") ?? ""}
-                />
-              </div>
-              <div className="premium-input-wrap">
-                <Banknote size={16} />
-                <input
-                  type="number"
-                  name="max_price"
-                  min={0}
-                  step={1}
-                  inputMode="numeric"
-                  placeholder={t("home.maxPrice")}
-                  defaultValue={searchParams.get("max_price") ?? ""}
-                />
-              </div>
+              <label className="premium-select-wrap filter-location-main search-field">
+                <span className="search-field-label">{t("home.selectLocation")}</span>
+                <span className="search-field-control">
+                  <MapPin size={16} />
+                  <select
+                    name="location"
+                    aria-label={t("home.selectLocation")}
+                    defaultValue={searchParams.get("location") ?? ""}
+                  >
+                    <option value="">{t("home.selectLocation")}</option>
+                    {locationOptions.map((loc) => (
+                      <option key={loc} value={loc}>
+                        {loc}
+                      </option>
+                    ))}
+                  </select>
+                </span>
+              </label>
+              <label className="premium-input-wrap search-date-field search-field">
+                <span className="search-field-label">{t("home.availableFrom")}</span>
+                <span className="search-field-control">
+                  <CalendarDays size={16} />
+                  <input
+                    type="date"
+                    name="check_in"
+                    aria-label={t("home.availableFrom")}
+                    title={t("home.availableFrom")}
+                    defaultValue={searchParams.get("check_in") ?? ""}
+                  />
+                </span>
+              </label>
+              <label className="premium-input-wrap search-date-field search-field">
+                <span className="search-field-label">{t("home.availableTo")}</span>
+                <span className="search-field-control">
+                  <CalendarDays size={16} />
+                  <input
+                    type="date"
+                    name="check_out"
+                    aria-label={t("home.availableTo")}
+                    title={t("home.availableTo")}
+                    defaultValue={searchParams.get("check_out") ?? ""}
+                  />
+                </span>
+              </label>
+              <label className="premium-input-wrap search-field">
+                <span className="search-field-label">{t("home.minPrice")}</span>
+                <span className="search-field-control">
+                  <Banknote size={16} />
+                  <input
+                    type="number"
+                    name="min_price"
+                    min={0}
+                    step={1}
+                    inputMode="numeric"
+                    placeholder={t("home.minPrice")}
+                    defaultValue={searchParams.get("min_price") ?? ""}
+                  />
+                </span>
+              </label>
+              <label className="premium-input-wrap search-field">
+                <span className="search-field-label">{t("home.maxPrice")}</span>
+                <span className="search-field-control">
+                  <Banknote size={16} />
+                  <input
+                    type="number"
+                    name="max_price"
+                    min={0}
+                    step={1}
+                    inputMode="numeric"
+                    placeholder={t("home.maxPrice")}
+                    defaultValue={searchParams.get("max_price") ?? ""}
+                  />
+                </span>
+              </label>
             </div>
 
             <button

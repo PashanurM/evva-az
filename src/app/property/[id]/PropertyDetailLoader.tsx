@@ -115,6 +115,25 @@ export function PropertyDetailLoader({
         setMapsUrl(nextMaps);
         setGallery(buildGallery(mapped));
         setLoading(false);
+      } else {
+        // SSR may come from list fallback without occupied ranges — refresh calendar data.
+        const direct = await api.getProperty(propertyId);
+        if (active && direct.success && direct.data?.id) {
+          const mapped = mapApiProperty(direct.data);
+          setProperty((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  occupiedRanges: mapped.occupiedRanges || [],
+                  images:
+                    (mapped.images || []).length > (prev.images || []).length
+                      ? mapped.images
+                      : prev.images,
+                  image: mapped.image || prev.image,
+                }
+              : mapped,
+          );
+        }
       }
 
       // Always try to enrich gallery (detail fallback may only have cover).

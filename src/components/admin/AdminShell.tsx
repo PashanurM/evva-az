@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Bike,
   Building2,
@@ -37,6 +37,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { admin, logout } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
+  const navPanelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setMenuOpen(false));
@@ -50,6 +52,19 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (navPanelRef.current?.contains(target)) return;
+      if (menuToggleRef.current?.contains(target)) return;
+      setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [menuOpen]);
 
   useEffect(() => {
@@ -103,6 +118,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <span className="admin-header-action-label">Çıxış</span>
             </button>
             <button
+              ref={menuToggleRef}
               type="button"
               className="admin-nav-menu-toggle"
               aria-expanded={menuOpen}
@@ -120,7 +136,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           {navLinks}
         </nav>
 
+        {menuOpen ? (
+          <button
+            type="button"
+            className="admin-nav-backdrop"
+            aria-label="Menyunu bağla"
+            onClick={() => setMenuOpen(false)}
+          />
+        ) : null}
+
         <nav
+          ref={navPanelRef}
           id="admin-nav-panel"
           className={`admin-nav-panel${menuOpen ? " is-open" : ""}`}
           aria-label="Admin navigation"
@@ -129,15 +155,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="admin-nav-panel-scroll">{navLinks}</div>
         </nav>
       </header>
-
-      {menuOpen ? (
-        <button
-          type="button"
-          className="admin-nav-backdrop"
-          aria-label="Menyunu bağla"
-          onClick={() => setMenuOpen(false)}
-        />
-      ) : null}
 
       <main className="admin-app-main">{children}</main>
     </div>
