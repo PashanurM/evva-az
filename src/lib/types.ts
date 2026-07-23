@@ -62,6 +62,17 @@ export interface Property {
   created_at: string;
   images?: Array<{ path: string; url: string }>;
   map_address?: string;
+  occupied_ranges?: Array<{
+    check_in: string;
+    check_out: string;
+    source?: string;
+  }>;
+  blocked_dates?: string[];
+  booked_ranges?: Array<{
+    check_in: string;
+    check_out: string;
+    source?: string;
+  }>;
   owner?: {
     id: number;
     name: string;
@@ -86,6 +97,8 @@ export interface PropertyFilters {
   min_rooms?: string;
   min_bathrooms?: string;
   location?: string;
+  check_in?: string;
+  check_out?: string;
   sort?: string;
   tags?: string[];
 }

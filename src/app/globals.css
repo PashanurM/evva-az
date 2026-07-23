@@ -3315,3 +3315,443 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 12px;
   }
 }
+
+/* —— Map markers —— */
+.evva-map-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.evva-map-marker-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #fff;
+  color: #14261c;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  transform: translateY(0);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.evva-map-marker-inner::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.evva-map-marker-inner {
+  position: relative;
+}
+
+.evva-map-marker-inner.is-premium {
+  background: linear-gradient(135deg, #1f6b45, #3f8f62);
+  color: #fff;
+  border-color: transparent;
+}
+
+.evva-map-marker-inner.is-premium::after {
+  background: #3f8f62;
+  border-color: transparent;
+}
+
+.evva-map-marker-inner:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.22);
+  z-index: 2;
+}
+
+.leaflet-popup.evva-map-popup-wrap .leaflet-popup-content-wrapper {
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+}
+
+.leaflet-popup.evva-map-popup-wrap .leaflet-popup-content {
+  margin: 0;
+  min-width: 200px;
+}
+
+.evva-map-popup-thumb {
+  display: block;
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  background: var(--bg-tertiary);
+}
+
+.evva-map-popup-body {
+  padding: 12px 14px 14px;
+}
+
+.evva-map-popup-body strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.evva-map-popup-body p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.evva-map-popup-body a {
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  text-decoration: none;
+}
+
+/* —— Map location picker —— */
+.map-location-picker {
+  display: grid;
+  gap: 12px;
+}
+
+.map-location-picker-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.map-location-picker-address {
+  grid-column: 1 / -1;
+}
+
+.map-location-picker label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.map-location-picker input {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  padding: 0 12px;
+  color: var(--text-primary);
+}
+
+.map-location-picker-map {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  z-index: 1;
+}
+
+.map-location-picker-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.evva-map-picker-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.evva-map-picker-pin {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--primary);
+  border: 3px solid #fff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.28);
+  transform: rotate(-45deg);
+}
+
+/* —— Owner edit —— */
+.owner-edit-page {
+  padding-bottom: 64px;
+}
+
+.owner-edit-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.owner-edit-head h1 {
+  margin: 8px 0 6px;
+}
+
+.owner-edit-head p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.owner-edit-form,
+.owner-edit-section {
+  display: grid;
+  gap: 16px;
+}
+
+.owner-edit-section {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.owner-edit-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+}
+
+.owner-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.owner-edit-form label,
+.owner-edit-section label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.owner-edit-form input,
+.owner-edit-form select,
+.owner-edit-form textarea,
+.owner-edit-section input,
+.owner-edit-section select,
+.owner-edit-section textarea {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.owner-edit-form textarea,
+.owner-edit-section textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.owner-edit-full {
+  grid-column: 1 / -1;
+}
+
+.owner-edit-switch {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  grid-template-columns: none !important;
+}
+
+.owner-edit-switch input {
+  width: 18px;
+  min-height: 18px;
+}
+
+.owner-edit-amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.owner-edit-chip {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  font-size: 13px;
+  grid-template-columns: none !important;
+}
+
+.owner-edit-chip input {
+  width: 16px;
+  min-height: 16px;
+}
+
+.owner-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* —— Busy / availability calendar —— */
+.busy-days-picker {
+  display: grid;
+  gap: 14px;
+}
+
+.busy-days-picker-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.busy-days-picker-toolbar span {
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.busy-days-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.busy-days-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.busy-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.busy-dot--blocked {
+  background: #f59e0b;
+}
+
+.busy-dot--booked {
+  background: #ef4444;
+}
+
+.busy-dot--free {
+  background: #22c55e;
+}
+
+.busy-days-months {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.busy-days-month {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.busy-days-month h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.busy-days-weekdays,
+.busy-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.busy-days-weekdays span {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.busy-day {
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(34, 197, 94, 0.08);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.busy-day.is-empty {
+  background: transparent;
+  cursor: default;
+}
+
+.busy-day.is-blocked {
+  background: rgba(245, 158, 11, 0.18);
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.busy-day.is-booked {
+  background: rgba(239, 68, 68, 0.16);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.3);
+  cursor: not-allowed;
+}
+
+.busy-day.is-readonly {
+  cursor: default;
+}
+
+.busy-day:disabled {
+  opacity: 1;
+}
+
+.availability-filter-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.search-date-field input {
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .owner-edit-grid,
+  .map-location-picker-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .busy-days-months {
+    grid-template-columns: 1fr;
+  }
+}
+

@@ -92,7 +92,7 @@ async function postMultipart<T>(
       headers,
       signal,
     });
-    if (res.status === 403) {
+    if (res.status === 403 || res.status === 419) {
       csrfTokenCache = null;
       await ensureCsrf(true);
       if (csrfTokenCache) {
@@ -177,7 +177,7 @@ async function adminFetch<T>(
         signal,
       });
 
-      if (needsCsrf && res.status === 403) {
+      if (needsCsrf && (res.status === 403 || res.status === 419)) {
         csrfTokenCache = null;
       }
 
@@ -190,7 +190,7 @@ async function adminFetch<T>(
   try {
     let result = await run(false);
     // Stale CSRF can block create/update — refresh once and retry.
-    if (needsCsrf && result.status === 403) {
+    if (needsCsrf && (result.status === 403 || result.status === 419)) {
       result = await run(true);
     }
     return result;
@@ -257,6 +257,7 @@ export interface AdminPropertyFormMeta {
     role: string;
   }>;
   tags: string[];
+  locations?: string[];
   primary_owner_id: number;
 }
 
@@ -481,6 +482,20 @@ export const adminApi = {
     adminFetch<{ message: string; id: number; property_id: number; new_owner_credentials?: Record<string, string> }>(
       `/admin/properties/${id}`,
       { method: "PUT", body: JSON.stringify(body) },
+      true,
+    ),
+
+  getPropertyBlockedDates: (id: number) =>
+    adminFetch<{
+      items: string[];
+      total: number;
+      occupied_ranges: Array<{ check_in: string; check_out: string; source?: string }>;
+    }>(`/admin/properties/${id}/blocked-dates`),
+
+  savePropertyBlockedDates: (id: number, dates: string[]) =>
+    adminFetch<{ message: string; items: string[]; total: number }>(
+      `/admin/properties/${id}/blocked-dates`,
+      { method: "PUT", body: JSON.stringify({ dates }) },
       true,
     ),
 

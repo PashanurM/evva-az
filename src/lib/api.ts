@@ -39,7 +39,9 @@ async function apiFetch<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  if (needsCsrf) {
+  async function ensureCsrf(force = false) {
+    if (!needsCsrf) return;
+    if (force) csrfTokenCache = null;
     if (!csrfTokenCache) {
       const csrfRes = await fetch(`${API_BASE}/auth/csrf`, {
         credentials: "include",
@@ -53,6 +55,8 @@ async function apiFetch<T>(
     }
   }
 
+  await ensureCsrf();
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
@@ -60,8 +64,15 @@ async function apiFetch<T>(
     cache: "no-store",
   });
 
-  if (needsCsrf && res.status === 403) {
-    csrfTokenCache = null;
+  if (needsCsrf && (res.status === 403 || res.status === 419)) {
+    await ensureCsrf(true);
+    const retry = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+      credentials: "include",
+      cache: "no-store",
+    });
+    return parseJson<T>(retry);
   }
 
   return parseJson<T>(res);
@@ -218,6 +229,65 @@ export const api = {
       }>;
       total: number;
     }>("/owner/properties"),
+
+  getOwnerProperty: (id: number) =>
+    apiFetch<{
+      property: {
+        id: number;
+        title: string;
+        location: string;
+        price: number;
+        capacity: number;
+        rooms: number;
+        bathrooms: number;
+        description: string;
+        single_beds: number;
+        double_beds: number;
+        sofa_beds: number;
+        minimum_nights: number;
+        check_in_time: string;
+        check_out_time: string;
+        map_address: string;
+        latitude: number | null;
+        longitude: number | null;
+        house_rules: string;
+        cancellation_policy: string;
+        is_active: boolean;
+        is_featured: boolean;
+        tags_list: string[];
+        wifi: boolean;
+        parking: boolean;
+        kitchen: boolean;
+        air_conditioner: boolean;
+        heating: boolean;
+        washing_machine: boolean;
+        barbecue: boolean;
+        heated_pool: boolean;
+        children_allowed: boolean;
+        pets_allowed: boolean;
+        blocked_dates: string[];
+        occupied_ranges: Array<{
+          check_in: string;
+          check_out: string;
+          source?: string;
+        }>;
+      };
+      tags: string[];
+    }>(`/owner/properties/${id}`),
+
+  updateOwnerProperty: (id: number, payload: Record<string, unknown>) =>
+    apiFetch<{ message: string; id: number; property_id: number }>(
+      `/owner/properties/${id}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+      true,
+    ),
+
+  saveOwnerBlockedDates: (id: number, dates: string[]) =>
+    apiFetch<{ message: string; items: string[]; total: number }>(
+      `/owner/properties/${id}/blocked-dates`,
+      { method: "PUT", body: JSON.stringify({ dates }) },
+      true,
+    ),
 
   getMyConversations: () =>
     apiFetch<{

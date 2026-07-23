@@ -19,6 +19,8 @@ interface HomeProps {
     max_price?: string;
     min_rooms?: string;
     min_bathrooms?: string;
+    check_in?: string;
+    check_out?: string;
     tags?: string | string[];
     sort?: string;
   }>;
@@ -41,6 +43,8 @@ export default async function Home({ searchParams }: HomeProps) {
       max_price: params.max_price,
       min_rooms: params.min_rooms,
       min_bathrooms: params.min_bathrooms,
+      check_in: params.check_in,
+      check_out: params.check_out,
       tags,
       sort: params.sort || "newest",
     }),

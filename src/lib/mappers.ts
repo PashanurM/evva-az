@@ -47,6 +47,7 @@ export function mapApiProperty(property: ApiProperty): Property {
     lat: coords?.lat ?? 0,
     lng: coords?.lng ?? 0,
     premium: property.is_premium,
+    occupiedRanges: property.occupied_ranges || property.booked_ranges || [],
   };
 }
 

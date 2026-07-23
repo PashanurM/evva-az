@@ -11,6 +11,10 @@ export function PropertyGrid({ properties }: { properties: Property[] }) {
   const searchParams = useSearchParams();
   const { t } = useLocale();
 
+  const checkIn = searchParams.get("check_in") || "";
+  const checkOut = searchParams.get("check_out") || "";
+  const hasDateFilter = Boolean(checkIn && checkOut && checkOut > checkIn);
+
   function handleSort(e: React.ChangeEvent<HTMLSelectElement>) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("sort", e.target.value);
@@ -27,6 +31,11 @@ export function PropertyGrid({ properties }: { properties: Property[] }) {
               <Star size={16} />
               <span>{t("common.results", { count: properties.length })}</span>
             </div>
+            {hasDateFilter ? (
+              <p className="availability-filter-note">
+                {t("home.availableFilterNote", { from: checkIn, to: checkOut })}
+              </p>
+            ) : null}
           </div>
           <form className="sort-form-modern">
             <label htmlFor="sort">{t("common.sortLabel")}</label>
@@ -50,7 +59,9 @@ export function PropertyGrid({ properties }: { properties: Property[] }) {
         <div className="container">
           {properties.length === 0 ? (
             <div className="no-results" style={{ textAlign: "center", padding: "80px 20px" }}>
-              <p>{t("home.noResults")}</p>
+              <p>
+                {hasDateFilter ? t("home.noAvailableResults") : t("home.noResults")}
+              </p>
             </div>
           ) : (
             <div className="properties-grid">

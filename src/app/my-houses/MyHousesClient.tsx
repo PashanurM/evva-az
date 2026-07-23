@@ -10,6 +10,7 @@ import {
   Eye,
   MapPin,
   MessageCircle,
+  Pencil,
   Sparkles,
 } from "lucide-react";
 import { api, assetUrl } from "@/lib/api";
@@ -252,10 +253,13 @@ export function MyHousesClient() {
                     </span>
                   </div>
                   <div className="owner-house-actions">
+                    <Link href={`/my-houses/${house.id}/edit`} className="auth-btn primary">
+                      <Pencil size={14} /> Redaktə et
+                    </Link>
                     <Link href={`/property/${house.id}`} className="auth-btn">
                       Saytda bax
                     </Link>
-                    <Link href="/messages" className="auth-btn primary">
+                    <Link href="/messages" className="auth-btn">
                       Mesajlar
                     </Link>
                   </div>

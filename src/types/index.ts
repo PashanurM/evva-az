@@ -30,6 +30,11 @@ export interface Property {
   lng: number;
   premium?: boolean;
   bookedDays?: number[];
+  occupiedRanges?: Array<{
+    check_in: string;
+    check_out: string;
+    source?: string;
+  }>;
 }
 
 export interface Restaurant {

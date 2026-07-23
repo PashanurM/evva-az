@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   Search,
   RotateCcw,
+  CalendarDays,
 } from "lucide-react";
 import { filterTags, locations } from "@/lib/data/properties";
 import { useLocale } from "@/providers/LocaleProvider";
@@ -47,11 +48,24 @@ export function SearchBox({
       "min_rooms",
       "min_bathrooms",
       "search",
+      "check_in",
+      "check_out",
     ] as const;
 
     for (const field of fields) {
       const val = form.get(field)?.toString();
       if (val) params.set(field, val);
+    }
+
+    const checkIn = form.get("check_in")?.toString() || "";
+    const checkOut = form.get("check_out")?.toString() || "";
+    if (checkIn && !checkOut) {
+      params.delete("check_in");
+    } else if (!checkIn && checkOut) {
+      params.delete("check_out");
+    } else if (checkIn && checkOut && checkOut <= checkIn) {
+      params.delete("check_out");
+      params.delete("check_in");
     }
 
     form.getAll("tags").forEach((tag) => {
@@ -113,6 +127,26 @@ export function SearchBox({
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="premium-input-wrap search-date-field">
+                <CalendarDays size={16} />
+                <input
+                  type="date"
+                  name="check_in"
+                  aria-label={t("home.availableFrom")}
+                  title={t("home.availableFrom")}
+                  defaultValue={searchParams.get("check_in") ?? ""}
+                />
+              </div>
+              <div className="premium-input-wrap search-date-field">
+                <CalendarDays size={16} />
+                <input
+                  type="date"
+                  name="check_out"
+                  aria-label={t("home.availableTo")}
+                  title={t("home.availableTo")}
+                  defaultValue={searchParams.get("check_out") ?? ""}
+                />
               </div>
               <div className="premium-input-wrap">
                 <Banknote size={16} />

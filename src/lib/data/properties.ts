@@ -109,6 +109,9 @@ export const properties: Property[] = [
 
 export const locations = ["Mərkəz", "Vəndam", "Bum", "Nic", "Qəmərvan"];
 
+// Re-export canonical list for callers that still import from data/properties.
+export { GABALA_LOCATIONS } from "@/lib/locations";
+
 export const filterTags = [
   "VİLLA",
   "A-frame",

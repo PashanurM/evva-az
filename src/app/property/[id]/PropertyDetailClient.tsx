@@ -19,20 +19,17 @@ import {
 } from "lucide-react";
 import type { Property } from "@/types";
 import { useLocale } from "@/providers/LocaleProvider";
+import { AvailabilityCalendar } from "@/components/property/AvailabilityCalendar";
 import { PropertyGallery } from "@/components/property/PropertyGallery";
-
-const WEEKDAYS = ["B.e", "Ç.a", "Ç", "C.a", "C", "Ş", "B"];
 
 interface PropertyDetailClientProps {
   property: Property;
-  calendarDays: (number | null)[];
   mapsUrl: string;
   gallery: string[];
 }
 
 export function PropertyDetailClient({
   property,
-  calendarDays,
   mapsUrl,
   gallery,
 }: PropertyDetailClientProps) {
@@ -187,27 +184,7 @@ export function PropertyDetailClient({
             <h2>{t("property.bookedDays")}</h2>
             <div style={{ fontSize: 13, opacity: 0.72 }}>{t("property.bookingsNote")}</div>
           </div>
-          <div className="calendar-grid">
-            <div className="calendar-card">
-              <h3>{t("property.monthJune2026")}</h3>
-              <div className="weekdays">
-                {WEEKDAYS.map((d) => (
-                  <span key={d}>{d}</span>
-                ))}
-              </div>
-              <div className="days">
-                {calendarDays.map((day, i) =>
-                  day === null ? (
-                    <div key={`empty-${i}`} />
-                  ) : (
-                    <div key={day} className="day">
-                      {day}
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
+          <AvailabilityCalendar occupiedRanges={property.occupiedRanges || []} months={3} />
         </section>
       </div>
     </section>

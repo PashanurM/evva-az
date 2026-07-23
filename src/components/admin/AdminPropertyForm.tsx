@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BedDouble,
+  CalendarRange,
   ChevronLeft,
   ChevronRight,
   CircleCheck,
   GripVertical,
   Home,
   ImageIcon,
+  MapPin,
   Search,
   Star,
   Tags,
@@ -26,6 +28,9 @@ import {
   type AdminPropertyPayload,
 } from "@/lib/admin-api";
 import { useAdminConfirm } from "@/components/admin/AdminConfirmModal";
+import { MapLocationPicker } from "@/components/map/MapLocationPicker";
+import { BusyDaysPicker } from "@/components/property/BusyDaysPicker";
+import { GABALA_LOCATIONS, resolveLocationOptions } from "@/lib/locations";
 
 const AMENITIES = [
   { key: "wifi", label: "Wi-Fi" },
@@ -209,6 +214,11 @@ export function AdminPropertyForm({
   const [saving, setSaving] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
   const [draggedImageId, setDraggedImageId] = useState<number | null>(null);
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [bookedRanges, setBookedRanges] = useState<
+    Array<{ check_in: string; check_out: string; source?: string }>
+  >([]);
+  const [savingBlocked, setSavingBlocked] = useState(false);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const pendingCoverRef = useRef<PendingImage | null>(null);
   const pendingImagesRef = useRef<PendingImage[]>([]);
@@ -256,7 +266,10 @@ export function AdminPropertyForm({
       setMeta(metaRes.data);
 
       if (propertyId) {
-        const propRes = await adminApi.getProperty(propertyId);
+        const [propRes, blockedRes] = await Promise.all([
+          adminApi.getProperty(propertyId),
+          adminApi.getPropertyBlockedDates(propertyId),
+        ]);
         if (propRes.success && propRes.data) {
           setForm(detailToForm(propRes.data.property));
           setExistingCover(propRes.data.property.cover_image || null);
@@ -264,14 +277,32 @@ export function AdminPropertyForm({
         } else {
           toast.error(propRes.error || "Mülk yüklənmədi");
         }
+        if (blockedRes.success && blockedRes.data) {
+          setBlockedDates(blockedRes.data.items || []);
+          setBookedRanges(
+            (blockedRes.data.occupied_ranges || []).filter(
+              (r) => (r.source || "booking") === "booking",
+            ),
+          );
+        } else {
+          setBlockedDates([]);
+          setBookedRanges([]);
+        }
       } else {
         setForm(emptyForm());
         setExistingCover(null);
         setExistingImages([]);
+        setBlockedDates([]);
+        setBookedRanges([]);
       }
       setLoading(false);
     })();
   }, [propertyId]);
+
+  const locationOptions = useMemo(
+    () => resolveLocationOptions([...(meta?.locations || []), form.location]),
+    [meta, form.location],
+  );
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -609,6 +640,22 @@ export function AdminPropertyForm({
     onSaved({ keepOpen: true, id: savedId });
   }
 
+  async function handleSaveBlocked() {
+    if (!activeId) {
+      toast.warning("Əvvəlcə mülkü yaradın, sonra dolu günləri seçin.");
+      return;
+    }
+    setSavingBlocked(true);
+    const res = await adminApi.savePropertyBlockedDates(activeId, blockedDates);
+    setSavingBlocked(false);
+    if (!res.success) {
+      toast.error(res.error || "Dolu günlər saxlanmadı");
+      return;
+    }
+    setBlockedDates(res.data?.items || blockedDates);
+    toast.success(res.data?.message || "Dolu günlər yeniləndi");
+  }
+
   if (loading) return <div className="admin-loading">Form yüklənir...</div>;
 
   return (
@@ -646,8 +693,19 @@ export function AdminPropertyForm({
             <input value={form.title} onChange={(e) => update("title", e.target.value)} required />
           </label>
           <label>
-            Yaxınlıq *
-            <input value={form.location} onChange={(e) => update("location", e.target.value)} required />
+            Yaxınlıq / məkan *
+            <select
+              value={form.location}
+              onChange={(e) => update("location", e.target.value)}
+              required
+            >
+              <option value="">Məkan seçin</option>
+              {(locationOptions.length ? locationOptions : [...GABALA_LOCATIONS]).map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             Qiymət (₼) *
@@ -702,6 +760,26 @@ export function AdminPropertyForm({
               placeholder="Məs: 48 saat əvvəl pulsuz ləğv..."
             />
           </label>
+        </div>
+
+        <div className="admin-form-section">
+          <h3><MapPin size={18} /> Xəritə / dəqiq məkan</h3>
+          <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--text-muted)" }}>
+            Xəritədə klik et və ya pin-i sürüklə — koordinatlar avtomatik dolacaq.
+          </p>
+          <MapLocationPicker
+            latitude={form.latitude}
+            longitude={form.longitude}
+            mapAddress={form.map_address}
+            onChange={(coords) =>
+              setForm((prev) => ({
+                ...prev,
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+                map_address: coords.mapAddress ?? prev.map_address,
+              }))
+            }
+          />
         </div>
 
         <div className="admin-form-section">
@@ -1108,6 +1186,28 @@ export function AdminPropertyForm({
               </label>
             ))}
           </div>
+        </div>
+
+        <div className="admin-form-section">
+          <h3><CalendarRange size={18} /> Dolu günləri seç</h3>
+          <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--text-muted)" }}>
+            Ev sahibinin bağlamaq istədiyi günləri seçin. Rezerv olunmuş günlər avtomatik dolu sayılır.
+            {!activeId ? " Əvvəlcə mülkü yaradın, sonra dolu günləri saxlayın." : null}
+          </p>
+          <BusyDaysPicker
+            blockedDates={blockedDates}
+            bookedRanges={bookedRanges}
+            onChange={setBlockedDates}
+          />
+          <button
+            type="button"
+            className="admin-btn admin-btn--primary"
+            style={{ marginTop: 12 }}
+            disabled={savingBlocked || !activeId}
+            onClick={() => void handleSaveBlocked()}
+          >
+            {savingBlocked ? "Saxlanılır..." : "Dolu günləri saxla"}
+          </button>
         </div>
 
         <div className="admin-property-form-actions">

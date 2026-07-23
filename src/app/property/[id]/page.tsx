@@ -24,15 +24,6 @@ export async function generateMetadata({ params }: PageProps) {
   });
 }
 
-function buildJune2026Calendar() {
-  const daysInMonth = 30;
-  const startDay = 0;
-  const cells: (number | null)[] = [];
-  for (let i = 0; i < startDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-  return cells;
-}
-
 export default async function PropertyPage({ params }: PageProps) {
   const { id } = await params;
   const propertyId = Number(id);
@@ -42,7 +33,6 @@ export default async function PropertyPage({ params }: PageProps) {
   if (!apiProperty) notFound();
 
   const property = mapApiProperty(apiProperty);
-  const calendarDays = buildJune2026Calendar();
   const mapsUrl =
     property.lat && property.lng
       ? `https://www.google.com/maps/search/?api=1&query=${property.lat},${property.lng}`
@@ -62,7 +52,6 @@ export default async function PropertyPage({ params }: PageProps) {
   return (
     <PropertyDetailClient
       property={property}
-      calendarDays={calendarDays}
       mapsUrl={mapsUrl}
       gallery={gallery}
     />
