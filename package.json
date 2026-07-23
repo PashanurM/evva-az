@@ -22,6 +22,10 @@
     "react-toastify": "^11.1.0",
     "tailwindcss": "^4.3.2"
   },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-win32-x64-msvc": "^4.3.3",
+    "lightningcss-win32-x64-msvc": "^1.33.0"
+  },
   "devDependencies": {
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20.19.0",
