@@ -153,6 +153,9 @@ export function SearchBox({
                 <input
                   type="number"
                   name="min_price"
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
                   placeholder={t("home.minPrice")}
                   defaultValue={searchParams.get("min_price") ?? ""}
                 />
@@ -162,6 +165,9 @@ export function SearchBox({
                 <input
                   type="number"
                   name="max_price"
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
                   placeholder={t("home.maxPrice")}
                   defaultValue={searchParams.get("max_price") ?? ""}
                 />

@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import type { MapPropertyPoint } from "@/lib/map";
+import {
+  createPropertyMarkerIcon,
+  escapeLeafletHtml,
+  loadLeaflet,
+} from "@/lib/leaflet-setup";
+import "leaflet/dist/leaflet.css";
 
 interface PropertiesMapProps {
   properties: MapPropertyPoint[];
@@ -31,7 +37,7 @@ export function PropertiesMap({ properties }: PropertiesMapProps) {
     let cancelled = false;
 
     async function buildMap(container: HTMLDivElement, storeRef: { current: LeafletMap | null }) {
-      const L = (await import("leaflet")).default;
+      const L = await loadLeaflet();
 
       if (cancelled) return null;
 
@@ -50,11 +56,16 @@ export function PropertiesMap({ properties }: PropertiesMapProps) {
       const bounds = L.latLngBounds([]);
 
       mappable.forEach((property) => {
-        const marker = L.marker([property.lat, property.lng]);
+        const icon = createPropertyMarkerIcon(L, {
+          price: property.price,
+          title: property.title,
+          image: property.image,
+        });
+        const marker = L.marker([property.lat, property.lng], { icon, keyboard: false });
         marker.bindPopup(`
           <div class="map-popup">
-            <strong>${escapeHtml(property.title)}</strong>
-            <div>${escapeHtml(property.location)}</div>
+            <strong>${escapeLeafletHtml(property.title)}</strong>
+            <div>${escapeLeafletHtml(property.location)}</div>
             <div>${property.price} ₼/gecə</div>
             <a href="/property/${property.id}">Ətraflı bax</a>
           </div>
@@ -75,15 +86,13 @@ export function PropertiesMap({ properties }: PropertiesMapProps) {
     }
 
     async function initMaps() {
-      await import("leaflet/dist/leaflet.css");
-
       if (mapRef.current) {
         await buildMap(mapRef.current, mapInstanceRef);
         setReady(true);
       }
     }
 
-    initMaps();
+    void initMaps();
 
     return () => {
       cancelled = true;
@@ -100,7 +109,7 @@ export function PropertiesMap({ properties }: PropertiesMapProps) {
     let cancelled = false;
 
     async function initFullscreen() {
-      const L = (await import("leaflet")).default;
+      const L = await loadLeaflet();
       if (cancelled || !fullscreenMapRef.current) return;
 
       if (fullscreenMapInstanceRef.current) {
@@ -110,14 +119,19 @@ export function PropertiesMap({ properties }: PropertiesMapProps) {
 
       const map = L.map(fullscreenMapRef.current, { scrollWheelZoom: true });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; OpenStreetMap',
+        attribution: "&copy; OpenStreetMap",
         maxZoom: 19,
       }).addTo(map);
 
       const bounds = L.latLngBounds([]);
       mappable.forEach((property) => {
-        const marker = L.marker([property.lat, property.lng]);
-        marker.bindPopup(`<strong>${escapeHtml(property.title)}</strong>`);
+        const icon = createPropertyMarkerIcon(L, {
+          price: property.price,
+          title: property.title,
+          image: property.image,
+        });
+        const marker = L.marker([property.lat, property.lng], { icon, keyboard: false });
+        marker.bindPopup(`<strong>${escapeLeafletHtml(property.title)}</strong>`);
         marker.addTo(map);
         bounds.extend([property.lat, property.lng]);
       });
@@ -130,7 +144,7 @@ export function PropertiesMap({ properties }: PropertiesMapProps) {
       setTimeout(() => map.invalidateSize(), 150);
     }
 
-    initFullscreen();
+    void initFullscreen();
 
     return () => {
       cancelled = true;
@@ -184,12 +198,4 @@ export function PropertiesMap({ properties }: PropertiesMapProps) {
       </div>
     </section>
   );
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }

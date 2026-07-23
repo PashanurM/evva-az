@@ -3,6 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { Property } from "@/types";
 import { useLocale } from "@/providers/LocaleProvider";
+import {
+  createPropertyMarkerIcon,
+  escapeLeafletHtml,
+  loadLeaflet,
+} from "@/lib/leaflet-setup";
 import "leaflet/dist/leaflet.css";
 
 interface PropertyMapProps {
@@ -15,14 +20,6 @@ interface PropertyMapProps {
 type LeafletContainer = HTMLElement & { _leaflet_id?: number };
 
 const GABALA_CENTER: [number, number] = [40.9814, 47.8458];
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
 
 /** Offset markers that share nearly the same coordinates so they don't stack. */
 function spreadOverlapping(
@@ -76,7 +73,7 @@ export function PropertyMap({
     let active = true;
 
     void (async () => {
-      const L = (await import("leaflet")).default;
+      const L = await loadLeaflet();
       if (!active) return;
 
       if (mapRef.current) {
@@ -125,31 +122,25 @@ export function PropertyMap({
         const pos = positions.get(item.id) || ([item.lat, item.lng] as [number, number]);
         bounds.push(pos);
 
-        const priceLabel = `${item.price} ₼`;
         const thumb = item.image
-          ? `<img class="evva-map-popup-thumb" src="${escapeHtml(item.image)}" alt="" />`
+          ? `<img class="evva-map-popup-thumb" src="${escapeLeafletHtml(item.image)}" alt="" onerror="this.remove()" />`
           : "";
-        const icon = L.divIcon({
-          className: "evva-map-marker",
-          html: `
-            <div class="evva-map-marker-inner${item.premium ? " is-premium" : ""}" title="${escapeHtml(item.title)}">
-              <span class="evva-map-marker-price">${escapeHtml(priceLabel)}</span>
-            </div>
-          `,
-          iconSize: [64, 34],
-          iconAnchor: [32, 34],
-          popupAnchor: [0, -30],
+        const icon = createPropertyMarkerIcon(L, {
+          price: item.price,
+          title: item.title,
+          image: item.image,
+          premium: item.premium,
         });
 
-        const marker = L.marker(pos, { icon, riseOnHover: true }).addTo(map);
+        const marker = L.marker(pos, { icon, riseOnHover: true, keyboard: false }).addTo(map);
         marker.bindPopup(
           `
           <div class="evva-map-popup">
             ${thumb}
             <div class="evva-map-popup-body">
-              <strong>${escapeHtml(item.title)}</strong>
-              <p>${escapeHtml(item.location)} · <b>${escapeHtml(String(item.price))} ₼</b> ${escapeHtml(t("common.perNight"))}</p>
-              <a href="/property/${item.id}">${escapeHtml(t("common.viewDetails"))}</a>
+              <strong>${escapeLeafletHtml(item.title)}</strong>
+              <p>${escapeLeafletHtml(item.location)} · <b>${escapeLeafletHtml(String(item.price))} ₼</b> ${escapeLeafletHtml(t("common.perNight"))}</p>
+              <a href="/property/${item.id}">${escapeLeafletHtml(t("common.viewDetails"))}</a>
             </div>
           </div>
         `,

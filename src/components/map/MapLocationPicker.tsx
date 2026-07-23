@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPickerMarkerIcon, loadLeaflet } from "@/lib/leaflet-setup";
 import "leaflet/dist/leaflet.css";
 
 type LeafletContainer = HTMLElement & { _leaflet_id?: number };
@@ -40,7 +41,7 @@ export function MapLocationPicker({
     let active = true;
 
     void (async () => {
-      const L = (await import("leaflet")).default;
+      const L = await loadLeaflet();
       if (!active) return;
 
       if (mapRef.current) {
@@ -72,12 +73,7 @@ export function MapLocationPicker({
         attribution: "© OpenStreetMap",
       }).addTo(map);
 
-      const icon = L.divIcon({
-        className: "evva-map-picker-icon",
-        html: `<span class="evva-map-picker-pin"></span>`,
-        iconSize: [28, 36],
-        iconAnchor: [14, 34],
-      });
+      const icon = createPickerMarkerIcon(L);
 
       const marker = L.marker(center, { draggable: true, icon }).addTo(map);
       markerRef.current = marker;

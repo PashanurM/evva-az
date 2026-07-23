@@ -9,6 +9,8 @@ const apiProxy =
     : "https://pashanur.alwaysdata.net");
 
 const nextConfig: NextConfig = {
+  // Hide Next.js DevTools portal badge in local UI (nextjs-portal element).
+  devIndicators: false,
   logging: {
     browserToTerminal: false,
   },

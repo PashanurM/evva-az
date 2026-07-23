@@ -92,6 +92,9 @@ export function SearchForm({ config, total, initialFilters }: SearchFormProps) {
                     <input
                       type="number"
                       name="min_price"
+                      min={0}
+                      step={1}
+                      inputMode="numeric"
                       placeholder="Min. qiymət"
                       value={minPrice}
                       onChange={(e) => setMinPrice(e.target.value)}
@@ -102,6 +105,9 @@ export function SearchForm({ config, total, initialFilters }: SearchFormProps) {
                     <input
                       type="number"
                       name="max_price"
+                      min={0}
+                      step={1}
+                      inputMode="numeric"
                       placeholder="Maks. qiymət"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}

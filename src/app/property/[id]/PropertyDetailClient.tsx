@@ -28,19 +28,40 @@ interface PropertyDetailClientProps {
   gallery: string[];
 }
 
+const AZ_MONTHS = [
+  "yanvar",
+  "fevral",
+  "mart",
+  "aprel",
+  "may",
+  "iyun",
+  "iyul",
+  "avqust",
+  "sentyabr",
+  "oktyabr",
+  "noyabr",
+  "dekabr",
+];
+
+/** Stable SSR/client date label — avoids Intl locale mismatches. */
+function formatPropertyDate(value?: string): string {
+  if (!value) return "";
+  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return "";
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  if (month < 0 || month > 11 || day < 1) return "";
+  return `${day} ${AZ_MONTHS[month]} ${year}`;
+}
+
 export function PropertyDetailClient({
   property,
   mapsUrl,
   gallery,
 }: PropertyDetailClientProps) {
   const { t } = useLocale();
-  const createdDate = property.createdAt
-    ? new Intl.DateTimeFormat("az-AZ", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      }).format(new Date(property.createdAt))
-    : "";
+  const createdDate = formatPropertyDate(property.createdAt);
   const ownerInitial = (property.owner?.name || property.owner?.username || "E")
     .trim()
     .charAt(0)
@@ -60,7 +81,7 @@ export function PropertyDetailClient({
             <PropertyGallery images={gallery} title={property.title} />
           </div>
 
-          <div className="glass">
+          <div className="glass property-hero-panel">
             <div className="headline">
               <h1>{property.title}</h1>
               <div className="price-pill">
@@ -95,10 +116,14 @@ export function PropertyDetailClient({
 
               <div className="property-detail-meta">
                 {createdDate ? (
-                  <span><CalendarPlus size={15} /> {createdDate}</span>
+                  <span>
+                    <CalendarPlus size={15} /> {createdDate}
+                  </span>
                 ) : null}
                 {property.owner?.username ? (
-                  <span><UserRound size={15} /> @{property.owner.username}</span>
+                  <span>
+                    <UserRound size={15} /> @{property.owner.username}
+                  </span>
                 ) : null}
               </div>
 
@@ -121,14 +146,27 @@ export function PropertyDetailClient({
               </div>
 
               <div className="property-detail-meta property-detail-meta--secondary">
-                <span><Eye size={15} /> {property.views} baxış</span>
-                <span><Bed size={15} /> {property.singleBeds ?? 0} tək yataq</span>
-                <span><Bed size={15} /> {property.doubleBeds ?? 0} iki nəfərlik yataq</span>
+                <span>
+                  <Eye size={15} /> {property.views} baxış
+                </span>
+                <span>
+                  <Bed size={15} /> {property.singleBeds ?? 0} tək yataq
+                </span>
+                <span>
+                  <Bed size={15} /> {property.doubleBeds ?? 0} iki nəfərlik yataq
+                </span>
                 {(property.sofaBeds ?? 0) > 0 ? (
-                  <span><Bed size={15} /> {property.sofaBeds} divan yataq</span>
+                  <span>
+                    <Bed size={15} /> {property.sofaBeds} divan yataq
+                  </span>
                 ) : null}
-                <span><Moon size={15} /> min. {property.minimumNights ?? 1} gecə</span>
-                <span><Clock3 size={15} /> {property.checkInTime || "15:00"} / {property.checkOutTime || "12:00"}</span>
+                <span>
+                  <Moon size={15} /> min. {property.minimumNights ?? 1} gecə
+                </span>
+                <span>
+                  <Clock3 size={15} /> {property.checkInTime || "15:00"} /{" "}
+                  {property.checkOutTime || "12:00"}
+                </span>
               </div>
 
               <div className="card-tags">
@@ -184,7 +222,7 @@ export function PropertyDetailClient({
             <h2>{t("property.bookedDays")}</h2>
             <div style={{ fontSize: 13, opacity: 0.72 }}>{t("property.bookingsNote")}</div>
           </div>
-          <AvailabilityCalendar occupiedRanges={property.occupiedRanges || []} months={3} />
+          <AvailabilityCalendar occupiedRanges={property.occupiedRanges || []} />
         </section>
       </div>
     </section>

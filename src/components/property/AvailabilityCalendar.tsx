@@ -21,12 +21,13 @@ type OccupiedRange = {
   source?: string;
 };
 
+type DayStatus = "booked" | "blocked" | "free";
+
 type AvailabilityCalendarProps = {
   occupiedRanges?: OccupiedRange[];
-  months?: number;
 };
 
-function dayStatus(iso: string, ranges: OccupiedRange[]): "booked" | "blocked" | "free" {
+function dayStatus(iso: string, ranges: OccupiedRange[]): DayStatus {
   for (const range of ranges) {
     if (iso >= range.check_in && iso < range.check_out) {
       return (range.source || "booking") === "blocked" ? "blocked" : "booked";
@@ -35,113 +36,105 @@ function dayStatus(iso: string, ranges: OccupiedRange[]): "booked" | "blocked" |
   return "free";
 }
 
-export function AvailabilityCalendar({
-  occupiedRanges = [],
-  months = 3,
-}: AvailabilityCalendarProps) {
+function statusLabel(status: DayStatus): string {
+  if (status === "booked") return "Rezerv olunub";
+  if (status === "blocked") return "Sahib bağlayıb";
+  return "Boş";
+}
+
+export function AvailabilityCalendar({ occupiedRanges = [] }: AvailabilityCalendarProps) {
+  const todayIso = useMemo(() => toIso(new Date()), []);
   const [cursor, setCursor] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
 
-  const monthDates = useMemo(() => {
-    const list: Date[] = [];
-    for (let i = 0; i < months; i++) {
-      list.push(new Date(cursor.getFullYear(), cursor.getMonth() + i, 1));
-    }
-    return list;
-  }, [cursor, months]);
-
-  function buildCells(monthDate: Date) {
-    const year = monthDate.getFullYear();
-    const month = monthDate.getMonth();
+  const cells = useMemo(() => {
+    const year = cursor.getFullYear();
+    const month = cursor.getMonth();
     const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const cells: Array<{ day: number | null; iso?: string; status?: string }> = [];
+    const list: Array<{ day: number | null; iso?: string; status?: DayStatus; isPast?: boolean; isToday?: boolean }> =
+      [];
 
-    for (let i = 0; i < firstWeekday; i++) cells.push({ day: null });
+    for (let i = 0; i < firstWeekday; i++) list.push({ day: null });
     for (let day = 1; day <= daysInMonth; day++) {
       const iso = toIso(new Date(year, month, day));
-      cells.push({ day, iso, status: dayStatus(iso, occupiedRanges) });
+      list.push({
+        day,
+        iso,
+        status: dayStatus(iso, occupiedRanges),
+        isPast: iso < todayIso,
+        isToday: iso === todayIso,
+      });
     }
-    while (cells.length % 7 !== 0) cells.push({ day: null });
-    return cells;
-  }
+    while (list.length % 7 !== 0) list.push({ day: null });
+    return list;
+  }, [cursor, occupiedRanges, todayIso]);
 
   return (
-    <div className="busy-days-picker availability-calendar">
-      <div className="busy-days-picker-toolbar">
+    <div className="availability-calendar">
+      <div className="availability-calendar-nav">
         <button
           type="button"
-          className="auth-btn"
+          className="availability-calendar-nav-btn"
+          aria-label="Əvvəlki ay"
           onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
         >
           ←
         </button>
-        <span>{monthLabel(cursor)}</span>
+        <h3 className="availability-calendar-title">{monthLabel(cursor)}</h3>
         <button
           type="button"
-          className="auth-btn"
+          className="availability-calendar-nav-btn"
+          aria-label="Növbəti ay"
           onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
         >
           →
         </button>
       </div>
 
-      <div className="busy-days-legend">
-        <span className="busy-days-legend-item">
-          <i className="busy-dot busy-dot--booked" /> Rezerv olunub
+      <div className="availability-calendar-legend">
+        <span className="availability-calendar-legend-item">
+          <i className="availability-dot is-booked" /> Rezerv olunub
         </span>
-        <span className="busy-days-legend-item">
-          <i className="busy-dot busy-dot--blocked" /> Sahib bağlayıb
+        <span className="availability-calendar-legend-item">
+          <i className="availability-dot is-blocked" /> Sahib bağlayıb
         </span>
-        <span className="busy-days-legend-item">
-          <i className="busy-dot busy-dot--free" /> Boş
+        <span className="availability-calendar-legend-item">
+          <i className="availability-dot is-free" /> Boş
         </span>
       </div>
 
-      <div className="busy-days-months">
-        {monthDates.map((monthDate) => {
-          const cells = buildCells(monthDate);
-          return (
-            <div key={monthDate.toISOString()} className="busy-days-month">
-              <h4>{monthLabel(monthDate)}</h4>
-              <div className="busy-days-weekdays">
-                {WEEKDAYS.map((d) => (
-                  <span key={d}>{d}</span>
-                ))}
-              </div>
-              <div className="busy-days-grid">
-                {cells.map((cell, idx) =>
-                  cell.day == null ? (
-                    <span key={`e-${idx}`} className="busy-day is-empty" />
-                  ) : (
-                    <span
-                      key={cell.iso}
-                      className={[
-                        "busy-day",
-                        "is-readonly",
-                        cell.status === "booked" ? "is-booked" : "",
-                        cell.status === "blocked" ? "is-blocked" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      title={
-                        cell.status === "booked"
-                          ? "Rezerv olunub"
-                          : cell.status === "blocked"
-                            ? "Sahib bağlayıb"
-                            : "Boş"
-                      }
-                    >
-                      {cell.day}
-                    </span>
-                  ),
-                )}
-              </div>
-            </div>
-          );
-        })}
+      <div className="availability-calendar-panel">
+        <div className="availability-calendar-weekdays">
+          {WEEKDAYS.map((d) => (
+            <span key={d}>{d}</span>
+          ))}
+        </div>
+        <div className="availability-calendar-grid">
+          {cells.map((cell, idx) =>
+            cell.day == null ? (
+              <span key={`e-${idx}`} className="availability-day is-empty" aria-hidden="true" />
+            ) : (
+              <span
+                key={cell.iso}
+                className={[
+                  "availability-day",
+                  `is-${cell.status}`,
+                  cell.isPast ? "is-past" : "",
+                  cell.isToday ? "is-today" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                title={statusLabel(cell.status || "free")}
+              >
+                <span className="availability-day-num">{cell.day}</span>
+                <span className="availability-day-mark" aria-hidden="true" />
+              </span>
+            ),
+          )}
+        </div>
       </div>
     </div>
   );

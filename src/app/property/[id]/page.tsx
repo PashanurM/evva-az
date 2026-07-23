@@ -1,8 +1,7 @@
-import { notFound } from "next/navigation";
 import { mapApiProperty } from "@/lib/mappers";
 import { getProperty } from "@/lib/server-api";
 import { createDynamicMetadata, KEYWORDS, pageMetadata } from "@/lib/site-metadata";
-import { PropertyDetailClient } from "./PropertyDetailClient";
+import { PropertyDetailLoader } from "./PropertyDetailLoader";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -10,8 +9,14 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
-  const apiProperty = await getProperty(Number(id));
+  const propertyId = Number(id);
+  if (!Number.isFinite(propertyId) || propertyId <= 0) {
+    return pageMetadata.propertyNotFound;
+  }
+
+  const apiProperty = await getProperty(propertyId);
   if (!apiProperty) return pageMetadata.propertyNotFound;
+
   return createDynamicMetadata({
     title: `${apiProperty.title} | ${apiProperty.location} günlük kirayə | EVVA.AZ`,
     description: apiProperty.description,
@@ -27,10 +32,16 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function PropertyPage({ params }: PageProps) {
   const { id } = await params;
   const propertyId = Number(id);
-  if (!Number.isFinite(propertyId) || propertyId <= 0) notFound();
+
+  if (!Number.isFinite(propertyId) || propertyId <= 0) {
+    return <PropertyDetailLoader propertyId={0} />;
+  }
 
   const apiProperty = await getProperty(propertyId);
-  if (!apiProperty) notFound();
+  if (!apiProperty) {
+    // Client loader retries via /api/v1 proxy fallback (list rebuild).
+    return <PropertyDetailLoader propertyId={propertyId} />;
+  }
 
   const property = mapApiProperty(apiProperty);
   const mapsUrl =
@@ -40,20 +51,18 @@ export default async function PropertyPage({ params }: PageProps) {
 
   const gallery: string[] = [];
   const pushUnique = (url?: string) => {
-    if (!url) return;
-    if (gallery.includes(url)) return;
+    if (!url || gallery.includes(url)) return;
     gallery.push(url);
   };
   pushUnique(property.image);
-  for (const image of property.images || []) {
-    pushUnique(image);
-  }
+  for (const image of property.images || []) pushUnique(image);
 
   return (
-    <PropertyDetailClient
-      property={property}
-      mapsUrl={mapsUrl}
-      gallery={gallery}
+    <PropertyDetailLoader
+      propertyId={propertyId}
+      initialProperty={property}
+      initialMapsUrl={mapsUrl}
+      initialGallery={gallery}
     />
   );
 }
