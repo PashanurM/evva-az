@@ -13,6 +13,7 @@ import type {
 } from "./types";
 import { getApiBackendBase } from "./api-base";
 import { backendFetch } from "./backend-fetch";
+import { entityIdFromKey } from "./slug";
 
 function toQueryParams(filters: Record<string, string | undefined>): string {
   const params = new URLSearchParams();
@@ -138,8 +139,21 @@ export async function getRestaurants(
 }
 
 export const getRestaurant = cache(async (idOrSlug: number | string): Promise<Restaurant | null> => {
-  const key = encodeURIComponent(String(idOrSlug).trim());
-  return serverFetch<Restaurant>(`/restaurants/${key}`);
+  const key = String(idOrSlug).trim();
+  if (!key) return null;
+
+  // Prefer numeric id (slug URLs end with -{id}). Works even if the API
+  // has not deployed slug lookup yet.
+  const id = entityIdFromKey(key);
+  if (id != null) {
+    const byId = await serverFetch<Restaurant>(`/restaurants/${id}`);
+    if (byId) return byId;
+  }
+
+  if (!/^\d+$/.test(key)) {
+    return serverFetch<Restaurant>(`/restaurants/${encodeURIComponent(key)}`);
+  }
+  return null;
 });
 
 export async function getPlaces(
@@ -155,8 +169,19 @@ export async function getPlaces(
 }
 
 export const getPlace = cache(async (idOrSlug: number | string): Promise<Place | null> => {
-  const key = encodeURIComponent(String(idOrSlug).trim());
-  return serverFetch<Place>(`/places/${key}`);
+  const key = String(idOrSlug).trim();
+  if (!key) return null;
+
+  const id = entityIdFromKey(key);
+  if (id != null) {
+    const byId = await serverFetch<Place>(`/places/${id}`);
+    if (byId) return byId;
+  }
+
+  if (!/^\d+$/.test(key)) {
+    return serverFetch<Place>(`/places/${encodeURIComponent(key)}`);
+  }
+  return null;
 });
 
 export async function getDeliveryHouses(
