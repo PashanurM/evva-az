@@ -46,8 +46,7 @@ function UserTable({
                   className="admin-table-link"
                   title="İstifadəçi profilinə bax"
                 >
-                  <strong>{u.full_name || u.username}</strong>
-                  <span className="admin-table-link-sub">@{u.username}</span>
+                  <strong>{u.full_name?.trim() || u.username}</strong>
                 </Link>
               </td>
               <td data-label="Rol">{u.role}</td>

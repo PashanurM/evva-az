@@ -12,9 +12,9 @@ import {
   SlidersHorizontal,
   Search,
   RotateCcw,
-  CalendarDays,
 } from "lucide-react";
 import { filterTags, locations } from "@/lib/data/properties";
+import { DateInput } from "@/components/ui/DateInput";
 import { useLocale } from "@/providers/LocaleProvider";
 
 interface SearchBoxProps {
@@ -131,32 +131,30 @@ export function SearchBox({
                   </select>
                 </span>
               </label>
-              <label className="premium-input-wrap search-date-field search-field">
+              <div className="premium-input-wrap search-date-field search-field">
                 <span className="search-field-label">{t("home.availableFrom")}</span>
-                <span className="search-field-control">
-                  <CalendarDays size={16} />
-                  <input
-                    type="date"
+                <span className="search-field-control search-field-control--date">
+                  <DateInput
                     name="check_in"
-                    aria-label={t("home.availableFrom")}
-                    title={t("home.availableFrom")}
+                    variant="search"
                     defaultValue={searchParams.get("check_in") ?? ""}
+                    aria-label={t("home.availableFrom")}
+                    placeholder={t("home.availableFrom")}
                   />
                 </span>
-              </label>
-              <label className="premium-input-wrap search-date-field search-field">
+              </div>
+              <div className="premium-input-wrap search-date-field search-field">
                 <span className="search-field-label">{t("home.availableTo")}</span>
-                <span className="search-field-control">
-                  <CalendarDays size={16} />
-                  <input
-                    type="date"
+                <span className="search-field-control search-field-control--date">
+                  <DateInput
                     name="check_out"
-                    aria-label={t("home.availableTo")}
-                    title={t("home.availableTo")}
+                    variant="search"
                     defaultValue={searchParams.get("check_out") ?? ""}
+                    aria-label={t("home.availableTo")}
+                    placeholder={t("home.availableTo")}
                   />
                 </span>
-              </label>
+              </div>
               <label className="premium-input-wrap search-field">
                 <span className="search-field-label">{t("home.minPrice")}</span>
                 <span className="search-field-control">

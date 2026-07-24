@@ -149,7 +149,9 @@ export const ru = {
     loginSubtitle:
       "Для входа используй только номер телефона или username.",
     loginTabPhone: "Номер телефона",
+    loginTabPhoneShort: "Телефон",
     loginTabUsername: "Username",
+    loginTabUsernameShort: "Логин",
     loginTabList: "Выбор типа входа",
     phoneHint: "Система проверит номер в любом формате.",
     usernameHint: "Вход только по username.",

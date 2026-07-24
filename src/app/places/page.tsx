@@ -11,9 +11,6 @@ interface PlacesPageProps {
 }
 
 export default async function PlacesPage({ searchParams }: PlacesPageProps) {
-  const config = await getSiteConfig();
-  if (!config.modules.places) notFound();
-
   const params = await searchParams;
   const pick = (key: string) => {
     const value = params[key];
@@ -26,7 +23,12 @@ export default async function PlacesPage({ searchParams }: PlacesPageProps) {
     sort: pick("sort") || "featured",
   };
 
-  const listing = await getPlaces(filters);
+  const [config, listing] = await Promise.all([
+    getSiteConfig(),
+    getPlaces(filters),
+  ]);
+  if (!config.modules.places) notFound();
+
   const places = listing.items.map(mapApiPlace);
 
   return (

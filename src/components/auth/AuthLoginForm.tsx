@@ -95,7 +95,12 @@ export function AuthLoginForm() {
                 onClick={() => setMode("phone")}
               >
                 <Phone size={16} aria-hidden />
-                {t("auth.loginTabPhone")}
+                <span className="login-switch-label login-switch-label--full">
+                  {t("auth.loginTabPhone")}
+                </span>
+                <span className="login-switch-label login-switch-label--short">
+                  {t("auth.loginTabPhoneShort")}
+                </span>
               </button>
               <button
                 type="button"
@@ -105,7 +110,12 @@ export function AuthLoginForm() {
                 onClick={() => setMode("username")}
               >
                 <AtSign size={16} aria-hidden />
-                {t("common.username")}
+                <span className="login-switch-label login-switch-label--full">
+                  {t("auth.loginTabUsername")}
+                </span>
+                <span className="login-switch-label login-switch-label--short">
+                  {t("auth.loginTabUsernameShort")}
+                </span>
               </button>
             </div>
 

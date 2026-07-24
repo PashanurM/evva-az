@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { formatMonthYear } from "@/lib/date-format";
 
 const WEEKDAYS = ["B.e", "Ç.a", "Ç", "C.a", "C", "Ş", "B"];
 
@@ -9,10 +10,6 @@ function toIso(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
-}
-
-function monthLabel(date: Date): string {
-  return new Intl.DateTimeFormat("az-AZ", { month: "long", year: "numeric" }).format(date);
 }
 
 type OccupiedRange = {
@@ -83,7 +80,7 @@ export function AvailabilityCalendar({ occupiedRanges = [] }: AvailabilityCalend
         >
           ←
         </button>
-        <h3 className="availability-calendar-title">{monthLabel(cursor)}</h3>
+        <h3 className="availability-calendar-title">{formatMonthYear(cursor, "az")}</h3>
         <button
           type="button"
           className="availability-calendar-nav-btn"

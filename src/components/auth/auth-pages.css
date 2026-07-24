@@ -121,6 +121,12 @@
   color: var(--text-muted);
   cursor: pointer;
   transition: color 0.24s ease;
+  padding: 0 10px;
+  min-width: 0;
+}
+
+.login-switch-label--short {
+  display: none;
 }
 
 .login-switch button:hover:not(.active) {
@@ -262,10 +268,43 @@
 }
 
 @media (max-width: 720px) {
+  .login-switch {
+    padding: 4px;
+    border-radius: 16px;
+    gap: 3px;
+  }
+
+  .login-switch-indicator {
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px - 3px) / 2);
+    border-radius: 12px;
+  }
+
+  .login-switch--username .login-switch-indicator {
+    transform: translateX(calc(100% + 3px));
+  }
+
   .login-switch button {
-    font-size: 12px;
-    gap: 6px;
-    padding: 0 8px;
+    min-height: 42px;
+    font-size: 12.5px;
+    gap: 5px;
+    padding: 0 6px;
+  }
+
+  .login-switch button svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .login-switch-label--full {
+    display: none;
+  }
+
+  .login-switch-label--short {
+    display: inline;
   }
 
   .floating-back-btn {

@@ -2810,8 +2810,8 @@ a.admin-stat-card:focus-visible {
   .admin-form-grid input,
   .admin-form-grid select,
   .admin-form-grid textarea {
-    font-size: 16px;
-    min-height: 44px;
+    font-size: 14px;
+    min-height: 42px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -3017,8 +3017,8 @@ a.admin-stat-card:focus-visible {
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    min-height: 44px;
-    font-size: 16px;
+    min-height: 42px;
+    font-size: 14px;
     box-sizing: border-box;
   }
 
@@ -3276,8 +3276,8 @@ a.admin-stat-card:focus-visible {
   .admin-panel-card input:not([type="checkbox"]):not([type="radio"]),
   .admin-panel-card select,
   .admin-panel-card textarea {
-    min-height: 44px;
-    font-size: 16px; /* iOS: avoid auto-zoom on focus */
+    min-height: 42px;
+    font-size: 14px;
     border-radius: 10px;
   }
 
@@ -3419,8 +3419,8 @@ a.admin-stat-card:focus-visible {
   .admin-form-grid input,
   .admin-form-grid select,
   .admin-form-grid textarea {
-    min-height: 44px;
-    font-size: 16px;
+    min-height: 42px;
+    font-size: 14px;
   }
 
   .admin-property-form-actions {
@@ -3532,8 +3532,8 @@ a.admin-stat-card:focus-visible {
   .admin-property-form .admin-form-textarea-field textarea,
   .admin-owner-picker__search input {
     width: 100%;
-    min-height: 44px;
-    font-size: 16px; /* prevents iOS zoom */
+    min-height: 42px;
+    font-size: 14px;
     font-weight: 500;
     padding: 0 12px;
     border-radius: 12px;
@@ -3543,6 +3543,7 @@ a.admin-stat-card:focus-visible {
   .admin-module-form .admin-form-grid select {
     padding-right: 42px;
     background-position: right 12px center;
+    font-size: 13.5px;
   }
 
   .admin-property-form .admin-form-grid input::placeholder,

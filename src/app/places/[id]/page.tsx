@@ -20,15 +20,16 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function PlaceDetailPage({ params }: PageProps) {
-  const config = await getSiteConfig();
-  if (!config.modules.places) notFound();
-
   const { id } = await params;
   const placeId = Number(id);
   if (!Number.isFinite(placeId) || placeId <= 0) notFound();
 
-  const apiPlace = await getPlace(placeId);
-  if (!apiPlace) notFound();
+  const [config, apiPlace] = await Promise.all([
+    getSiteConfig(),
+    getPlace(placeId),
+  ]);
+
+  if (!config.modules.places || !apiPlace) notFound();
 
   const place = mapApiPlace(apiPlace);
   const images = place.images?.length

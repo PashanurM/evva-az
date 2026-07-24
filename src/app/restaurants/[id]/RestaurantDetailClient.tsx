@@ -67,6 +67,7 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
               width={1200}
               height={420}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              priority
               unoptimized
             />
           </div>

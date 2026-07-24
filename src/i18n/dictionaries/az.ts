@@ -149,7 +149,9 @@ export const az = {
     loginSubtitle:
       "İstifadəçi girişi üçün yalnız telefon nömrəsi və ya username istifadə et.",
     loginTabPhone: "Telefon nömrəsi",
-    loginTabUsername: "Username",
+    loginTabPhoneShort: "Telefon",
+    loginTabUsername: "İstifadəçi adı",
+    loginTabUsernameShort: "Username",
     loginTabList: "Giriş növü seçimi",
     phoneHint: "Nömrəni hansı formatda yazsan da sistem onu yoxlayacaq.",
     usernameHint: "Yalnız username ilə giriş et.",

@@ -49,6 +49,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminPropertyForm } from "@/components/admin/AdminPropertyForm";
 import { AdminModuleForm } from "@/components/admin/AdminModuleForm";
 import { BusyDaysPicker } from "@/components/property/BusyDaysPicker";
+import { DateInput } from "@/components/ui/DateInput";
 
 type FieldType = "text" | "number" | "date" | "textarea" | "boolean" | "select";
 
@@ -1026,6 +1027,16 @@ export function AdminEntityDetailPage({
                       value={String(form[field.key] ?? "")}
                       onChange={(event) => setForm((current) => ({ ...current, [field.key]: event.target.value }))}
                     />
+                  ) : field.type === "date" ? (
+                    <DateInput
+                      variant="admin"
+                      value={String(form[field.key] ?? "")}
+                      onChange={(next) =>
+                        setForm((current) => ({ ...current, [field.key]: next }))
+                      }
+                      aria-label={field.label}
+                      placeholder={field.label}
+                    />
                   ) : (
                     <input
                       type={
@@ -1033,9 +1044,7 @@ export function AdminEntityDetailPage({
                           ? "tel"
                           : field.type === "number"
                             ? "number"
-                            : field.type === "date"
-                              ? "date"
-                              : "text"
+                            : "text"
                       }
                       inputMode={isPhoneFieldKey(field.key) ? "numeric" : undefined}
                       pattern={isPhoneFieldKey(field.key) ? "[0-9]*" : undefined}

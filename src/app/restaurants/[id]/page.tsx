@@ -24,15 +24,16 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function RestaurantDetailPage({ params }: PageProps) {
-  const config = await getSiteConfig();
-  if (!config.modules.restaurants) notFound();
-
   const { id } = await params;
   const restaurantId = Number(id);
   if (!Number.isFinite(restaurantId) || restaurantId <= 0) notFound();
 
-  const restaurant = await getRestaurant(restaurantId);
-  if (!restaurant) notFound();
+  const [config, restaurant] = await Promise.all([
+    getSiteConfig(),
+    getRestaurant(restaurantId),
+  ]);
+
+  if (!config.modules.restaurants || !restaurant) notFound();
 
   return (
     <RestaurantDetailClient

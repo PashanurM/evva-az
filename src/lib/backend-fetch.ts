@@ -2,6 +2,13 @@ import https from "node:https";
 import { URL } from "node:url";
 import { getApiBackendBase } from "./api-base";
 
+type BackendFetchInit = RequestInit & {
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
+};
+
 const insecureHttpsAgent =
   process.env.NODE_ENV === "development"
     ? new https.Agent({ rejectUnauthorized: false })
@@ -89,12 +96,20 @@ function nodeHttpsFetch(url: string, init: RequestInit = {}): Promise<Response> 
 /** Server-side fetch to the PHP backend (Next route handler + SSR). */
 export async function backendFetch(
   path: string,
-  init: RequestInit = {},
+  init: BackendFetchInit = {},
 ): Promise<Response> {
   const base = getApiBackendBase();
   const url = path.startsWith("http") ? path : `${base}${path.startsWith("/") ? path : `/${path}`}`;
 
-  const options: RequestInit = { ...init, cache: "no-store" };
+  // Default uncached (auth/proxy-safe). Callers can opt into ISR via next.revalidate.
+  const options: BackendFetchInit = {
+    ...init,
+    cache: init.cache ?? (init.next?.revalidate != null ? undefined : "no-store"),
+  };
+
+  if (init.next?.revalidate != null && options.cache === undefined) {
+    delete options.cache;
+  }
 
   if (url.startsWith("https://") && process.env.NODE_ENV === "development") {
     return nodeHttpsFetch(url, options);

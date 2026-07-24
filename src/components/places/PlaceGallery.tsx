@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useLocale } from "@/providers/LocaleProvider";
@@ -10,9 +10,19 @@ interface PlaceGalleryProps {
   title: string;
 }
 
+const PREVIEW_LIMIT = 5;
+
 export function PlaceGallery({ images, title }: PlaceGalleryProps) {
   const { t } = useLocale();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  const visibleImages = useMemo(() => {
+    if (expanded || images.length <= PREVIEW_LIMIT) return images;
+    return images.slice(0, PREVIEW_LIMIT);
+  }, [expanded, images]);
+
+  const hiddenCount = Math.max(0, images.length - PREVIEW_LIMIT);
 
   const close = useCallback(() => setLightboxIndex(null), []);
 
@@ -46,9 +56,9 @@ export function PlaceGallery({ images, title }: PlaceGalleryProps) {
   return (
     <>
       <div className="place-gallery">
-        {images.map((src, i) => (
+        {visibleImages.map((src, i) => (
           <button
-            key={src}
+            key={`${src}-${i}`}
             type="button"
             className={`place-gallery-item ${i === 0 ? "place-gallery-main" : ""}`}
             onClick={() => setLightboxIndex(i)}
@@ -57,13 +67,28 @@ export function PlaceGallery({ images, title }: PlaceGalleryProps) {
             <Image
               src={src}
               alt={`${title} ${i + 1}`}
-              width={600}
-              height={400}
+              width={i === 0 ? 1200 : 600}
+              height={i === 0 ? 800 : 400}
+              sizes={i === 0 ? "(max-width: 768px) 100vw, 70vw" : "(max-width: 768px) 50vw, 220px"}
+              priority={i === 0}
+              loading={i === 0 ? "eager" : "lazy"}
+              unoptimized
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
+            {!expanded && i === PREVIEW_LIMIT - 1 && hiddenCount > 0 ? (
+              <span className="place-gallery-more">+{hiddenCount}</span>
+            ) : null}
           </button>
         ))}
       </div>
+
+      {!expanded && hiddenCount > 0 ? (
+        <div className="place-gallery-expand">
+          <button type="button" className="place-gallery-expand-btn" onClick={() => setExpanded(true)}>
+            Bütün şəkillər ({images.length})
+          </button>
+        </div>
+      ) : null}
 
       {lightboxIndex !== null && (
         <div
@@ -100,6 +125,7 @@ export function PlaceGallery({ images, title }: PlaceGalleryProps) {
             className="place-lightbox-image"
             onClick={(e) => e.stopPropagation()}
             unoptimized
+            priority
           />
           <button
             type="button"

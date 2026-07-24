@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type {
   ApiResponse,
   DeliveryHouseListResult,
@@ -40,10 +41,12 @@ async function parseJsonResponse<T>(res: Response): Promise<ApiResponse<T> | nul
   }
 }
 
-async function serverFetch<T>(path: string): Promise<T | null> {
+/** Public SSR reads — soft-cached so detail navigations stay snappy. */
+async function serverFetch<T>(path: string, revalidate = 60): Promise<T | null> {
   try {
     const res = await backendFetch(`/api/v1${path}`, {
       headers: { Accept: "application/json" },
+      next: { revalidate },
     });
     const json = await parseJsonResponse<T>(res);
     return json?.success && json.data ? json.data : null;
@@ -66,9 +69,9 @@ function normalizeProperty(item: Property): Property {
   };
 }
 
-export async function getSiteConfig(): Promise<SiteConfig> {
+export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
   return (
-    (await serverFetch<SiteConfig>("/config/site")) || {
+    (await serverFetch<SiteConfig>("/config/site", 120)) || {
       site_name: "EVVA.AZ",
       site_url: "https://evva.az",
       modules: { restaurants: true, places: true, delivery: true },
@@ -76,7 +79,7 @@ export async function getSiteConfig(): Promise<SiteConfig> {
       locations: ["Mərkəz", "Vəndam", "Bum", "Nic", "Qəmərvan"],
     }
   );
-}
+});
 
 export async function getProperties(
   filters: PropertyFilters = {},
@@ -101,7 +104,7 @@ export async function getProperties(
   );
 }
 
-export async function getProperty(id: number): Promise<Property | null> {
+export const getProperty = cache(async (id: number): Promise<Property | null> => {
   const direct = await serverFetch<Property>(`/properties/${id}`);
   if (direct?.id) return normalizeProperty(direct);
 
@@ -111,6 +114,7 @@ export async function getProperty(id: number): Promise<Property | null> {
   try {
     const res = await backendFetch(`${backend}/api/v1/properties`, {
       headers: { Accept: "application/json" },
+      next: { revalidate: 60 },
     });
     const json = await parseJsonResponse<PropertyListResult>(res);
     const item = json?.data?.items?.find((row) => Number(row.id) === id);
@@ -119,7 +123,7 @@ export async function getProperty(id: number): Promise<Property | null> {
   } catch {
     return null;
   }
-}
+});
 
 export async function getRestaurants(
   filters: Record<string, string | undefined> = {},
@@ -133,9 +137,9 @@ export async function getRestaurants(
   );
 }
 
-export async function getRestaurant(id: number): Promise<Restaurant | null> {
+export const getRestaurant = cache(async (id: number): Promise<Restaurant | null> => {
   return serverFetch<Restaurant>(`/restaurants/${id}`);
-}
+});
 
 export async function getPlaces(
   filters: Record<string, string | undefined> = {},
@@ -149,9 +153,9 @@ export async function getPlaces(
   );
 }
 
-export async function getPlace(id: number): Promise<Place | null> {
+export const getPlace = cache(async (id: number): Promise<Place | null> => {
   return serverFetch<Place>(`/places/${id}`);
-}
+});
 
 export async function getDeliveryHouses(
   filters: Record<string, string | undefined> = {},

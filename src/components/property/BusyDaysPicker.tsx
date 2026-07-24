@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { formatMonthYear } from "@/lib/date-format";
 
 const WEEKDAYS = ["B.e", "Ç.a", "Ç", "C.a", "C", "Ş", "B"];
 
@@ -9,10 +10,6 @@ function toIso(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
-}
-
-function monthLabel(date: Date): string {
-  return new Intl.DateTimeFormat("az-AZ", { month: "long", year: "numeric" }).format(date);
 }
 
 type OccupiedRange = {
@@ -97,7 +94,7 @@ export function BusyDaysPicker({
         >
           ←
         </button>
-        <span>{monthLabel(cursor)}</span>
+        <span>{formatMonthYear(cursor, "az")}</span>
         <button
           type="button"
           className="busy-days-nav-btn"

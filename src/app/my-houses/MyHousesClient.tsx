@@ -69,6 +69,19 @@ function statusLabel(status: string): string {
   return map[status] || status;
 }
 
+function formatOwnerTime(value: string): string {
+  if (!value) return "";
+  const date = new Date(value.includes("T") ? value : value.replace(" ", "T"));
+  if (Number.isNaN(date.getTime())) {
+    return value.length > 16 ? value.slice(0, 16) : value;
+  }
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${day}.${month} ${hours}:${minutes}`;
+}
+
 export function MyHousesClient() {
   const { user, loading: authLoading, refresh } = useAuth();
   const { t } = useLocale();
@@ -277,13 +290,13 @@ export function MyHousesClient() {
                     </span>
                   </div>
                   <div className="owner-house-actions">
-                    <Link href={`/my-houses/${house.id}/edit`} className="auth-btn primary">
+                    <Link href={`/my-houses/${house.id}/edit`} className="auth-btn primary owner-house-btn">
                       <Pencil size={14} /> Redaktə et
                     </Link>
-                    <Link href={`/property/${house.id}`} className="auth-btn">
+                    <Link href={`/property/${house.id}`} className="auth-btn owner-house-btn">
                       Saytda bax
                     </Link>
-                    <Link href="/messages" className="auth-btn">
+                    <Link href="/messages" className="auth-btn owner-house-btn">
                       Mesajlar
                     </Link>
                   </div>
@@ -293,29 +306,45 @@ export function MyHousesClient() {
           </div>
         ) : null}
 
-        <div className="owner-panel-section">
+        <div className="owner-panel-section owner-inbox-section">
           <div className="owner-panel-section-head">
-            <h2>Son mesajlar</h2>
+            <div className="owner-inbox-title">
+              <MessageCircle size={18} aria-hidden />
+              <h2>Son mesajlar</h2>
+            </div>
             <Link href="/messages">Hamısı</Link>
           </div>
           {conversations.length === 0 ? (
-            <p style={{ color: "var(--text-secondary)" }}>Hələ söhbət yoxdur.</p>
+            <div className="owner-inbox-empty">
+              <MessageCircle size={22} aria-hidden />
+              <p>Hələ söhbət yoxdur.</p>
+            </div>
           ) : (
-            <div className="messages-list">
-              {conversations.slice(0, 5).map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/chat?conversation_id=${item.id}${item.property_id ? `&property_id=${item.property_id}` : ""}`}
-                  className="messages-list-item"
-                >
-                  <div>
-                    <strong>{item.property_title || "Söhbət"}</strong>
-                    <span>{item.guest_name || "Qonaq"}</span>
-                  </div>
-                  <p>{item.last_message || "Mesaj yoxdur"}</p>
-                  <small>{item.updated_at}</small>
-                </Link>
-              ))}
+            <div className="owner-inbox-list">
+              {conversations.slice(0, 5).map((item) => {
+                const initial = (item.guest_name || "Q").trim().charAt(0).toUpperCase();
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/chat?conversation_id=${item.id}${item.property_id ? `&property_id=${item.property_id}` : ""}`}
+                    className="owner-inbox-item"
+                  >
+                    <span className="owner-inbox-avatar" aria-hidden>
+                      {initial}
+                    </span>
+                    <span className="owner-inbox-main">
+                      <span className="owner-inbox-row">
+                        <strong>{item.property_title || "Söhbət"}</strong>
+                        <small>{formatOwnerTime(item.updated_at)}</small>
+                      </span>
+                      <span className="owner-inbox-guest">{item.guest_name || "Qonaq"}</span>
+                      <span className="owner-inbox-preview">
+                        {item.last_message || "Mesaj yoxdur"}
+                      </span>
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>

@@ -12,9 +12,6 @@ interface RestaurantsPageProps {
 }
 
 export default async function RestaurantsPage({ searchParams }: RestaurantsPageProps) {
-  const config = await getSiteConfig();
-  if (!config.modules.restaurants) notFound();
-
   const params = await searchParams;
   const pick = (key: string) => {
     const value = params[key];
@@ -27,7 +24,12 @@ export default async function RestaurantsPage({ searchParams }: RestaurantsPageP
     sort: pick("sort") || "featured",
   };
 
-  const listing = await getRestaurants(filters);
+  const [config, listing] = await Promise.all([
+    getSiteConfig(),
+    getRestaurants(filters),
+  ]);
+  if (!config.modules.restaurants) notFound();
+
   const restaurants = listing.items.map((item) => {
     const mapped = mapApiRestaurant(item);
     return {

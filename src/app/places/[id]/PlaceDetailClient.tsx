@@ -90,6 +90,7 @@ export function PlaceDetailClient({ place, images, mapsUrl }: PlaceDetailClientP
                           alt={activity.name}
                           width={520}
                           height={320}
+                          loading="lazy"
                           unoptimized
                         />
                       ) : (
