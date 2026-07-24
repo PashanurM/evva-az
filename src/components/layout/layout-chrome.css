@@ -520,29 +520,10 @@ html {
   }
 }
 
-@media (min-width: 981px) {
-  .nav-mobile-drawer {
-    left: auto;
-    right: 16px;
-    width: min(360px, calc(100vw - 32px));
-    top: calc(var(--header-height, 88px) + 8px);
-  }
-
-  .nav-mobile-section--lang,
-  .nav-mobile-section--account {
-    display: none;
-  }
-
-  .nav-mobile-links {
-    display: grid;
-    gap: 8px;
-  }
-
-  .nav-mobile-links .discover-pill {
-    width: 100%;
-    justify-content: flex-start;
-    border-radius: 14px;
-    min-height: 48px;
+@media (min-width: 769px) {
+  .nav-mobile-drawer,
+  .nav-mobile-backdrop {
+    display: none !important;
   }
 }
 
@@ -818,8 +799,8 @@ html {
   color: var(--primary-dark);
 }
 
-/* Tablet drawer: Discover + Language side by side */
-@media (min-width: 640px) and (max-width: 980px) {
+/* Narrow tablet drawer: Discover + Language side by side */
+@media (min-width: 640px) and (max-width: 768px) {
   .nav-mobile-drawer {
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(150px, 0.7fr);
@@ -914,7 +895,7 @@ html {
   color: var(--primary-light);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 768px) {
   .top-bar {
     --header-scroll-progress: 0;
   }
