@@ -72,9 +72,11 @@ export function PlaceGallery({ images, title }: PlaceGalleryProps) {
               width={i === 0 ? 1600 : 800}
               height={i === 0 ? 900 : 600}
               sizes={
-                i === 0
-                  ? "(max-width: 900px) 100vw, (max-width: 1400px) 70vw, 920px"
-                  : "(max-width: 900px) 50vw, 320px"
+                images.length === 1
+                  ? "100vw"
+                  : i === 0
+                    ? "(max-width: 900px) 100vw, (max-width: 1400px) 70vw, 920px"
+                    : "(max-width: 900px) 50vw, 320px"
               }
               priority={i === 0}
               loading={i === 0 ? "eager" : "lazy"}

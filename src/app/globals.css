@@ -2922,6 +2922,20 @@ button.auth-submit:hover:not(:disabled) {
     grid-template-columns: minmax(0, 2.4fr) minmax(220px, 1fr) minmax(220px, 1fr);
   }
 
+  /* Re-assert count layouts — otherwise the 3-col rule above wins and
+     a single image only fills the first column on large screens. */
+  .place-gallery--count-1 {
+    grid-template-columns: 1fr;
+  }
+
+  .place-gallery--count-2 {
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  }
+
+  .place-gallery--count-3 {
+    grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  }
+
   .place-gallery-main {
     height: 480px;
   }
@@ -2931,7 +2945,8 @@ button.auth-submit:hover:not(:disabled) {
   }
 
   .place-gallery--count-1 .place-gallery-main {
-    height: clamp(380px, 38vw, 560px);
+    width: 100%;
+    height: clamp(420px, 40vw, 580px);
   }
 
   .place-gallery--count-2 .place-gallery-main,
