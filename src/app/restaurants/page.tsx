@@ -35,6 +35,7 @@ export default async function RestaurantsPage({ searchParams }: RestaurantsPageP
     return {
       id: mapped.id,
       title: mapped.title,
+      slug: mapped.slug,
       location: mapped.location,
       premium: Boolean(mapped.premium),
       rating: mapped.rating,

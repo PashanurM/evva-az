@@ -40,6 +40,7 @@ export interface Property {
 export interface Restaurant {
   id: number;
   title: string;
+  slug: string;
   location: string;
   premium?: boolean;
   image?: string;
@@ -49,6 +50,7 @@ export interface Restaurant {
 export interface Place {
   id: number;
   title: string;
+  slug: string;
   description: string;
   longDescription?: string;
   category: string;

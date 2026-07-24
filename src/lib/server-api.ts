@@ -137,8 +137,9 @@ export async function getRestaurants(
   );
 }
 
-export const getRestaurant = cache(async (id: number): Promise<Restaurant | null> => {
-  return serverFetch<Restaurant>(`/restaurants/${id}`);
+export const getRestaurant = cache(async (idOrSlug: number | string): Promise<Restaurant | null> => {
+  const key = encodeURIComponent(String(idOrSlug).trim());
+  return serverFetch<Restaurant>(`/restaurants/${key}`);
 });
 
 export async function getPlaces(
@@ -153,8 +154,9 @@ export async function getPlaces(
   );
 }
 
-export const getPlace = cache(async (id: number): Promise<Place | null> => {
-  return serverFetch<Place>(`/places/${id}`);
+export const getPlace = cache(async (idOrSlug: number | string): Promise<Place | null> => {
+  const key = encodeURIComponent(String(idOrSlug).trim());
+  return serverFetch<Place>(`/places/${key}`);
 });
 
 export async function getDeliveryHouses(

@@ -1,16 +1,17 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getRestaurant, getSiteConfig } from "@/lib/server-api";
 import { assetUrl } from "@/lib/assets";
+import { entitySlug } from "@/lib/slug";
 import { createDynamicMetadata, KEYWORDS, pageMetadata } from "@/lib/site-metadata";
 import { RestaurantDetailClient } from "./RestaurantDetailClient";
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { id } = await params;
-  const restaurant = await getRestaurant(Number(id));
+  const { slug } = await params;
+  const restaurant = await getRestaurant(decodeURIComponent(slug));
   if (!restaurant) return pageMetadata.restaurantNotFound;
   return createDynamicMetadata({
     title: `${restaurant.name} | EVVA.AZ`,
@@ -24,16 +25,26 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function RestaurantDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const restaurantId = Number(id);
-  if (!Number.isFinite(restaurantId) || restaurantId <= 0) notFound();
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug).trim();
+  if (!slug) notFound();
 
   const [config, restaurant] = await Promise.all([
     getSiteConfig(),
-    getRestaurant(restaurantId),
+    getRestaurant(slug),
   ]);
 
   if (!config.modules.restaurants || !restaurant) notFound();
+
+  const canonicalSlug = entitySlug({
+    id: restaurant.id,
+    slug: restaurant.slug,
+    name: restaurant.name,
+  });
+
+  if (slug !== canonicalSlug) {
+    permanentRedirect(`/restaurants/${canonicalSlug}`);
+  }
 
   return (
     <RestaurantDetailClient

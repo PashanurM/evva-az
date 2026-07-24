@@ -3,11 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Crown, Star, UtensilsCrossed } from "lucide-react";
+import { restaurantPath } from "@/lib/slug";
 import { useLocale } from "@/providers/LocaleProvider";
 
 export interface RestaurantListItem {
   id: number;
   title: string;
+  slug: string;
   location: string;
   premium: boolean;
   rating?: number;
@@ -72,7 +74,7 @@ export function RestaurantsPageClient({
             </div>
           ) : (
             restaurants.map((restaurant) => (
-              <Link key={restaurant.id} href={`/restaurants/${restaurant.id}`} className="catalog-card">
+              <Link key={restaurant.id} href={restaurantPath(restaurant)} className="catalog-card">
                 <div className="catalog-card-image">
                   {restaurant.image && !restaurant.image.endsWith("no-image.svg") ? (
                     <Image

@@ -1,16 +1,17 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { mapApiPlace } from "@/lib/mappers";
 import { getPlace, getSiteConfig } from "@/lib/server-api";
+import { entitySlug } from "@/lib/slug";
 import { createDynamicMetadata, KEYWORDS, pageMetadata } from "@/lib/site-metadata";
 import { PlaceDetailClient } from "./PlaceDetailClient";
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { id } = await params;
-  const apiPlace = await getPlace(Number(id));
+  const { slug } = await params;
+  const apiPlace = await getPlace(decodeURIComponent(slug));
   if (!apiPlace) return pageMetadata.placeNotFound;
   return createDynamicMetadata({
     title: `${apiPlace.title} | EVVA.AZ`,
@@ -20,16 +21,27 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function PlaceDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const placeId = Number(id);
-  if (!Number.isFinite(placeId) || placeId <= 0) notFound();
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug).trim();
+  if (!slug) notFound();
 
   const [config, apiPlace] = await Promise.all([
     getSiteConfig(),
-    getPlace(placeId),
+    getPlace(slug),
   ]);
 
   if (!config.modules.places || !apiPlace) notFound();
+
+  const canonicalSlug = entitySlug({
+    id: apiPlace.id,
+    slug: apiPlace.slug,
+    title: apiPlace.title,
+  });
+
+  // Old /places/12 URLs and outdated slugs permanently redirect to the SEO path.
+  if (slug !== canonicalSlug) {
+    permanentRedirect(`/places/${canonicalSlug}`);
+  }
 
   const place = mapApiPlace(apiPlace);
   const images = place.images?.length

@@ -1,5 +1,6 @@
 import { assetUrl } from "@/lib/assets";
 import { resolvePropertyCoordinates } from "@/lib/location-coords";
+import { entitySlug } from "@/lib/slug";
 import type {
   Place as ApiPlace,
   Property as ApiProperty,
@@ -55,6 +56,11 @@ export function mapApiRestaurant(restaurant: ApiRestaurant): Restaurant {
   return {
     id: restaurant.id,
     title: restaurant.name,
+    slug: entitySlug({
+      id: restaurant.id,
+      slug: restaurant.slug,
+      name: restaurant.name,
+    }),
     location: restaurant.location,
     premium: restaurant.is_featured,
     image: assetUrl(restaurant.cover_url || restaurant.cover_path),
@@ -68,6 +74,11 @@ export function mapApiPlace(place: ApiPlace): Place {
   return {
     id: place.id,
     title: place.title,
+    slug: entitySlug({
+      id: place.id,
+      slug: place.slug,
+      title: place.title,
+    }),
     description: place.short_description,
     longDescription: place.description,
     category: place.category,

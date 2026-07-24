@@ -286,12 +286,14 @@ export const api = {
   getRestaurants: (filters: Record<string, string | undefined> = {}) =>
     apiFetch<RestaurantListResult>(`/restaurants${toQuery(filters, "")}`),
 
-  getRestaurant: (id: number) => apiFetch<Restaurant>(`/restaurants/${id}`),
+  getRestaurant: (idOrSlug: number | string) =>
+    apiFetch<Restaurant>(`/restaurants/${encodeURIComponent(String(idOrSlug))}`),
 
   getPlaces: (filters: Record<string, string | undefined> = {}) =>
     apiFetch<PlaceListResult>(`/places${toQuery(filters, "")}`),
 
-  getPlace: (id: number) => apiFetch<Place>(`/places/${id}`),
+  getPlace: (idOrSlug: number | string) =>
+    apiFetch<Place>(`/places/${encodeURIComponent(String(idOrSlug))}`),
 
   getDeliveryHouses: (filters: Record<string, string | undefined> = {}) =>
     apiFetch<DeliveryHouseListResult>(`/delivery/houses${toQuery(filters, "")}`),

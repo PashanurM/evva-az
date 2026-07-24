@@ -109,6 +109,7 @@ export interface PropertyFilters {
 export interface Restaurant {
   id: number;
   name: string;
+  slug: string;
   short_description: string;
   location: string;
   cover_path: string;
@@ -133,6 +134,7 @@ export interface RestaurantListResult {
 export interface Place {
   id: number;
   title: string;
+  slug: string;
   short_description: string;
   category: string;
   location: string;

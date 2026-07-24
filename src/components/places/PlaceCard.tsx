@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Crown, MapPin, Star } from "lucide-react";
 import type { Place } from "@/types";
+import { placePath } from "@/lib/slug";
 import { useLocale } from "@/providers/LocaleProvider";
 
 export function PlaceCard({ place }: { place: Place }) {
@@ -11,7 +12,7 @@ export function PlaceCard({ place }: { place: Place }) {
   const thumb = place.image ?? place.images?.[0];
 
   return (
-    <Link href={`/places/${place.id}`} className="catalog-card place-card-link">
+    <Link href={placePath(place)} className="catalog-card place-card-link">
       <div className="catalog-card-image">
         {thumb ? (
           <Image

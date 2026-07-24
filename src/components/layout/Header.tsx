@@ -34,7 +34,6 @@ import type { SiteConfig } from "@/lib/types";
 const SCROLL_THRESHOLD = 56;
 const SCROLL_RANGE = 180;
 const SCROLL_SMOOTHING = 0.14;
-const MOBILE_NAV_BREAKPOINT = 980;
 
 function syncHeaderHeight(el: HTMLElement) {
   document.documentElement.style.setProperty(
@@ -186,16 +185,6 @@ export function Header() {
       document.body.style.overflow = "";
     };
   }, [menuOpen]);
-
-  useEffect(() => {
-    const onResize = () => {
-      if (window.innerWidth > MOBILE_NAV_BREAKPOINT) {
-        setMenuOpen(false);
-      }
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -423,10 +412,19 @@ export function Header() {
             </Link>
 
             <div className="header-actions header-actions--desktop">
-              <div className="discover-pills">{discoverLinks}</div>
               <LanguageSwitcher variant="nav" />
               <ThemeToggle />
               {desktopAuth}
+              <button
+                type="button"
+                className="nav-menu-toggle"
+                aria-expanded={menuOpen}
+                aria-controls="nav-mobile-drawer"
+                aria-label={menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                {menuOpen ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
+              </button>
             </div>
 
             <div className="header-actions header-actions--compact">
@@ -460,15 +458,15 @@ export function Header() {
         className={`nav-mobile-drawer${menuOpen ? " open" : ""}`}
         aria-hidden={!menuOpen}
       >
-        <div className="nav-mobile-section">
+        <div className="nav-mobile-section nav-mobile-section--discover">
           <span className="nav-mobile-label">{t("nav.discover")}</span>
           <div className="nav-mobile-links">{discoverLinks}</div>
         </div>
-        <div className="nav-mobile-section">
+        <div className="nav-mobile-section nav-mobile-section--lang">
           <span className="nav-mobile-label">{t("language.label")}</span>
           <LanguageSwitcher variant="menu" />
         </div>
-        <div className="nav-mobile-section">
+        <div className="nav-mobile-section nav-mobile-section--account">
           <span className="nav-mobile-label">{t("nav.account")}</span>
           <div className="nav-mobile-links nav-mobile-auth">{mobileAuthLinks}</div>
         </div>

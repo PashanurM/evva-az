@@ -55,7 +55,9 @@ export function PlaceGallery({ images, title }: PlaceGalleryProps) {
 
   return (
     <>
-      <div className="place-gallery">
+      <div
+        className={`place-gallery place-gallery--count-${Math.min(visibleImages.length, 5)}`}
+      >
         {visibleImages.map((src, i) => (
           <button
             key={`${src}-${i}`}
@@ -67,9 +69,13 @@ export function PlaceGallery({ images, title }: PlaceGalleryProps) {
             <Image
               src={src}
               alt={`${title} ${i + 1}`}
-              width={i === 0 ? 1200 : 600}
-              height={i === 0 ? 800 : 400}
-              sizes={i === 0 ? "(max-width: 768px) 100vw, 70vw" : "(max-width: 768px) 50vw, 220px"}
+              width={i === 0 ? 1600 : 800}
+              height={i === 0 ? 900 : 600}
+              sizes={
+                i === 0
+                  ? "(max-width: 900px) 100vw, (max-width: 1400px) 70vw, 920px"
+                  : "(max-width: 900px) 50vw, 320px"
+              }
               priority={i === 0}
               loading={i === 0 ? "eager" : "lazy"}
               unoptimized
