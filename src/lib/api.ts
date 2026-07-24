@@ -156,7 +156,7 @@ export const api = {
 
   getCsrf: () => apiFetch<{ csrf_token: string }>("/auth/csrf"),
 
-  getMe: async () => {
+  getMe: async (): Promise<ApiResponse<User>> => {
     const site = await apiFetch<User>("/auth/me");
     if (site.success && site.data?.id) {
       return site;
@@ -181,26 +181,35 @@ export const api = {
       return site;
     }
 
+    const viewMode: User["view_mode"] =
+      admin.data.view_mode === "owner" ||
+      admin.data.view_mode === "admin" ||
+      admin.data.view_mode === "user"
+        ? admin.data.view_mode
+        : "admin";
+
+    const mapped: User = {
+      id: admin.data.id,
+      full_name: admin.data.full_name || "",
+      username: admin.data.username || "",
+      phone: admin.data.phone || "",
+      role: "admin",
+      base_role: "admin",
+      view_mode: viewMode,
+      role_text: admin.data.role_text || "Admin",
+      profile_image: admin.data.profile_image || "",
+      owner_login_id: admin.data.owner_login_id || "",
+      can_switch_owner: Boolean(admin.data.can_switch_owner),
+      has_owner_properties: Boolean(admin.data.has_owner_properties),
+      is_verified: true,
+      is_approved: true,
+      role_links: admin.data.role_links || [],
+    };
+
     return {
       success: true,
       status: admin.status,
-      data: {
-        id: admin.data.id,
-        full_name: admin.data.full_name || "",
-        username: admin.data.username || "",
-        phone: admin.data.phone || "",
-        role: (admin.data.role as User["role"]) || "admin",
-        base_role: "admin",
-        view_mode: (admin.data.view_mode as User["view_mode"]) || "admin",
-        role_text: admin.data.role_text || "Admin",
-        profile_image: admin.data.profile_image || "",
-        owner_login_id: admin.data.owner_login_id || "",
-        can_switch_owner: Boolean(admin.data.can_switch_owner),
-        has_owner_properties: Boolean(admin.data.has_owner_properties),
-        is_verified: true,
-        is_approved: true,
-        role_links: admin.data.role_links || [],
-      },
+      data: mapped,
     };
   },
 
