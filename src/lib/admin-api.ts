@@ -208,6 +208,10 @@ export interface AdminUser {
   role_text: string;
   profile_image: string;
   owner_login_id: string;
+  can_switch_owner?: boolean;
+  has_owner_properties?: boolean;
+  view_mode?: "admin" | "owner";
+  role_links?: Array<{ url: string; label: string; icon: string; mode?: string }>;
 }
 
 export interface AdminDashboard {

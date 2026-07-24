@@ -9,10 +9,12 @@ import {
   CalendarDays,
   ChevronDown,
   CircleUserRound,
+  Home,
   LogOut,
   MapPin,
   Menu,
   MessageSquare,
+  Shield,
   UserRound,
   UtensilsCrossed,
   X,
@@ -20,6 +22,11 @@ import {
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { api } from "@/lib/api";
+import {
+  markAdminOwnerMode,
+  rememberPostLogoutRedirect,
+  resolveAdminOwnerLogoutPath,
+} from "@/lib/auth-redirect";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
 import type { SiteConfig } from "@/lib/types";
@@ -39,12 +46,13 @@ function syncHeaderHeight(el: HTMLElement) {
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, refresh, applyUser } = useAuth();
   const { t } = useLocale();
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +61,47 @@ export function Header() {
     places: true,
     delivery: true,
   };
+
+  const canSwitchProfiles = Boolean(user?.can_switch_owner) || user?.base_role === "admin";
+  const inOwnerMode = user?.role === "owner" || user?.view_mode === "owner";
+  const isOwnerHome = inOwnerMode || user?.role === "owner";
+  const showOwnerPanelLink = user?.role === "owner" && !canSwitchProfiles;
+  const showAdminEntry = canSwitchProfiles && !inOwnerMode;
+  const logoHref = isOwnerHome ? "/my-houses" : "/";
+
+  async function handleSwitchMode(mode: "admin" | "owner") {
+    if (switching) return;
+    setSwitching(true);
+    setMenuOpen(false);
+    setProfileOpen(false);
+    try {
+      const res = await api.switchMode(mode);
+      if (!res.success || !res.data) {
+        return;
+      }
+      markAdminOwnerMode(mode === "owner");
+      if (res.data.user) {
+        applyUser(res.data.user);
+      } else {
+        await refresh();
+      }
+      router.replace(res.data.redirect || (mode === "owner" ? "/my-houses" : "/admin"));
+      router.refresh();
+    } finally {
+      setSwitching(false);
+    }
+  }
+
+  async function handleLogout() {
+    const dest = resolveAdminOwnerLogoutPath(user);
+    rememberPostLogoutRedirect(dest);
+    markAdminOwnerMode(false);
+    setMenuOpen(false);
+    setProfileOpen(false);
+    await logout();
+    router.replace(dest);
+    router.refresh();
+  }
 
   useEffect(() => {
     void api.getSiteConfig().then((res) => {
@@ -207,11 +256,29 @@ export function Header() {
           {t("nav.myBookings")}
         </Link>
       )}
-      {user.role === "owner" && (
+      {showOwnerPanelLink && (
         <Link href="/my-houses" className="auth-btn primary" onClick={() => setMenuOpen(false)}>
           {t("nav.ownerPanel")}
         </Link>
       )}
+      {canSwitchProfiles ? (
+        <button
+          type="button"
+          className="auth-btn"
+          disabled={switching}
+          onClick={() => void handleSwitchMode(inOwnerMode ? "admin" : "owner")}
+        >
+          {inOwnerMode ? (
+            <>
+              <Shield size={16} aria-hidden /> Admin panelə keç
+            </>
+          ) : (
+            <>
+              <Home size={16} aria-hidden /> Ev sahibi profilinə keç
+            </>
+          )}
+        </button>
+      ) : null}
       <Link href="/messages" className="auth-btn" onClick={() => setMenuOpen(false)}>
         {t("nav.messages")}
       </Link>
@@ -221,14 +288,7 @@ export function Header() {
       <button
         type="button"
         className="auth-btn"
-        onClick={() => {
-          setMenuOpen(false);
-          void (async () => {
-            await logout();
-            router.replace("/login");
-            router.refresh();
-          })();
-        }}
+        onClick={() => void handleLogout()}
       >
         {t("common.logout")}
       </button>
@@ -277,12 +337,38 @@ export function Header() {
             {t("nav.myBookings")}
           </Link>
         )}
-        {user.role === "owner" && (
+        {showOwnerPanelLink && (
           <Link href="/my-houses" className="profile-menu-item" role="menuitem">
-            <CalendarDays size={18} aria-hidden />
+            <Home size={18} aria-hidden />
             {t("nav.ownerPanel")}
           </Link>
         )}
+        {canSwitchProfiles ? (
+          <button
+            type="button"
+            className="profile-menu-item"
+            role="menuitem"
+            disabled={switching}
+            onClick={() => void handleSwitchMode(inOwnerMode ? "admin" : "owner")}
+          >
+            {inOwnerMode ? (
+              <>
+                <Shield size={18} aria-hidden />
+                Admin panelə keç
+              </>
+            ) : (
+              <>
+                <Home size={18} aria-hidden />
+                Ev sahibi profilinə keç
+              </>
+            )}
+          </button>
+        ) : showAdminEntry ? (
+          <Link href="/admin" className="profile-menu-item" role="menuitem">
+            <Shield size={18} aria-hidden />
+            Admin panel
+          </Link>
+        ) : null}
         <Link href="/messages" className="profile-menu-item" role="menuitem">
           <MessageSquare size={18} aria-hidden />
           {t("nav.messages")}
@@ -294,14 +380,7 @@ export function Header() {
           type="button"
           className="profile-menu-item profile-menu-logout"
           role="menuitem"
-          onClick={() => {
-            setProfileOpen(false);
-            void (async () => {
-              await logout();
-              router.replace("/login");
-              router.refresh();
-            })();
-          }}
+          onClick={() => void handleLogout()}
         >
           <LogOut size={18} aria-hidden />
           {t("common.logout")}
@@ -329,7 +408,7 @@ export function Header() {
       <div className="top-bar-track">
         <div className="top-bar-inner">
           <div className="nav-shell">
-            <Link href="/" className="logo full-logo">
+            <Link href={logoHref} className="logo full-logo">
               <Image
                 className="site-logo-mark"
                 src="/assets/evva-logo-mark.png"

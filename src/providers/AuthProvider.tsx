@@ -27,6 +27,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const applyUser = useCallback((next: User | null) => {
+    setUser(next);
+    setLoading(false);
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.logout();
@@ -34,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // still clear local session
     } finally {
       setUser(null);
+      setLoading(false);
     }
   }, []);
 
@@ -63,8 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, refresh, logout }),
-    [user, loading, refresh, logout],
+    () => ({ user, loading, refresh, applyUser, logout }),
+    [user, loading, refresh, applyUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

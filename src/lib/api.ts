@@ -12,10 +12,24 @@ import type {
   User,
 } from "./types";
 import { assetUrl } from "./assets";
+import {
+  compressImageAggressive,
+  compressImageForUpload,
+  httpStatusMessage,
+} from "./image-compress";
 
 export { assetUrl };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+const UPLOAD_TIMEOUT_MS = 90_000;
+
+export type OwnerPropertyImage = {
+  id: number;
+  image_path: string;
+  url: string;
+  is_cover?: boolean;
+  sort_order?: number;
+};
 
 let csrfTokenCache: string | null = null;
 
@@ -35,7 +49,8 @@ async function apiFetch<T>(
   needsCsrf = false,
 ): Promise<ApiResponse<T>> {
   const headers = new Headers(options.headers || {});
-  if (!headers.has("Content-Type") && options.body) {
+  // Let the browser set multipart boundary for FormData bodies.
+  if (!(options.body instanceof FormData) && !headers.has("Content-Type") && options.body) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -78,6 +93,47 @@ async function apiFetch<T>(
   return parseJson<T>(res);
 }
 
+async function postMultipart<T>(path: string, formData: FormData): Promise<ApiResponse<T>> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+  try {
+    return await apiFetch<T>(
+      path,
+      { method: "POST", body: formData, signal: controller.signal },
+      true,
+    );
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      return { success: false, error: "Sorğu vaxtı bitdi. Yenidən cəhd edin." };
+    }
+    return { success: false, error: "Şəbəkə xətası. Yenidən cəhd edin." };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function uploadCompressedFile<T>(
+  path: string,
+  fieldName: string,
+  file: File,
+): Promise<ApiResponse<T>> {
+  let prepared = await compressImageForUpload(file);
+  let formData = new FormData();
+  formData.append(fieldName, prepared);
+
+  let res = await postMultipart<T>(path, formData);
+  if (res.status === 413 || (!res.success && /413|böyük|too large/i.test(res.error || ""))) {
+    prepared = await compressImageAggressive(prepared);
+    formData = new FormData();
+    formData.append(fieldName, prepared);
+    res = await postMultipart<T>(path, formData);
+  }
+  if (!res.success && (res.status === 413 || !res.error)) {
+    res.error = httpStatusMessage(res.status || 413);
+  }
+  return res;
+}
+
 function toQuery<F extends object>(
   filters: F,
   arraySuffix = "[]",
@@ -113,8 +169,13 @@ export const api = {
       username?: string;
       phone?: string;
       role?: string;
+      role_text?: string;
       profile_image?: string;
       owner_login_id?: string;
+      can_switch_owner?: boolean;
+      has_owner_properties?: boolean;
+      view_mode?: string;
+      role_links?: User["role_links"];
     }>("/admin/me");
     if (!admin.success || !admin.data?.id) {
       return site;
@@ -129,13 +190,16 @@ export const api = {
         username: admin.data.username || "",
         phone: admin.data.phone || "",
         role: (admin.data.role as User["role"]) || "admin",
-        role_text: "Admin",
+        base_role: "admin",
+        view_mode: (admin.data.view_mode as User["view_mode"]) || "admin",
+        role_text: admin.data.role_text || "Admin",
         profile_image: admin.data.profile_image || "",
         owner_login_id: admin.data.owner_login_id || "",
-        can_switch_owner: false,
+        can_switch_owner: Boolean(admin.data.can_switch_owner),
+        has_owner_properties: Boolean(admin.data.has_owner_properties),
         is_verified: true,
         is_approved: true,
-        role_links: [],
+        role_links: admin.data.role_links || [],
       },
     };
   },
@@ -169,6 +233,18 @@ export const api = {
     csrfTokenCache = null;
     return apiFetch<{ message: string }>("/auth/logout", { method: "POST", body: "{}" }, true);
   },
+
+  switchMode: (mode: "admin" | "owner") =>
+    apiFetch<{
+      message: string;
+      mode: "admin" | "owner";
+      redirect: string;
+      user: User;
+    }>(
+      "/auth/switch-mode",
+      { method: "POST", body: JSON.stringify({ mode }) },
+      true,
+    ),
 
   forgotPassword: (payload: {
     identifier: string;
@@ -265,6 +341,10 @@ export const api = {
         heated_pool: boolean;
         children_allowed: boolean;
         pets_allowed: boolean;
+        cover_path: string;
+        cover_url: string;
+        cover_image: OwnerPropertyImage | null;
+        images: OwnerPropertyImage[];
         blocked_dates: string[];
         occupied_ranges: Array<{
           check_in: string;
@@ -286,6 +366,115 @@ export const api = {
     apiFetch<{ message: string; items: string[]; total: number }>(
       `/owner/properties/${id}/blocked-dates`,
       { method: "PUT", body: JSON.stringify({ dates }) },
+      true,
+    ),
+
+  uploadOwnerPropertyCover: (id: number, file: File) =>
+    uploadCompressedFile<{
+      message: string;
+      property_id: number;
+      cover_image: OwnerPropertyImage;
+      images: OwnerPropertyImage[];
+      cover_url: string;
+      cover_path: string;
+    }>(`/owner/properties/${id}/cover-image`, "cover", file),
+
+  uploadOwnerPropertyImages: async (id: number, files: FileList | File[]) => {
+    type UploadResult = {
+      message: string;
+      uploaded: Array<{ id: number; url: string; path: string }>;
+      property_id: number;
+      images: OwnerPropertyImage[];
+      cover_image: OwnerPropertyImage | null;
+      cover_url: string;
+      cover_path?: string;
+    };
+
+    const list = Array.from(files);
+    if (list.length === 0) {
+      return { success: false as const, error: "Şəkil seçilməyib" };
+    }
+
+    const allUploaded: UploadResult["uploaded"] = [];
+    let last: ApiResponse<UploadResult> | null = null;
+
+    for (const file of list) {
+      const prepared = await compressImageForUpload(file);
+      let formData = new FormData();
+      formData.append("images[]", prepared);
+      let res = await postMultipart<UploadResult>(`/owner/properties/${id}/images`, formData);
+
+      if (res.status === 413 || (!res.success && /413|böyük|too large/i.test(res.error || ""))) {
+        const smaller = await compressImageAggressive(prepared);
+        formData = new FormData();
+        formData.append("images[]", smaller);
+        res = await postMultipart<UploadResult>(`/owner/properties/${id}/images`, formData);
+      }
+
+      if (!res.success || !res.data) {
+        return {
+          success: false as const,
+          error:
+            res.error ||
+            httpStatusMessage(res.status || 413) ||
+            `${file.name} yüklənmədi`,
+          status: res.status,
+        };
+      }
+
+      allUploaded.push(...(res.data.uploaded || []));
+      last = res;
+    }
+
+    if (!last?.data) {
+      return { success: false as const, error: "Şəkillər yüklənmədi" };
+    }
+
+    return {
+      success: true as const,
+      data: {
+        ...last.data,
+        uploaded: allUploaded,
+        message: `${allUploaded.length} şəkil uğurla yükləndi`,
+      },
+    };
+  },
+
+  deleteOwnerPropertyImage: (propertyId: number, imageId: number) =>
+    apiFetch<{
+      message: string;
+      images: OwnerPropertyImage[];
+      cover_image: OwnerPropertyImage | null;
+      cover_url: string;
+      cover_path: string;
+    }>(
+      `/owner/properties/${propertyId}/images/${imageId}`,
+      { method: "DELETE", body: "{}" },
+      true,
+    ),
+
+  setOwnerPropertyCover: (propertyId: number, imageId: number) =>
+    apiFetch<{
+      message: string;
+      cover_url: string;
+      cover_path: string;
+      cover_image: OwnerPropertyImage;
+      images: OwnerPropertyImage[];
+    }>(
+      `/owner/properties/${propertyId}/cover`,
+      { method: "POST", body: JSON.stringify({ image_id: imageId }) },
+      true,
+    ),
+
+  reorderOwnerPropertyImages: (propertyId: number, imageIds: number[]) =>
+    apiFetch<{
+      message: string;
+      property_id: number;
+      images: OwnerPropertyImage[];
+      cover_image: OwnerPropertyImage | null;
+    }>(
+      `/owner/properties/${propertyId}/images/order`,
+      { method: "PUT", body: JSON.stringify({ image_ids: imageIds }) },
       true,
     ),
 
@@ -344,6 +533,22 @@ export const api = {
     }>(
       `/chat/conversations/${conversationId}/messages`,
       { method: "POST", body: JSON.stringify({ message }) },
+      true,
+    ),
+
+  deleteChatMessage: (conversationId: number, messageId: number) =>
+    apiFetch<{
+      message: string;
+      conversation: {
+        id: number;
+        property_id: number;
+        property_title: string;
+        messages: ChatMessage[];
+        total_messages: number;
+      };
+    }>(
+      `/chat/conversations/${conversationId}/messages/${messageId}/delete`,
+      { method: "POST", body: JSON.stringify({ message_id: messageId }) },
       true,
     ),
 

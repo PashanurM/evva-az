@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   Bike,
@@ -15,11 +15,15 @@ import {
   Menu,
   MessageSquare,
   Shield,
+  UserRound,
   UtensilsCrossed,
   Users,
   X,
 } from "lucide-react";
 import { useAdmin } from "@/providers/AdminProvider";
+import { useAuth } from "@/providers/AuthProvider";
+import { api } from "@/lib/api";
+import { markAdminOwnerMode } from "@/lib/auth-redirect";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Panel", icon: LayoutDashboard, exact: true },
@@ -35,10 +39,28 @@ const NAV_ITEMS = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { admin, logout } = useAdmin();
+  const { applyUser, refresh: refreshPublicAuth } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
   const navPanelRef = useRef<HTMLElement>(null);
+
+  const [tipKey, setTipKey] = useState<string | null>(null);
+  const tipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showTip(key: string) {
+    setTipKey(key);
+    if (tipTimer.current) clearTimeout(tipTimer.current);
+    tipTimer.current = setTimeout(() => setTipKey(null), 1800);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (tipTimer.current) clearTimeout(tipTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setMenuOpen(false));
@@ -76,6 +98,26 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     };
   }, [menuOpen]);
 
+  async function switchToOwnerProfile() {
+    if (switching) return;
+    setSwitching(true);
+    setMenuOpen(false);
+    try {
+      const res = await api.switchMode("owner");
+      if (!res.success || !res.data) return;
+      markAdminOwnerMode(true);
+      if (res.data.user) {
+        applyUser(res.data.user);
+      } else {
+        await refreshPublicAuth();
+      }
+      router.replace(res.data.redirect || "/my-houses");
+      router.refresh();
+    } finally {
+      setSwitching(false);
+    }
+  }
+
   const navLinks = NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
     const active = exact ? pathname === href : pathname.startsWith(href);
     return (
@@ -106,14 +148,44 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <div className="admin-header-actions">
-            <Link href="/" className="admin-nav-link admin-nav-link--ghost admin-nav-link--site" aria-label="Sayta qayıt">
+            <button
+              type="button"
+              className={`admin-nav-link admin-nav-link--ghost admin-header-icon-btn${tipKey === "owner" ? " is-tip-open" : ""}`}
+              disabled={switching}
+              onClick={() => void switchToOwnerProfile()}
+              onPointerDown={() => showTip("owner")}
+              aria-label="Ev sahibi profilinə keç"
+              title="Ev sahibi profilinə keç"
+              data-tooltip="Ev sahibi profilinə keç"
+            >
+              <UserRound size={16} aria-hidden />
+              <span className="admin-header-action-label">
+                {switching ? "Keçilir..." : "Ev sahibi profili"}
+              </span>
+            </button>
+            <Link
+              href="/"
+              className={`admin-nav-link admin-nav-link--ghost admin-nav-link--site admin-header-icon-btn${tipKey === "site" ? " is-tip-open" : ""}`}
+              onPointerDown={() => showTip("site")}
+              aria-label="Sayta qayıt"
+              title="Sayta qayıt"
+              data-tooltip="Sayta qayıt"
+            >
               <Home size={16} aria-hidden />
               <span className="admin-header-action-label">Sayta qayıt</span>
             </Link>
             {admin && (
               <span className="admin-user-chip">{admin.full_name || admin.username}</span>
             )}
-            <button type="button" className="admin-nav-link admin-nav-link--ghost" onClick={() => void logout()} aria-label="Çıxış">
+            <button
+              type="button"
+              className={`admin-nav-link admin-nav-link--ghost admin-header-icon-btn${tipKey === "logout" ? " is-tip-open" : ""}`}
+              onClick={() => void logout()}
+              onPointerDown={() => showTip("logout")}
+              aria-label="Çıxış"
+              title="Çıxış"
+              data-tooltip="Çıxış"
+            >
               <LogOut size={16} aria-hidden />
               <span className="admin-header-action-label">Çıxış</span>
             </button>

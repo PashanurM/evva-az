@@ -24,13 +24,16 @@ export interface User {
   username: string;
   phone: string;
   role: "user" | "owner" | "admin";
+  base_role?: "user" | "owner" | "admin";
+  view_mode?: "user" | "owner" | "admin";
   role_text: string;
   profile_image: string;
   owner_login_id: string;
   can_switch_owner: boolean;
+  has_owner_properties?: boolean;
   is_verified: boolean;
   is_approved: boolean;
-  role_links: Array<{ url: string; label: string; icon: string }>;
+  role_links: Array<{ url: string; label: string; icon: string; mode?: string }>;
 }
 
 export interface Property {

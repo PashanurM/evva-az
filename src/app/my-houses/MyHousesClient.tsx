@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import { api, assetUrl } from "@/lib/api";
+import {
+  consumePostLogoutRedirect,
+  isAdminOwnerModeMarked,
+  markAdminOwnerMode,
+} from "@/lib/auth-redirect";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
 
@@ -65,7 +70,7 @@ function statusLabel(status: string): string {
 }
 
 export function MyHousesClient() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refresh } = useAuth();
   const { t } = useLocale();
   const router = useRouter();
   const [items, setItems] = useState<OwnerProperty[]>([]);
@@ -73,17 +78,36 @@ export function MyHousesClient() {
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [authRetrying, setAuthRetrying] = useState(false);
+  const authRetryDone = useRef(false);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || authRetrying) return;
+
     if (!user) {
-      router.replace("/login?return=/my-houses");
+      // Admin→owner switch may land here before public AuthProvider has session.
+      if (isAdminOwnerModeMarked() && !authRetryDone.current) {
+        authRetryDone.current = true;
+        setAuthRetrying(true);
+        void (async () => {
+          await refresh();
+          setAuthRetrying(false);
+        })();
+        return;
+      }
+      router.replace(consumePostLogoutRedirect("/login?return=/my-houses"));
       return;
     }
+
+    authRetryDone.current = false;
+
     if (user.role !== "owner" && user.role !== "admin") {
       setError("Bu panel yalnız ev sahibləri üçündür.");
       setLoading(false);
       return;
+    }
+    if (user.can_switch_owner || user.base_role === "admin") {
+      markAdminOwnerMode(true);
     }
 
     void (async () => {
@@ -120,7 +144,7 @@ export function MyHousesClient() {
       setError(failures[0] || "");
       setLoading(false);
     })();
-  }, [authLoading, user, router]);
+  }, [authLoading, authRetrying, user, router, refresh]);
 
   const stats = useMemo(() => {
     const activeHomes = items.filter((item) => item.is_active).length;
@@ -136,7 +160,7 @@ export function MyHousesClient() {
     };
   }, [items, bookings, conversations]);
 
-  if (authLoading || loading) {
+  if (authLoading || authRetrying || (loading && Boolean(user))) {
     return (
       <section className="page-hero">
         <div className="container">

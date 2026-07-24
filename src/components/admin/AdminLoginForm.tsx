@@ -5,11 +5,13 @@ import { FormEvent, useState } from "react";
 import { ArrowLeft, KeyRound, Lock, LogIn, ShieldCheck, User } from "lucide-react";
 import { adminApi } from "@/lib/admin-api";
 import { useAdmin } from "@/providers/AdminProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import "@/components/auth/auth-pages.css";
 
 export function AdminLoginForm() {
   const { refresh } = useAdmin();
+  const { refresh: refreshPublicAuth } = useAuth();
   const [mode, setMode] = useState<"pin" | "password">("pin");
   const [pin, setPin] = useState("");
   const [username, setUsername] = useState("");
@@ -35,6 +37,8 @@ export function AdminLoginForm() {
     }
 
     await refresh();
+    // Keep public AuthProvider in sync so owner-mode switch doesn't hit /login.
+    await refreshPublicAuth();
   }
 
   return (

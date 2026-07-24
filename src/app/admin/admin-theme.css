@@ -207,6 +207,65 @@
   background: transparent;
 }
 
+.admin-header-icon-btn {
+  position: relative;
+}
+
+.admin-header-icon-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(2px);
+  z-index: 40;
+  width: max-content;
+  max-width: 180px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text-primary) 92%, transparent);
+  color: var(--bg-card);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  box-shadow: 0 8px 20px rgba(16, 28, 22, 0.18);
+}
+
+.admin-header-icon-btn[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  border: 5px solid transparent;
+  border-bottom-color: color-mix(in srgb, var(--text-primary) 92%, transparent);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.admin-header-icon-btn[data-tooltip]:hover::after,
+.admin-header-icon-btn[data-tooltip]:hover::before,
+.admin-header-icon-btn[data-tooltip]:focus-visible::after,
+.admin-header-icon-btn[data-tooltip]:focus-visible::before,
+.admin-header-icon-btn[data-tooltip].is-tip-open::after,
+.admin-header-icon-btn[data-tooltip].is-tip-open::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+.admin-header-icon-btn[data-tooltip]:hover::after,
+.admin-header-icon-btn[data-tooltip]:focus-visible::after,
+.admin-header-icon-btn[data-tooltip].is-tip-open::after {
+  transform: translateX(-50%) translateY(0);
+}
+
 .dark .admin-nav-link {
   background: transparent;
   border-color: transparent;

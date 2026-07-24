@@ -166,11 +166,33 @@ export function ProfileView() {
 
       {user.role_links.length > 0 && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 24 }}>
-          {user.role_links.map((link) => (
-            <a key={link.url} href={link.url} className="auth-btn">
-              {link.label}
-            </a>
-          ))}
+          {user.role_links.map((link) => {
+            const mode = link.mode === "admin" || link.mode === "owner" ? link.mode : null;
+            if (mode) {
+              return (
+                <button
+                  key={`${link.url}-${mode}`}
+                  type="button"
+                  className="auth-btn"
+                  onClick={() => {
+                    void (async () => {
+                      const res = await api.switchMode(mode);
+                      if (!res.success) return;
+                      await refresh();
+                      window.location.href = res.data?.redirect || link.url;
+                    })();
+                  }}
+                >
+                  {link.label}
+                </button>
+              );
+            }
+            return (
+              <a key={link.url} href={link.url} className="auth-btn">
+                {link.label}
+              </a>
+            );
+          })}
         </div>
       )}
     </div>

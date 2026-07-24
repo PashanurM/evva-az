@@ -111,15 +111,33 @@ export function PropertyCard({ property }: PropertyCardProps) {
         )}
 
         <div className="card-actions card-actions-3">
-          <Link href={`/property/${property.id}`} className="view-btn" aria-label="Ətraflı">
+          <Link
+            href={`/property/${property.id}`}
+            className="view-btn"
+            aria-label="Ətraflı"
+            title="Ətraflı"
+            data-tooltip="Ətraflı"
+          >
             <i className="fas fa-eye" aria-hidden />
             <span className="btn-label">Ətraflı</span>
           </Link>
-          <Link href={`/chat?property_id=${property.id}`} className="contact-btn" aria-label="Mesaj yaz">
+          <Link
+            href={`/chat?property_id=${property.id}`}
+            className="contact-btn"
+            aria-label="Mesaj yaz"
+            title="Mesaj yaz"
+            data-tooltip="Mesaj yaz"
+          >
             <i className="fas fa-comments" aria-hidden />
             <span className="btn-label">Mesaj yaz</span>
           </Link>
-          <Link href={`/booking?property_id=${property.id}`} className="reserve-btn" aria-label="Rezerv et">
+          <Link
+            href={`/booking?property_id=${property.id}`}
+            className="reserve-btn"
+            aria-label="Rezerv et"
+            title="Rezerv et"
+            data-tooltip="Rezerv et"
+          >
             <i className="fas fa-calendar-check" aria-hidden />
             <span className="btn-label">Rezerv et</span>
           </Link>

@@ -453,6 +453,10 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 12px;
 }
 
+.evva-filter-core > * {
+  min-width: 0;
+}
+
 .evva-filter-core-simple {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: end;
@@ -463,6 +467,8 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
   gap: 6px;
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .search-field-label {
@@ -476,6 +482,9 @@ h1, h2, h3, h4, h5, h6 {
 .search-field-control {
   position: relative;
   display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .search-field-control svg {
@@ -491,6 +500,8 @@ h1, h2, h3, h4, h5, h6 {
 .premium-select-wrap,
 .premium-input-wrap {
   position: relative;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .premium-select-wrap svg,
@@ -507,6 +518,8 @@ h1, h2, h3, h4, h5, h6 {
 .premium-select-wrap select,
 .premium-input-wrap input {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: 52px;
   border-radius: 16px;
   border: 1px solid #dbe3ef;
@@ -515,6 +528,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 18px 0 46px;
   font-size: 15px;
   outline: none;
+  box-sizing: border-box;
 }
 
 .premium-select-wrap select {
@@ -1441,6 +1455,7 @@ button.auth-submit:hover:not(:disabled) {
 
 .property-gallery {
   background: color-mix(in srgb, var(--bg-tertiary) 70%, #0f172a 30%);
+  touch-action: pan-y;
 }
 
 .property-gallery-empty {
@@ -2650,6 +2665,7 @@ button.auth-submit:hover:not(:disabled) {
   background: rgba(0, 0, 0, 0.88);
   display: flex;
   align-items: center;
+  touch-action: pan-y;
   justify-content: center;
   z-index: 9999;
   padding: 20px;
@@ -3015,21 +3031,25 @@ button.auth-submit:hover:not(:disabled) {
   }
 
   .evva-filter-core-simple {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 8px;
   }
 
-  .evva-filter-core-simple .filter-location-main {
+  .evva-filter-core-simple .filter-location-main,
+  .evva-filter-core-simple .search-date-field {
     grid-column: 1 / -1;
   }
 
   .room-bath-filter-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
   .search-actions-inline {
     display: flex;
     flex-direction: row;
+    justify-content: center;
+    align-items: center;
     width: 100%;
     gap: 8px;
   }
@@ -3048,7 +3068,8 @@ button.auth-submit:hover:not(:disabled) {
 
   .search-actions-inline .search-btn,
   .search-actions-inline .reset-search-btn {
-    flex: 1 1 0;
+    flex: 0 1 auto;
+    min-width: 110px;
     max-width: 160px;
   }
 
@@ -3112,20 +3133,43 @@ button.auth-submit:hover:not(:disabled) {
     height: 48px;
     border-radius: 14px;
     font-size: 14px;
-    padding: 0 18px 0 48px;
+    padding: 0 14px 0 42px;
   }
 
   .premium-select-wrap select {
-    padding-right: 42px;
-    background-position: right 16px center;
+    padding-right: 40px;
+    background-position: right 12px center;
     background-size: 15px;
   }
 
   .premium-select-wrap svg,
   .premium-input-wrap svg {
-    left: 16px;
-    width: 16px;
-    height: 16px;
+    left: 14px;
+    width: 15px;
+    height: 15px;
+  }
+
+  .search-field-label {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .search-date-field input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    padding-right: 12px;
+  }
+
+  .evva-filter-core-simple .premium-input-wrap:not(.search-date-field) input {
+    padding-left: 38px;
+    font-size: 13px;
+  }
+
+  .evva-filter-core-simple .premium-input-wrap:not(.search-date-field) svg {
+    left: 12px;
   }
 
   .more-filter-toggle {
@@ -3267,6 +3311,90 @@ button.auth-submit:hover:not(:disabled) {
     gap: 6px;
   }
 
+  .property-card .card-actions-3 a {
+    position: relative;
+    min-height: 42px;
+    min-width: 0;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+  }
+
+  .property-card .card-actions-3 .btn-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .property-card .card-actions-3 a svg,
+  .property-card .card-actions-3 a i {
+    width: 18px;
+    height: 18px;
+    font-size: 16px;
+    margin: 0;
+  }
+
+  .property-card .card-actions-3 a[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%) translateY(4px);
+    z-index: 5;
+    width: max-content;
+    max-width: 140px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--text-primary) 92%, transparent);
+    color: var(--bg-card);
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.3;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+    box-shadow: 0 8px 18px rgba(16, 28, 22, 0.16);
+  }
+
+  .property-card .card-actions-3 a[data-tooltip]::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 2px);
+    transform: translateX(-50%);
+    z-index: 5;
+    border: 5px solid transparent;
+    border-top-color: color-mix(in srgb, var(--text-primary) 92%, transparent);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+  }
+
+  .property-card .card-actions-3 a[data-tooltip]:hover::after,
+  .property-card .card-actions-3 a[data-tooltip]:hover::before,
+  .property-card .card-actions-3 a[data-tooltip]:focus-visible::after,
+  .property-card .card-actions-3 a[data-tooltip]:focus-visible::before,
+  .property-card .card-actions-3 a[data-tooltip].is-tip-open::after,
+  .property-card .card-actions-3 a[data-tooltip].is-tip-open::before {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .property-card .card-actions-3 a[data-tooltip]:hover::after,
+  .property-card .card-actions-3 a[data-tooltip]:focus-visible::after,
+  .property-card .card-actions-3 a[data-tooltip].is-tip-open::after {
+    transform: translateX(-50%) translateY(0);
+  }
+
   .card-actions a {
     min-height: 40px;
     font-size: 11px;
@@ -3358,7 +3486,7 @@ button.auth-submit:hover:not(:disabled) {
   }
 
   .search-box-premium {
-    padding: 18px;
+    padding: 16px;
     border-radius: 16px;
   }
 
@@ -3372,18 +3500,29 @@ button.auth-submit:hover:not(:disabled) {
 
   .premium-select-wrap select,
   .premium-input-wrap input {
-    height: 48px;
-    padding: 0 18px 0 48px;
+    height: 46px;
+    padding: 0 12px 0 40px;
+    font-size: 13px;
   }
 
   .premium-select-wrap select {
-    padding-right: 42px;
-    background-position: right 16px center;
+    padding-right: 36px;
+    background-position: right 12px center;
   }
 
   .premium-select-wrap svg,
   .premium-input-wrap svg {
-    left: 16px;
+    left: 12px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .evva-filter-core-simple .premium-input-wrap:not(.search-date-field) input {
+    padding-left: 36px;
+  }
+
+  .evva-filter-core-simple .premium-input-wrap:not(.search-date-field) svg {
+    left: 11px;
   }
 
   .property-card .card-actions-3 a {
@@ -3737,6 +3876,156 @@ button.auth-submit:hover:not(:disabled) {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 4px;
+}
+
+.owner-edit-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.owner-file-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--primary) 45%, var(--border-color));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+  color: var(--primary-dark);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.owner-file-pick input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.owner-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.owner-image-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  aspect-ratio: 4 / 3;
+}
+
+.owner-image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.owner-image-card.is-cover {
+  outline: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.owner-image-badge,
+.owner-image-order {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(16, 24, 20, 0.72);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.owner-image-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  padding: 8px 10px;
+  background: linear-gradient(transparent, rgba(10, 16, 12, 0.75));
+  color: #fff;
+  display: grid;
+  gap: 2px;
+}
+
+.owner-image-meta span {
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.owner-image-meta small {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.owner-image-actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  background: linear-gradient(transparent, rgba(10, 16, 12, 0.78));
+}
+
+.owner-image-actions .auth-btn {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.owner-image-icon-btn {
+  width: 32px;
+  min-width: 32px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+
+.owner-image-hover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 16, 12, 0.45);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.owner-image-card:hover .owner-image-hover,
+.owner-image-card:focus-within .owner-image-hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.owner-image-hover .auth-btn {
+  pointer-events: auto;
 }
 
 /* —— Busy days picker (owner / admin) —— */
@@ -4137,6 +4426,13 @@ button.auth-submit:hover:not(:disabled) {
 
 .search-date-field input {
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.search-date-field input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 @media (max-width: 1100px) {
@@ -4146,6 +4442,12 @@ button.auth-submit:hover:not(:disabled) {
 
   .evva-filter-core-simple .filter-location-main {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 641px) {
+  .evva-filter-core-simple .search-date-field {
+    min-width: 0;
   }
 }
 

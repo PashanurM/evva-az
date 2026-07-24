@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type TouchEvent } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 import { useLocale } from "@/providers/LocaleProvider";
@@ -10,10 +10,14 @@ interface PropertyGalleryProps {
   title: string;
 }
 
+const SWIPE_THRESHOLD_PX = 40;
+
 export function PropertyGallery({ images, title }: PropertyGalleryProps) {
   const { t } = useLocale();
   const [index, setIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const didSwipe = useRef(false);
 
   const total = images.length;
   const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
@@ -26,6 +30,43 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
     },
     [total],
   );
+
+  const onSwipeStart = useCallback((e: TouchEvent) => {
+    if (total <= 1) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+    didSwipe.current = false;
+  }, [total]);
+
+  const onSwipeEnd = useCallback(
+    (e: TouchEvent) => {
+      if (!touchStart.current || total <= 1) return;
+      const touch = e.changedTouches[0];
+      if (!touch) {
+        touchStart.current = null;
+        return;
+      }
+
+      const dx = touch.clientX - touchStart.current.x;
+      const dy = touch.clientY - touchStart.current.y;
+      touchStart.current = null;
+
+      if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(dy)) return;
+
+      didSwipe.current = true;
+      move(dx < 0 ? 1 : -1);
+    },
+    [move, total],
+  );
+
+  const openLightbox = useCallback(() => {
+    if (didSwipe.current) {
+      didSwipe.current = false;
+      return;
+    }
+    setLightboxOpen(true);
+  }, []);
 
   useEffect(() => {
     setIndex(0);
@@ -61,11 +102,15 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
 
   return (
     <>
-      <div className="hero-image property-gallery">
+      <div
+        className="hero-image property-gallery"
+        onTouchStart={onSwipeStart}
+        onTouchEnd={onSwipeEnd}
+      >
         <button
           type="button"
           className="property-gallery-main"
-          onClick={() => setLightboxOpen(true)}
+          onClick={openLightbox}
           aria-label={t("property.galleryOpen")}
         >
           <Image
@@ -77,6 +122,7 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
             style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
             priority={safeIndex === 0}
             unoptimized
+            draggable={false}
           />
         </button>
 
@@ -143,7 +189,15 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
           role="dialog"
           aria-modal="true"
           aria-label={title}
-          onClick={() => setLightboxOpen(false)}
+          onClick={() => {
+            if (didSwipe.current) {
+              didSwipe.current = false;
+              return;
+            }
+            setLightboxOpen(false);
+          }}
+          onTouchStart={onSwipeStart}
+          onTouchEnd={onSwipeEnd}
         >
           <button
             type="button"
@@ -174,6 +228,7 @@ export function PropertyGallery({ images, title }: PropertyGalleryProps) {
             className="place-lightbox-image"
             onClick={(e) => e.stopPropagation()}
             unoptimized
+            draggable={false}
           />
           {total > 1 ? (
             <button

@@ -705,9 +705,11 @@ html {
   top: calc(100% + 8px);
   right: 0;
   z-index: 1300;
+  display: grid;
+  gap: 4px;
   min-width: 148px;
   margin: 0;
-  padding: 6px;
+  padding: 8px;
   list-style: none;
   border-radius: 16px;
   background: var(--bg-card);
@@ -917,12 +919,18 @@ html {
   }
 
   .site-footer-columns {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
   .site-footer-bottom-inner {
     flex-direction: column;
     text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .site-footer-columns {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -3,10 +3,21 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarRange, Home, MapPin, Save } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  ImageIcon,
+  MapPin,
+  Save,
+  Star,
+} from "lucide-react";
 import { MapLocationPicker } from "@/components/map/MapLocationPicker";
 import { BusyDaysPicker } from "@/components/property/BusyDaysPicker";
-import { api } from "@/lib/api";
+import { api, assetUrl, type OwnerPropertyImage } from "@/lib/api";
+import { consumePostLogoutRedirect, markAdminOwnerMode } from "@/lib/auth-redirect";
 import { GABALA_LOCATIONS, resolveLocationOptions } from "@/lib/locations";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
@@ -72,6 +83,19 @@ const emptyForm = (): FormState => ({
   amenities: Object.fromEntries(AMENITIES.map((a) => [a.key, false])),
 });
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+type PendingImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+  sizeLabel: string;
+};
+
 export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLocale();
@@ -83,22 +107,32 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
   const [bookedRanges, setBookedRanges] = useState<
     Array<{ check_in: string; check_out: string; source?: string }>
   >([]);
+  const [coverImage, setCoverImage] = useState<OwnerPropertyImage | null>(null);
+  const [galleryImages, setGalleryImages] = useState<OwnerPropertyImage[]>([]);
+  const [pendingCover, setPendingCover] = useState<PendingImage | null>(null);
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingBlocked, setSavingBlocked] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      router.replace(`/login?return=/my-houses/${propertyId}/edit`);
+      router.replace(
+        consumePostLogoutRedirect(`/login?return=/my-houses/${propertyId}/edit`),
+      );
       return;
     }
     if (user.role !== "owner" && user.role !== "admin") {
       setError("Bu səhifə yalnız ev sahibləri üçündür.");
       setLoading(false);
       return;
+    }
+    if (user.can_switch_owner || user.base_role === "admin") {
+      markAdminOwnerMode(true);
     }
 
     void (async () => {
@@ -146,6 +180,18 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
           AMENITIES.map((a) => [a.key, Boolean((p as Record<string, unknown>)[a.key])]),
         ),
       });
+      setCoverImage(
+        p.cover_image ||
+          (p.cover_url
+            ? {
+                id: 0,
+                image_path: p.cover_path || "",
+                url: p.cover_url,
+                is_cover: true,
+              }
+            : null),
+      );
+      setGalleryImages(p.images || []);
       setBlockedDates(p.blocked_dates || []);
       setBookedRanges(
         (p.occupied_ranges || []).filter((r) => (r.source || "booking") === "booking"),
@@ -154,8 +200,166 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
     })();
   }, [authLoading, user, router, propertyId]);
 
+  useEffect(() => {
+    return () => {
+      if (pendingCover) URL.revokeObjectURL(pendingCover.previewUrl);
+      pendingImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- revoke only on unmount
+  }, []);
+
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function applyImagePayload(data: {
+    cover_image?: OwnerPropertyImage | null;
+    images?: OwnerPropertyImage[];
+    cover_url?: string;
+    cover_path?: string;
+  }) {
+    setCoverImage(
+      data.cover_image ||
+        (data.cover_url
+          ? {
+              id: 0,
+              image_path: data.cover_path || "",
+              url: data.cover_url,
+              is_cover: true,
+            }
+          : null),
+    );
+    setGalleryImages(data.images || []);
+  }
+
+  function onPickCover(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    if (pendingCover) URL.revokeObjectURL(pendingCover.previewUrl);
+    setPendingCover({
+      id: `cover-${Date.now()}`,
+      file,
+      previewUrl: URL.createObjectURL(file),
+      sizeLabel: formatFileSize(file.size),
+    });
+    setNotice("Yeni cover şəkli seçildi. Yükləmək üçün düyməyə basın.");
+  }
+
+  function onPickGallery(files: FileList | null) {
+    if (!files?.length) return;
+    const next = Array.from(files).map((file, index) => ({
+      id: `pending-${Date.now()}-${index}`,
+      file,
+      previewUrl: URL.createObjectURL(file),
+      sizeLabel: formatFileSize(file.size),
+    }));
+    setPendingImages((prev) => [...prev, ...next]);
+    setNotice(`${next.length} şəkil önizləməyə əlavə olundu.`);
+  }
+
+  function removePending(id: string) {
+    setPendingImages((prev) => {
+      const target = prev.find((img) => img.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((img) => img.id !== id);
+    });
+  }
+
+  async function handleCoverUpload() {
+    if (!pendingCover) return;
+    setImageBusy(true);
+    setError("");
+    setNotice("");
+    const res = await api.uploadOwnerPropertyCover(propertyId, pendingCover.file);
+    setImageBusy(false);
+    if (!res.success || !res.data) {
+      setError(res.error || "Cover yüklənmədi");
+      return;
+    }
+    URL.revokeObjectURL(pendingCover.previewUrl);
+    setPendingCover(null);
+    applyImagePayload(res.data);
+    setNotice(res.data.message || "Cover yeniləndi");
+  }
+
+  async function handleGalleryUpload() {
+    if (pendingImages.length === 0) return;
+    setImageBusy(true);
+    setError("");
+    setNotice("");
+    const files = pendingImages.map((img) => img.file);
+    const res = await api.uploadOwnerPropertyImages(propertyId, files);
+    setImageBusy(false);
+    if (!res.success || !res.data) {
+      setError(res.error || "Şəkillər yüklənmədi");
+      return;
+    }
+    pendingImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+    setPendingImages([]);
+    applyImagePayload(res.data);
+    setNotice(res.data.message || "Şəkillər yükləndi");
+  }
+
+  async function handleDeleteImage(imageId: number) {
+    if (imageId <= 0) {
+      setError("Bu cover köhnə yolla saxlanıb. Yeni cover yükləyin və ya qalereyadan seçin.");
+      return;
+    }
+    if (!window.confirm("Bu şəkli silmək istəyirsiniz?")) return;
+    setImageBusy(true);
+    setError("");
+    setNotice("");
+    const res = await api.deleteOwnerPropertyImage(propertyId, imageId);
+    setImageBusy(false);
+    if (!res.success || !res.data) {
+      setError(res.error || "Şəkil silinmədi");
+      return;
+    }
+    applyImagePayload(res.data);
+    setNotice(res.data.message || "Şəkil silindi");
+  }
+
+  async function handleSetCover(imageId: number) {
+    setImageBusy(true);
+    setError("");
+    setNotice("");
+    const res = await api.setOwnerPropertyCover(propertyId, imageId);
+    setImageBusy(false);
+    if (!res.success || !res.data) {
+      setError(res.error || "Cover təyin olunmadı");
+      return;
+    }
+    applyImagePayload(res.data);
+    setNotice(res.data.message || "Cover yeniləndi");
+  }
+
+  async function reorderGallery(nextImages: OwnerPropertyImage[]) {
+    const previous = galleryImages;
+    setGalleryImages(nextImages);
+    setImageBusy(true);
+    setError("");
+    const res = await api.reorderOwnerPropertyImages(
+      propertyId,
+      nextImages.map((img) => img.id),
+    );
+    setImageBusy(false);
+    if (!res.success || !res.data) {
+      setGalleryImages(previous);
+      setError(res.error || "Sıra saxlanmadı");
+      return;
+    }
+    applyImagePayload(res.data);
+  }
+
+  function moveGalleryImage(imageId: number, direction: -1 | 1) {
+    const index = galleryImages.findIndex((img) => img.id === imageId);
+    if (index < 0) return;
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= galleryImages.length) return;
+    const next = [...galleryImages];
+    const [item] = next.splice(index, 1);
+    next.splice(nextIndex, 0, item);
+    void reorderGallery(next);
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -200,6 +404,40 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
       return;
     }
     setNotice(res.data?.message || "Məlumatlar yeniləndi");
+
+    if (pendingCover || pendingImages.length > 0) {
+      setImageBusy(true);
+      let mediaOk = true;
+      if (pendingCover) {
+        const coverRes = await api.uploadOwnerPropertyCover(propertyId, pendingCover.file);
+        if (!coverRes.success || !coverRes.data) {
+          mediaOk = false;
+          setError(coverRes.error || "Cover yüklənmədi");
+        } else {
+          URL.revokeObjectURL(pendingCover.previewUrl);
+          setPendingCover(null);
+          applyImagePayload(coverRes.data);
+        }
+      }
+      if (mediaOk && pendingImages.length > 0) {
+        const galleryRes = await api.uploadOwnerPropertyImages(
+          propertyId,
+          pendingImages.map((img) => img.file),
+        );
+        if (!galleryRes.success || !galleryRes.data) {
+          mediaOk = false;
+          setError(galleryRes.error || "Şəkillər yüklənmədi");
+        } else {
+          pendingImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+          setPendingImages([]);
+          applyImagePayload(galleryRes.data);
+        }
+      }
+      setImageBusy(false);
+      if (mediaOk) {
+        setNotice("Məlumatlar və şəkillər yeniləndi");
+      }
+    }
   }
 
   async function handleSaveBlocked() {
@@ -236,7 +474,7 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
           <div>
             <span className="section-kicker">Ev sahibi</span>
             <h1>Evi redaktə et</h1>
-            <p>Məlumatları, xəritə məkanını və dolu günləri buradan yenilə.</p>
+            <p>Məlumatları, şəkilləri, xəritə məkanını və dolu günləri buradan yenilə.</p>
           </div>
         </div>
 
@@ -367,6 +605,190 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
 
           <div className="owner-edit-section">
             <h2>
+              <ImageIcon size={18} /> Cover şəkli
+            </h2>
+            <p className="owner-edit-hint">Kartlarda və siyahıda görünəcək əsas şəkil.</p>
+            {coverImage?.url || coverImage?.image_path ? (
+              <div className="owner-image-grid">
+                <div className="owner-image-card is-cover">
+                  <img
+                    src={assetUrl(coverImage.url || coverImage.image_path)}
+                    alt="Cover"
+                  />
+                  <span className="owner-image-badge">Cover</span>
+                  {coverImage.id > 0 ? (
+                    <div className="owner-image-actions">
+                      <button
+                        type="button"
+                        className="auth-btn"
+                        disabled={imageBusy}
+                        onClick={() => void handleDeleteImage(coverImage.id)}
+                      >
+                        Sil
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <p className="owner-edit-hint">Cover şəkli yoxdur.</p>
+            )}
+            <label className="owner-file-pick">
+              <span>{coverImage ? "Cover-i dəyiş" : "Cover seç"}</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={(e) => {
+                  onPickCover(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {pendingCover ? (
+              <div className="owner-image-grid" style={{ marginTop: 12 }}>
+                <div className="owner-image-card is-cover is-pending">
+                  <img src={pendingCover.previewUrl} alt={pendingCover.file.name} />
+                  <span className="owner-image-badge">Yeni cover</span>
+                  <div className="owner-image-meta">
+                    <span title={pendingCover.file.name}>{pendingCover.file.name}</span>
+                    <small>{pendingCover.sizeLabel}</small>
+                  </div>
+                  <div className="owner-image-actions">
+                    <button
+                      type="button"
+                      className="auth-btn"
+                      onClick={() => {
+                        URL.revokeObjectURL(pendingCover.previewUrl);
+                        setPendingCover(null);
+                      }}
+                    >
+                      Çıxar
+                    </button>
+                    <button
+                      type="button"
+                      className="auth-btn primary"
+                      disabled={imageBusy}
+                      onClick={() => void handleCoverUpload()}
+                    >
+                      {imageBusy ? "Yüklənir..." : "İndi yüklə"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="owner-edit-section">
+            <h2>
+              <ImageIcon size={18} /> Ev qalereyası
+            </h2>
+            <p className="owner-edit-hint">
+              Şəkilləri yükləyin, silin və ya cover edin. Ox düymələri ilə sıranı dəyişin.
+            </p>
+            {galleryImages.length > 0 ? (
+              <div className="owner-image-grid">
+                {galleryImages.map((img, index) => (
+                  <div key={img.id} className="owner-image-card">
+                    <img src={assetUrl(img.url || img.image_path)} alt="" />
+                    <span className="owner-image-order">{index + 1}</span>
+                    <div className="owner-image-hover">
+                      <button
+                        type="button"
+                        className="auth-btn primary"
+                        disabled={imageBusy}
+                        onClick={() => void handleSetCover(img.id)}
+                      >
+                        <Star size={14} aria-hidden />
+                        Cover et
+                      </button>
+                    </div>
+                    <div className="owner-image-actions">
+                      <button
+                        type="button"
+                        className="auth-btn owner-image-icon-btn"
+                        disabled={imageBusy || index === 0}
+                        aria-label="Sola keçir"
+                        onClick={() => moveGalleryImage(img.id, -1)}
+                      >
+                        <ChevronLeft size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="auth-btn owner-image-icon-btn"
+                        disabled={imageBusy || index === galleryImages.length - 1}
+                        aria-label="Sağa keçir"
+                        onClick={() => moveGalleryImage(img.id, 1)}
+                      >
+                        <ChevronRight size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="auth-btn"
+                        disabled={imageBusy}
+                        onClick={() => void handleDeleteImage(img.id)}
+                      >
+                        Sil
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="owner-edit-hint">Qalereya şəkli yoxdur.</p>
+            )}
+            <label className="owner-file-pick">
+              <span>Qalereya şəkilləri seç</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                onChange={(e) => {
+                  onPickGallery(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {pendingImages.length > 0 ? (
+              <div style={{ marginTop: 14 }}>
+                <p className="owner-edit-hint" style={{ fontWeight: 700 }}>
+                  Önizləmə ({pendingImages.length}) — hələ yüklənməyib
+                </p>
+                <div className="owner-image-grid">
+                  {pendingImages.map((image) => (
+                    <div key={image.id} className="owner-image-card is-pending">
+                      <img src={image.previewUrl} alt={image.file.name} />
+                      <span className="owner-image-badge">Yeni</span>
+                      <div className="owner-image-meta">
+                        <span title={image.file.name}>{image.file.name}</span>
+                        <small>{image.sizeLabel}</small>
+                      </div>
+                      <div className="owner-image-actions">
+                        <button
+                          type="button"
+                          className="auth-btn"
+                          onClick={() => removePending(image.id)}
+                        >
+                          Çıxar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="auth-btn primary"
+                  style={{ marginTop: 12 }}
+                  disabled={imageBusy}
+                  onClick={() => void handleGalleryUpload()}
+                >
+                  {imageBusy ? "Yüklənir..." : "Şəkilləri indi yüklə"}
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="owner-edit-section">
+            <h2>
               <MapPin size={18} /> Xəritə / dəqiq məkan
             </h2>
             <MapLocationPicker
@@ -482,9 +904,13 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
           </div>
 
           <div className="owner-edit-actions">
-            <button type="submit" className="auth-btn primary" disabled={saving}>
+            <button
+              type="submit"
+              className="auth-btn primary"
+              disabled={saving || imageBusy}
+            >
               <Save size={16} />
-              {saving ? "Saxlanılır..." : "Məlumatları saxla"}
+              {saving || imageBusy ? "Saxlanılır..." : "Hamısını saxla"}
             </button>
             <Link href={`/property/${propertyId}`} className="auth-btn">
               Saytda bax
