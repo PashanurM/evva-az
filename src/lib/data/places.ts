@@ -1,4 +1,5 @@
 import type { Place } from "@/types";
+import { entitySlug } from "@/lib/slug";
 
 const BASE = "https://rahim.alwaysdata.net/booking";
 
@@ -6,9 +7,10 @@ export const places: Place[] = [
   {
     id: 1,
     title: "Şəlaləaltı Restoran",
+    slug: entitySlug({ id: 1, title: "Şəlaləaltı Restoran" }),
     description: "Qəbələ Şəlaləaltı Restoranı",
     longDescription:
-      "Qəbələ Şəlaləaltı Restoranı — təbiət qoynasında, dağ mənzərəli restoran və istirahət məkanı. Ailəlik günü keçirmək, yerli mətbəx dadları və sakit atmosfer axtaran qonaqlar üçün uyğun seçimdir.",
+      "Qəbələ Şəlaləaltı Restoranı — təbiət qoynunda, dağ mənzərəli restoran və istirahət məkanı. Ailəlik günü keçirmək, yerli mətbəx dadları və sakit atmosfer axtaran qonaqlar üçün uyğun seçimdir.",
     category: "Restoran",
     location: "Vəndam, Qəbələ",
     address: "Qəbələ rayonu, Vəndam istiqaməti",
