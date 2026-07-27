@@ -46,7 +46,10 @@ export function AuthLoginForm() {
     }
 
     await refresh();
-    router.push("/");
+    const next = searchParams.get("next") || searchParams.get("return");
+    const safeNext =
+      next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    router.push(safeNext);
     router.refresh();
   }
 

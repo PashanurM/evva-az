@@ -1,15 +1,47 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Star } from "lucide-react";
 import type { Property } from "@/types";
 import { PropertyCard } from "./PropertyCard";
 import { useLocale } from "@/providers/LocaleProvider";
+import { useAuth } from "@/providers/AuthProvider";
+import { api } from "@/lib/api";
 
 export function PropertyGrid({ properties }: { properties: Property[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
+  const { user } = useAuth();
+  const [items, setItems] = useState(properties);
+
+  useEffect(() => {
+    setItems(properties);
+  }, [properties]);
+
+  useEffect(() => {
+    if (!user) {
+      setItems((prev) => prev.map((p) => ({ ...p, isFavorite: false })));
+      return;
+    }
+
+    let active = true;
+    void api.getFavorites().then((res) => {
+      if (!active || !res.success) return;
+      const ids = new Set((res.data?.items || []).map((row) => Number(row.id)));
+      setItems((prev) =>
+        prev.map((p) => ({
+          ...p,
+          isFavorite: ids.has(p.id),
+        })),
+      );
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   const checkIn = searchParams.get("check_in") || "";
   const checkOut = searchParams.get("check_out") || "";
@@ -29,7 +61,7 @@ export function PropertyGrid({ properties }: { properties: Property[] }) {
             <span className="section-kicker">{t("home.featuredListings")}</span>
             <div className="results-badge">
               <Star size={16} />
-              <span>{t("common.results", { count: properties.length })}</span>
+              <span>{t("common.results", { count: items.length })}</span>
             </div>
             {hasDateFilter ? (
               <p className="availability-filter-note">
@@ -57,7 +89,7 @@ export function PropertyGrid({ properties }: { properties: Property[] }) {
 
       <section className="properties" id="properties">
         <div className="container">
-          {properties.length === 0 ? (
+          {items.length === 0 ? (
             <div className="no-results" style={{ textAlign: "center", padding: "80px 20px" }}>
               <p>
                 {hasDateFilter ? t("home.noAvailableResults") : t("home.noResults")}
@@ -65,7 +97,7 @@ export function PropertyGrid({ properties }: { properties: Property[] }) {
             </div>
           ) : (
             <div className="properties-grid">
-              {properties.map((property) => (
+              {items.map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
             </div>

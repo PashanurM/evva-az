@@ -61,10 +61,17 @@ export interface Property {
   is_featured: boolean;
   avg_rating: number;
   rating_count: number;
+  rating_summary?: PropertyRatingSummary;
+  reviews?: PropertyReview[];
+  can_rate?: boolean;
+  has_confirmed_booking?: boolean;
+  user_rating?: PropertyUserRating | null;
   is_favorite: boolean;
   created_at: string;
   images?: Array<{ path: string; url: string }>;
   map_address?: string;
+  house_rules?: string;
+  cancellation_policy?: string;
   occupied_ranges?: Array<{
     check_in: string;
     check_out: string;
@@ -83,7 +90,45 @@ export interface Property {
     username: string;
     profile_image: string;
     bio: string;
+    avg_rating?: number;
+    rating_count?: number;
   };
+}
+
+export interface PropertyRatingSummary {
+  avg_rating: number;
+  rating_count: number;
+  cleanliness_avg: number;
+  location_avg: number;
+  comfort_avg: number;
+  value_avg?: number;
+  homeowner_avg: number;
+}
+
+export interface PropertyUserRating {
+  rating: number;
+  cleanliness_rating: number;
+  location_rating: number;
+  comfort_rating: number;
+  value_rating?: number;
+  homeowner_rating: number;
+  comment: string;
+  has_rated?: boolean;
+}
+
+export interface PropertyReview {
+  rating: number;
+  cleanliness_rating: number;
+  location_rating: number;
+  comfort_rating: number;
+  value_rating?: number;
+  homeowner_rating: number;
+  comment: string;
+  created_at: string;
+  updated_at?: string;
+  full_name: string;
+  username: string;
+  profile_image: string;
 }
 
 export interface PropertyListResult {
@@ -104,6 +149,27 @@ export interface PropertyFilters {
   check_out?: string;
   sort?: string;
   tags?: string[];
+  owner_id?: string;
+}
+
+export interface PublicOwnerProfile {
+  owner: {
+    id: number;
+    name: string;
+    bio: string;
+    profile_image: string;
+    profile_image_url: string;
+    created_at: string;
+  };
+  stats: {
+    property_count: number;
+    total_views: number;
+    approved_bookings: number;
+    avg_rating: number;
+    rating_count: number;
+  };
+  properties: Property[];
+  total: number;
 }
 
 export interface Restaurant {
@@ -123,6 +189,15 @@ export interface Restaurant {
   opening_hours?: string;
   cuisine_tags?: string;
   average_price?: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  whatsapp?: string;
+  local_foods?: string;
+  foreign_foods?: string;
+  desserts?: string;
+  drinks?: string;
+  discount_text?: string;
+  images?: Array<{ path: string; url: string }>;
 }
 
 export interface RestaurantListResult {
@@ -149,6 +224,8 @@ export interface Place {
   phone?: string;
   working_hours?: string;
   tips?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   images?: Array<{ path: string; url: string }>;
   activities?: Array<{
     name: string;

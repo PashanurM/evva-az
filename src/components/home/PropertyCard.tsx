@@ -12,8 +12,15 @@ import {
 } from "lucide-react";
 import type { Property } from "@/types";
 import { useLocale } from "@/providers/LocaleProvider";
+import { FavoriteToggle } from "@/components/property/FavoriteToggle";
 
-export function PropertyCard({ property }: { property: Property }) {
+export function PropertyCard({
+  property,
+  onFavoriteChange,
+}: {
+  property: Property;
+  onFavoriteChange?: (favorite: boolean) => void;
+}) {
   const { t } = useLocale();
   const [tipKey, setTipKey] = useState<string | null>(null);
   const tipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -33,15 +40,17 @@ export function PropertyCard({ property }: { property: Property }) {
       className={`property-card ${property.premium ? "premium-property-card" : ""}`}
       id={`property-${property.id}`}
     >
-      <Link href={`/property/${property.id}`} className="card-image">
-        <Image
-          src={property.image}
-          alt={property.title}
-          width={400}
-          height={270}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          unoptimized
-        />
+      <div className="card-image">
+        <Link href={`/property/${property.id}`} className="card-image-link" tabIndex={-1}>
+          <Image
+            src={property.image}
+            alt={property.title}
+            width={400}
+            height={270}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            unoptimized
+          />
+        </Link>
         {property.premium && (
           <span className="premium-crown-badge" aria-label={t("property.featuredHome")}>
             <Crown size={18} />
@@ -55,11 +64,18 @@ export function PropertyCard({ property }: { property: Property }) {
             {property.price} {t("common.perNight")}
           </span>
         </div>
-      </Link>
+        <FavoriteToggle
+          propertyId={property.id}
+          initialFavorite={Boolean(property.isFavorite)}
+          onChange={onFavoriteChange}
+        />
+      </div>
 
       <div className="card-content">
         <div className="card-topline">
-          <h3>{property.title}</h3>
+          <h3>
+            <Link href={`/property/${property.id}`}>{property.title}</Link>
+          </h3>
         </div>
 
         <div className="card-actions card-actions-3">

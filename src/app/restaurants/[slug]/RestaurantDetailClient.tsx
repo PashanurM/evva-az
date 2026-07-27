@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { ChevronRight, Clock, MapPin, Phone, Star } from "lucide-react";
+import { PlaceGallery } from "@/components/places/PlaceGallery";
 import { useLocale } from "@/providers/LocaleProvider";
 
 export interface RestaurantDetailData {
@@ -12,6 +12,7 @@ export interface RestaurantDetailData {
   address?: string;
   opening_hours?: string;
   phone?: string;
+  whatsapp?: string;
   average_price?: number;
   avg_rating: number;
   rating_count: number;
@@ -19,16 +20,52 @@ export interface RestaurantDetailData {
   description?: string;
   short_description?: string;
   cuisine_tags?: string;
+  discount_text?: string;
+  local_foods?: string;
+  foreign_foods?: string;
+  desserts?: string;
+  drinks?: string;
   cover: string;
+  images?: string[];
+  mapsUrl?: string;
 }
 
 interface RestaurantDetailClientProps {
   restaurant: RestaurantDetailData;
 }
 
+function splitMenuItems(text?: string): string[] {
+  if (!text?.trim()) return [];
+  return text
+    .split(/[\n,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+const MENU_SECTIONS: Array<{ key: keyof RestaurantDetailData; title: string }> = [
+  { key: "local_foods", title: "Yerli yeməklər" },
+  { key: "foreign_foods", title: "Xarici yeməklər" },
+  { key: "desserts", title: "Desertlər" },
+  { key: "drinks", title: "İçkilər" },
+];
+
 export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientProps) {
   const { t } = useLocale();
-  const cover = restaurant.cover;
+  const gallery =
+    restaurant.images?.length
+      ? restaurant.images
+      : restaurant.cover && !restaurant.cover.endsWith("no-image.svg")
+        ? [restaurant.cover]
+        : [];
+
+  const menuSections = MENU_SECTIONS.map((section) => ({
+    ...section,
+    items: splitMenuItems(
+      typeof restaurant[section.key] === "string"
+        ? (restaurant[section.key] as string)
+        : undefined,
+    ),
+  })).filter((section) => section.items.length > 0);
 
   return (
     <section className="place-detail">
@@ -57,21 +94,31 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
           <p className="place-hero-loc">
             <MapPin size={16} /> {restaurant.location}
           </p>
+          {restaurant.discount_text ? (
+            <p className="restaurant-discount-text">{restaurant.discount_text}</p>
+          ) : null}
         </section>
 
-        {cover && !cover.endsWith("no-image.svg") && (
-          <div className="catalog-card-image" style={{ borderRadius: 24, overflow: "hidden", marginBottom: 24, minHeight: 280 }}>
-            <Image
-              src={cover}
-              alt={restaurant.name}
-              width={1200}
-              height={420}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              priority
-              unoptimized
-            />
-          </div>
-        )}
+        {gallery.length > 0 ? (
+          <PlaceGallery images={gallery} title={restaurant.name} />
+        ) : null}
+
+        {menuSections.length > 0 ? (
+          <section className="restaurant-menu-grid">
+            {menuSections.map((section) => (
+              <div key={section.key} className="place-info-box restaurant-menu-box">
+                <h3>{section.title}</h3>
+                <div className="restaurant-menu-tags">
+                  {section.items.map((item) => (
+                    <span key={`${section.key}-${item}`} className="tag">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+        ) : null}
 
         <section className="place-info-grid">
           <div className="place-info-box">
@@ -115,6 +162,20 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
                   <dd>{restaurant.phone}</dd>
                 </div>
               )}
+              {restaurant.whatsapp && (
+                <div>
+                  <dt>WhatsApp</dt>
+                  <dd>
+                    <a
+                      href={`https://wa.me/${restaurant.whatsapp.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {restaurant.whatsapp}
+                    </a>
+                  </dd>
+                </div>
+              )}
               {restaurant.average_price ? (
                 <div>
                   <dt>{t("common.avgPrice")}</dt>
@@ -122,6 +183,18 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
                 </div>
               ) : null}
             </dl>
+
+            {restaurant.mapsUrl ? (
+              <a
+                href={restaurant.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="premium-map-btn"
+                style={{ marginTop: 16 }}
+              >
+                <MapPin size={16} /> {t("common.viewOnMap")}
+              </a>
+            ) : null}
           </aside>
         </section>
       </div>

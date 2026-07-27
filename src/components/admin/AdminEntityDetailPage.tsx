@@ -37,6 +37,8 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import dynamic from "next/dynamic";
+import type { Property } from "@/types";
 import {
   adminApi,
   type AdminDetailResource,
@@ -50,6 +52,16 @@ import { AdminPropertyForm } from "@/components/admin/AdminPropertyForm";
 import { AdminModuleForm } from "@/components/admin/AdminModuleForm";
 import { BusyDaysPicker } from "@/components/property/BusyDaysPicker";
 import { DateInput } from "@/components/ui/DateInput";
+
+const AdminPropertyMap = dynamic(
+  () => import("@/components/home/PropertyMap").then((m) => m.PropertyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="admin-property-map admin-property-map--loading">Xəritə yüklənir…</div>
+    ),
+  },
+);
 
 type FieldType = "text" | "number" | "date" | "textarea" | "boolean" | "select";
 
@@ -326,6 +338,27 @@ function PropertyDetailView({ entity }: { entity: Record<string, unknown> }) {
   const tags = Array.isArray(entity.tags_list) ? entity.tags_list : [];
   const isActive = asBoolean(entity.is_active);
   const isFeatured = asBoolean(entity.is_featured);
+  const lat = Number(entity.latitude);
+  const lng = Number(entity.longitude);
+  const hasMap = Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0;
+  const mapProperty: Property | null = hasMap
+    ? {
+        id: propertyId,
+        title: String(entity.title || "Ev"),
+        location: String(entity.location || entity.map_address || ""),
+        price: Number(entity.price) || 0,
+        guests: Number(entity.capacity) || 0,
+        rooms: Number(entity.rooms) || 0,
+        bathrooms: Number(entity.bathrooms) || 0,
+        views: Number(entity.views) || 0,
+        rating: Number(entity.avg_rating) || 0,
+        description: String(entity.description || ""),
+        tags: tags.map(String),
+        image: assetUrl(String(entity.cover_url || "")),
+        lat,
+        lng,
+      }
+    : null;
 
   return (
     <>
@@ -365,7 +398,67 @@ function PropertyDetailView({ entity }: { entity: Record<string, unknown> }) {
         <PropertyMetric icon={<Home size={20} />} label="Otaq sayı" value={String(entity.rooms ?? 0)} />
         <PropertyMetric icon={<Bath size={20} />} label="Hamam sayı" value={String(entity.bathrooms ?? 0)} />
         <PropertyMetric icon={<Eye size={20} />} label="Baxış sayı" value={String(entity.views ?? 0)} />
+        <PropertyMetric
+          icon={<Star size={20} />}
+          label="Ümumi reytinq"
+          value={
+            Number(entity.rating_count || 0) > 0
+              ? `${Number(entity.avg_rating || 0).toFixed(1)} / 10`
+              : "—"
+          }
+        />
+        <PropertyMetric icon={<Star size={20} />} label="Rəy sayı" value={String(entity.rating_count ?? 0)} />
       </section>
+
+      {entity.rating_summary || Array.isArray(entity.reviews) ? (
+        <section className="admin-panel-card admin-property-section">
+          <h2><Star size={20} /> Reytinq detalları</h2>
+          {entity.rating_summary && typeof entity.rating_summary === "object" ? (
+            <div className="admin-rating-breakdown">
+              {[
+                { label: "Təmizlik", key: "cleanliness_avg" },
+                { label: "Yerləşmə", key: "location_avg" },
+                { label: "Rahatlıq", key: "comfort_avg" },
+                { label: "Ev sahibi", key: "homeowner_avg" },
+              ].map((row) => {
+                const summary = entity.rating_summary as Record<string, unknown>;
+                const value = Number(summary[row.key] || 0);
+                return (
+                  <div key={row.key} className="admin-rating-breakdown-row">
+                    <strong>{row.label}</strong>
+                    <div className="admin-rating-track">
+                      <div className="admin-rating-fill" style={{ width: `${Math.max(0, Math.min(100, value * 10))}%` }} />
+                    </div>
+                    <b>{value.toFixed(1)}/10</b>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {Array.isArray(entity.reviews) && entity.reviews.length > 0 ? (
+            <div className="admin-reviews-list">
+              {(entity.reviews as Array<Record<string, unknown>>).map((review, index) => (
+                <article key={`${String(review.username || "r")}-${index}`} className="admin-review-card">
+                  <div className="admin-review-head">
+                    <strong>{String(review.full_name || review.username || "Qonaq")}</strong>
+                    <span>{Number(review.rating || 0).toFixed(1)}/10</span>
+                  </div>
+                  {review.comment ? <p>{String(review.comment)}</p> : null}
+                  <div className="admin-review-cats">
+                    <span>Təmizlik: {String(review.cleanliness_rating ?? "—")}</span>
+                    <span>Yerləşmə: {String(review.location_rating ?? "—")}</span>
+                    <span>Rahatlıq: {String(review.comfort_rating ?? "—")}</span>
+                    <span>Ev sahibi: {String(review.homeowner_rating ?? "—")}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p style={{ marginTop: 12, color: "var(--text-muted)" }}>Hələ rəy yoxdur.</p>
+          )}
+        </section>
+      ) : null}
 
       <div className="admin-property-detail-columns">
         <section className="admin-panel-card admin-property-section">
@@ -485,11 +578,18 @@ function PropertyDetailView({ entity }: { entity: Record<string, unknown> }) {
           <MapPin size={22} />
           <div>
             <strong>{String(entity.map_address || entity.location || "Ünvan yoxdur")}</strong>
-            {entity.latitude && entity.longitude ? (
-              <p>Koordinatlar: {String(entity.latitude)}, {String(entity.longitude)}</p>
+            {hasMap ? (
+              <p>Koordinatlar: {lat}, {lng}</p>
             ) : null}
           </div>
         </div>
+        {mapProperty ? (
+          <AdminPropertyMap
+            properties={[mapProperty]}
+            mapId={`admin-property-map-${propertyId}`}
+            className="admin-property-map"
+          />
+        ) : null}
       </section>
 
       {tags.length > 0 ? (
@@ -573,8 +673,62 @@ function ModuleGallery({ images }: { images: unknown }) {
   );
 }
 
+function ModuleMapSection({
+  entity,
+  mapId,
+}: {
+  entity: Record<string, unknown>;
+  mapId: string;
+}) {
+  const lat = Number(entity.latitude);
+  const lng = Number(entity.longitude);
+  const hasMap = Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0;
+  const mapProperty: Property | null = hasMap
+    ? {
+        id: Number(entity.id) || 0,
+        title: String(entity.name || entity.title || "Məkan"),
+        location: String(entity.location || entity.address || ""),
+        price: 0,
+        guests: 0,
+        rooms: 0,
+        bathrooms: 0,
+        views: 0,
+        rating: 0,
+        description: "",
+        tags: [],
+        image: assetUrl(String(entity.cover_url || entity.cover_path || "")),
+        lat,
+        lng,
+      }
+    : null;
+
+  return (
+    <section className="admin-panel-card admin-property-section">
+      <h2><MapPin size={20} /> Xəritə mövqeyi</h2>
+      <div className="admin-property-location">
+        <MapPin size={22} />
+        <div>
+          <strong>{String(entity.address || entity.location || "Ünvan yoxdur")}</strong>
+          {hasMap ? (
+            <p>Koordinatlar: {lat}, {lng}</p>
+          ) : (
+            <p>Koordinatlar əlavə edilməyib.</p>
+          )}
+        </div>
+      </div>
+      {mapProperty ? (
+        <AdminPropertyMap
+          properties={[mapProperty]}
+          mapId={mapId}
+          className="admin-property-map"
+        />
+      ) : null}
+    </section>
+  );
+}
+
 function RestaurantDetailView({ entity }: { entity: Record<string, unknown> }) {
-  const cover = String(entity.cover_path || entity.logo_path || "");
+  const cover = String(entity.cover_url || entity.cover_path || entity.logo_path || "");
   return (
     <>
       <DetailHero
@@ -639,18 +793,7 @@ function RestaurantDetailView({ entity }: { entity: Record<string, unknown> }) {
 
       <ModuleGallery images={entity.images} />
 
-      {entity.latitude && entity.longitude ? (
-        <section className="admin-panel-card admin-property-section">
-          <h2><MapPin size={20} /> Xəritə mövqeyi</h2>
-          <div className="admin-property-location">
-            <MapPin size={22} />
-            <div>
-              <strong>{String(entity.address || entity.location)}</strong>
-              <p>Koordinatlar: {String(entity.latitude)}, {String(entity.longitude)}</p>
-            </div>
-          </div>
-        </section>
-      ) : null}
+      <ModuleMapSection entity={entity} mapId={`admin-restaurant-map-${entity.id || "new"}`} />
     </>
   );
 }
@@ -708,18 +851,7 @@ function PlaceDetailView({ entity }: { entity: Record<string, unknown> }) {
         />
       </section>
 
-      <section className="admin-panel-card admin-property-section">
-        <h2><MapPin size={20} /> Xəritə və koordinatlar</h2>
-        <div className="admin-property-location">
-          <MapPin size={22} />
-          <div>
-            <strong>{String(entity.address || entity.location || "Ünvan yoxdur")}</strong>
-            {entity.latitude && entity.longitude ? (
-              <p>Koordinatlar: {String(entity.latitude)}, {String(entity.longitude)}</p>
-            ) : <p>Koordinatlar əlavə edilməyib.</p>}
-          </div>
-        </div>
-      </section>
+      <ModuleMapSection entity={entity} mapId={`admin-place-map-${entity.id || "new"}`} />
 
       <ModuleGallery images={entity.images} />
     </>
@@ -810,6 +942,7 @@ function UserDetailView({ entity }: { entity: Record<string, unknown> }) {
                 <tr>
                   <th>Ev</th>
                   <th>Qiymət</th>
+                  <th>Reytinq</th>
                   <th>Baxış</th>
                   <th>Status</th>
                 </tr>
@@ -847,6 +980,19 @@ function UserDetailView({ entity }: { entity: Record<string, unknown> }) {
                         </div>
                       </td>
                       <td>{Number(property.price ?? 0)} ₼</td>
+                      <td>
+                        {Number(property.rating_count || 0) > 0 ? (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            <Star size={14} fill="currentColor" />
+                            <strong>{Number(property.avg_rating || 0).toFixed(1)}</strong>
+                            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                              ({Number(property.rating_count)})
+                            </span>
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td>{Number(property.views ?? 0)}</td>
                       <td>
                         <span className="admin-table-badges">

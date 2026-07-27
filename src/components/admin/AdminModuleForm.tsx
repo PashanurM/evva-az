@@ -12,6 +12,8 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { useAdminConfirm } from "@/components/admin/AdminConfirmModal";
+import { MapLocationPicker } from "@/components/map/MapLocationPicker";
 import { adminApi } from "@/lib/admin-api";
 import { assetUrl } from "@/lib/assets";
 import { isPhoneFieldKey, sanitizePhoneInput } from "@/lib/phone";
@@ -24,6 +26,10 @@ type ModuleField = {
   type?: "text" | "number" | "textarea";
   placeholder?: string;
 };
+
+type GalleryImage = { id: number; url?: string; image_path?: string };
+
+const ADDRESS_GROUP_TITLES = new Set(["Ünvan və əlaqə", "Ünvan və ziyarət"]);
 
 const RESTAURANT_GROUPS: Array<{ title: string; icon: React.ReactNode; fields: ModuleField[] }> = [
   {
@@ -44,8 +50,6 @@ const RESTAURANT_GROUPS: Array<{ title: string; icon: React.ReactNode; fields: M
     fields: [
       { key: "location", label: "Məkan" },
       { key: "address", label: "Tam ünvan" },
-      { key: "latitude", label: "Latitude", type: "number" },
-      { key: "longitude", label: "Longitude", type: "number" },
       { key: "phone", label: "Telefon" },
       { key: "whatsapp", label: "WhatsApp" },
       { key: "opening_hours", label: "İş saatları" },
@@ -87,8 +91,6 @@ const PLACE_GROUPS: Array<{ title: string; icon: React.ReactNode; fields: Module
     fields: [
       { key: "location", label: "Məkan" },
       { key: "address", label: "Tam ünvan" },
-      { key: "latitude", label: "Latitude", type: "number" },
-      { key: "longitude", label: "Longitude", type: "number" },
       { key: "working_hours", label: "İş saatları" },
       { key: "phone", label: "Telefon" },
       { key: "tips", label: "Ziyarət üçün məsləhətlər", type: "textarea" },
@@ -136,9 +138,19 @@ function normalizeInitial(resource: ModuleResource, entity?: Record<string, unkn
   for (const key of ["average_price", "entry_price"]) {
     if (Number(normalized[key] || 0) === 0) normalized[key] = "";
   }
+  normalized.latitude =
+    entity.latitude != null && entity.latitude !== "" ? String(entity.latitude) : "";
+  normalized.longitude =
+    entity.longitude != null && entity.longitude !== "" ? String(entity.longitude) : "";
   normalized.is_active = entity.is_active === true || entity.is_active === 1 || entity.is_active === "1";
   normalized.is_featured = entity.is_featured === true || entity.is_featured === 1 || entity.is_featured === "1";
   return normalized;
+}
+
+function readGalleryImages(entity?: Record<string, unknown> | null): GalleryImage[] {
+  return Array.isArray(entity?.images)
+    ? (entity.images as GalleryImage[])
+    : [];
 }
 
 export function AdminModuleForm({
@@ -153,10 +165,13 @@ export function AdminModuleForm({
   onCancel: () => void;
 }) {
   const editing = Boolean(entity?.id);
+  const { confirm, modal: confirmModal } = useAdminConfirm();
   const [form, setForm] = useState<Record<string, unknown>>(() => normalizeInitial(resource, entity));
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<GalleryImage[]>(() => readGalleryImages(entity));
   const [saving, setSaving] = useState(false);
+  const [imageBusy, setImageBusy] = useState(false);
   const groups = resource === "restaurants" ? RESTAURANT_GROUPS : PLACE_GROUPS;
   const coverPreview = useMemo(() => coverFile ? URL.createObjectURL(coverFile) : "", [coverFile]);
   const galleryPreviews = useMemo(
@@ -166,6 +181,7 @@ export function AdminModuleForm({
 
   useEffect(() => {
     setForm(normalizeInitial(resource, entity));
+    setExistingImages(readGalleryImages(entity));
   }, [entity, resource]);
 
   useEffect(() => () => {
@@ -178,6 +194,30 @@ export function AdminModuleForm({
 
   function update(key: string, value: unknown) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handleDeleteImage(imageId: number) {
+    const entityId = Number(entity?.id);
+    if (!entityId) return;
+
+    const ok = await confirm({
+      title: "Şəkli sil",
+      message: "Bu şəkil silinsin?\n\nBu əməliyyat geri qaytarılmır.",
+    });
+    if (!ok) return;
+
+    setImageBusy(true);
+    const result = await adminApi.deleteEntityImage(resource, entityId, imageId);
+    setImageBusy(false);
+    if (!result.success) {
+      toast.error(result.error || "Şəkil silinmədi");
+      return;
+    }
+    setExistingImages((current) => current.filter((image) => image.id !== imageId));
+    if (result.data?.entity && Array.isArray(result.data.entity.images)) {
+      setExistingImages(result.data.entity.images as GalleryImage[]);
+    }
+    toast.success("Şəkil silindi.");
   }
 
   async function save() {
@@ -231,9 +271,6 @@ export function AdminModuleForm({
     onSaved(id, latestEntity);
   }
 
-  const existingImages = Array.isArray(entity?.images)
-    ? entity.images as Array<{ id: number; url?: string; image_path?: string }>
-    : [];
   const existingCover = String(entity?.cover_url || entity?.cover_path || "");
 
   return (
@@ -261,46 +298,68 @@ export function AdminModuleForm({
 
       <div className="admin-module-form-body">
         {groups.map((group) => (
-          <section key={group.title} className="admin-form-section">
-            <h3>{group.icon} {group.title}</h3>
-            <div className="admin-form-grid">
-              {group.fields.map((field) => (
-                <label key={field.key} className={field.type === "textarea" ? "admin-form-field-wide" : undefined}>
-                  {field.label}
-                  {field.type === "textarea" ? (
-                    <textarea
-                      rows={4}
-                      value={String(form[field.key] ?? "")}
-                      onChange={(event) => update(field.key, event.target.value)}
-                    />
-                  ) : (
-                    <input
-                      type={
-                        isPhoneFieldKey(field.key)
-                          ? "tel"
-                          : field.type === "number"
-                            ? "number"
-                            : "text"
-                      }
-                      inputMode={isPhoneFieldKey(field.key) ? "numeric" : undefined}
-                      pattern={isPhoneFieldKey(field.key) ? "[0-9]*" : undefined}
-                      step={field.type === "number" ? "any" : undefined}
-                      placeholder={field.placeholder}
-                      value={String(form[field.key] ?? "")}
-                      onChange={(event) =>
-                        update(
-                          field.key,
+          <div key={group.title}>
+            <section className="admin-form-section">
+              <h3>{group.icon} {group.title}</h3>
+              <div className="admin-form-grid">
+                {group.fields.map((field) => (
+                  <label key={field.key} className={field.type === "textarea" ? "admin-form-field-wide" : undefined}>
+                    {field.label}
+                    {field.type === "textarea" ? (
+                      <textarea
+                        rows={4}
+                        value={String(form[field.key] ?? "")}
+                        onChange={(event) => update(field.key, event.target.value)}
+                      />
+                    ) : (
+                      <input
+                        type={
                           isPhoneFieldKey(field.key)
-                            ? sanitizePhoneInput(event.target.value)
-                            : event.target.value,
-                        )
-                      }
-                    />
-                  )}
-                </label>
-              ))}
-            </div>
-          </section>
+                            ? "tel"
+                            : field.type === "number"
+                              ? "number"
+                              : "text"
+                        }
+                        inputMode={isPhoneFieldKey(field.key) ? "numeric" : undefined}
+                        pattern={isPhoneFieldKey(field.key) ? "[0-9]*" : undefined}
+                        step={field.type === "number" ? "any" : undefined}
+                        placeholder={field.placeholder}
+                        value={String(form[field.key] ?? "")}
+                        onChange={(event) =>
+                          update(
+                            field.key,
+                            isPhoneFieldKey(field.key)
+                              ? sanitizePhoneInput(event.target.value)
+                              : event.target.value,
+                          )
+                        }
+                      />
+                    )}
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            {ADDRESS_GROUP_TITLES.has(group.title) ? (
+              <section className="admin-form-section">
+                <h3><MapPin size={18} /> Xəritə / dəqiq məkan</h3>
+                <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--text-muted)" }}>
+                  Xəritədə klik et və ya pin-i sürüklə — koordinatlar avtomatik dolacaq.
+                </p>
+                <MapLocationPicker
+                  latitude={String(form.latitude ?? "")}
+                  longitude={String(form.longitude ?? "")}
+                  onChange={(coords) =>
+                    setForm((current) => ({
+                      ...current,
+                      latitude: coords.latitude,
+                      longitude: coords.longitude,
+                    }))
+                  }
+                />
+              </section>
+            ) : null}
+          </div>
         ))}
 
         <section className="admin-form-section">
@@ -364,6 +423,16 @@ export function AdminModuleForm({
                   {existingImages.map((image) => (
                     <div key={image.id} className="admin-image-card">
                       <img src={assetUrl(image.url || image.image_path || "")} alt="" />
+                      <div className="admin-image-card-actions">
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn--danger"
+                          disabled={imageBusy || !editing}
+                          onClick={() => void handleDeleteImage(image.id)}
+                        >
+                          Sil
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {galleryPreviews.map((preview) => (
@@ -417,6 +486,7 @@ export function AdminModuleForm({
           </button>
         </div>
       </div>
+      {confirmModal}
     </section>
   );
 }

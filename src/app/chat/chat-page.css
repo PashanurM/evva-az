@@ -57,10 +57,82 @@
 .chat-panel--room {
   position: relative;
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto 1fr auto;
   min-height: min(72vh, 760px);
   padding: 20px;
   gap: 14px;
+}
+
+.chat-booking-strip {
+  display: grid;
+  gap: 10px;
+}
+
+.chat-phone-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-tertiary) 55%, var(--bg-card));
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chat-phone-pill.is-open {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-card));
+  color: var(--primary-dark);
+}
+
+.chat-phone-pill a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.chat-booking-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
+}
+
+.chat-booking-card strong {
+  display: block;
+  font-size: 14px;
+}
+
+.chat-booking-card span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.chat-booking-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chat-booking-actions .auth-btn {
+  min-height: 36px;
+  font-size: 13px;
+  padding: 0 12px;
+}
+
+.chat-booking-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 .chat-panel--inbox {

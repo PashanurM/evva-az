@@ -10,6 +10,7 @@ import {
   Loader2,
   MessageCircle,
   MoreVertical,
+  Phone,
   Send,
   Trash2,
 } from "lucide-react";
@@ -30,6 +31,31 @@ type ChatMessage = {
   created_at: string;
   sender_name: string;
   is_mine: boolean;
+};
+
+type ChatBooking = {
+  id: number;
+  status: string;
+  payment_status: string;
+  check_in: string;
+  check_out: string;
+  guest_count: number;
+  guest_name: string;
+  can_confirm: boolean;
+  can_cancel: boolean;
+  confirm_blocked_reason: string;
+};
+
+type ConversationData = {
+  id: number;
+  property_title?: string;
+  messages?: ChatMessage[];
+  contact_unlocked?: boolean;
+  peer_name?: string;
+  peer_phone?: string;
+  phone_locked_message?: string;
+  viewer_is_owner?: boolean;
+  booking?: ChatBooking | null;
 };
 
 const AZ_MONTHS = [
@@ -114,10 +140,17 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
   const [conversationId, setConversationId] = useState(conversationFromUrl > 0 ? conversationFromUrl : 0);
   const [title, setTitle] = useState(property?.title || "");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [booking, setBooking] = useState<ChatBooking | null>(null);
+  const [contactUnlocked, setContactUnlocked] = useState(false);
+  const [peerName, setPeerName] = useState("");
+  const [peerPhone, setPeerPhone] = useState("");
+  const [phoneLockedMessage, setPhoneLockedMessage] = useState("");
+  const [viewerIsOwner, setViewerIsOwner] = useState(false);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [busy, setBusy] = useState(false);
+  const [bookingBusy, setBookingBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -135,14 +168,16 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
     toastTimer.current = setTimeout(() => setToast(""), 2200);
   }, []);
 
-  const applyConversation = useCallback((data: {
-    id: number;
-    property_title?: string;
-    messages?: ChatMessage[];
-  }) => {
+  const applyConversation = useCallback((data: ConversationData) => {
     setConversationId(data.id);
     if (data.property_title) setTitle(data.property_title);
     setMessages(data.messages || []);
+    setBooking(data.booking || null);
+    setContactUnlocked(Boolean(data.contact_unlocked));
+    setPeerName(data.peer_name || "");
+    setPeerPhone(data.peer_phone || "");
+    setPhoneLockedMessage(data.phone_locked_message || "");
+    setViewerIsOwner(Boolean(data.viewer_is_owner));
   }, []);
 
   useEffect(() => {
@@ -251,6 +286,32 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
     }
   }
 
+  async function handleBookingAction(action: "confirm" | "cancel") {
+    if (!booking?.id) return;
+    if (action === "cancel") {
+      const ok = window.confirm("Bu rezerv sorğusunu ləğv etmək istəyirsiniz?");
+      if (!ok) return;
+    }
+    setBookingBusy(true);
+    setError("");
+    try {
+      const res = await api.ownerBookingAction(booking.id, action);
+      if (!res.success) {
+        setError(res.error || "Əməliyyat uğursuz oldu");
+      } else if (conversationId > 0) {
+        const refreshed = await api.getConversation(conversationId);
+        if (refreshed.success && refreshed.data) {
+          applyConversation(refreshed.data);
+        }
+        showToast(res.data?.message || (action === "confirm" ? "Təsdiqləndi" : "Ləğv edildi"));
+      }
+    } catch {
+      setError("Əməliyyat uğursuz oldu");
+    } finally {
+      setBookingBusy(false);
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!user) {
@@ -352,6 +413,64 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
             {error}
           </div>
         ) : null}
+
+        <div className="chat-booking-strip">
+          <div className={`chat-phone-pill${contactUnlocked ? " is-open" : ""}`}>
+            <Phone size={14} aria-hidden />
+            {contactUnlocked && peerPhone ? (
+              <span>
+                {peerName ? `${peerName}: ` : ""}
+                <a href={`tel:${peerPhone}`}>{peerPhone}</a>
+              </span>
+            ) : (
+              <span>{phoneLockedMessage || "Nömrələr rezervasiya təsdiqləndikdən sonra açılır."}</span>
+            )}
+          </div>
+
+          {booking ? (
+            <div className="chat-booking-card">
+              <div>
+                <strong>
+                  {booking.check_in} — {booking.check_out}
+                </strong>
+                <span>
+                  {booking.guest_name} · {booking.guest_count} nəfər ·{" "}
+                  {booking.status === "payment_pending"
+                    ? "Sayt payı gözlənilir"
+                    : booking.status === "approved"
+                      ? "Təsdiqlənib"
+                      : booking.status === "pending"
+                        ? "Gözləyir"
+                        : booking.status}
+                </span>
+              </div>
+              {viewerIsOwner && booking.status === "pending" ? (
+                <div className="chat-booking-actions">
+                  <button
+                    type="button"
+                    className="auth-btn primary"
+                    disabled={!booking.can_confirm || bookingBusy}
+                    title={booking.confirm_blocked_reason || "Təsdiqlə"}
+                    onClick={() => void handleBookingAction("confirm")}
+                  >
+                    Təsdiqlə
+                  </button>
+                  <button
+                    type="button"
+                    className="auth-btn"
+                    disabled={!booking.can_cancel || bookingBusy}
+                    onClick={() => void handleBookingAction("cancel")}
+                  >
+                    Ləğv et
+                  </button>
+                </div>
+              ) : null}
+              {viewerIsOwner && booking.status === "pending" && booking.confirm_blocked_reason ? (
+                <p className="chat-booking-hint">{booking.confirm_blocked_reason}</p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         <div className="chat-thread" ref={threadRef}>
           {messages.length === 0 ? (

@@ -20,15 +20,53 @@ export interface Property {
     username: string;
     profileImage: string;
     bio: string;
+    avgRating?: number;
+    ratingCount?: number;
   };
   rating: number;
+  ratingCount?: number;
+  ratingSummary?: {
+    avg_rating: number;
+    rating_count: number;
+    cleanliness_avg: number;
+    location_avg: number;
+    comfort_avg: number;
+    homeowner_avg: number;
+  };
+  reviews?: Array<{
+    rating: number;
+    cleanliness_rating: number;
+    location_rating: number;
+    comfort_rating: number;
+    homeowner_rating: number;
+    comment: string;
+    created_at: string;
+    full_name: string;
+    username: string;
+    profile_image: string;
+  }>;
+  canRate?: boolean;
+  hasConfirmedBooking?: boolean;
+  userRating?: {
+    rating: number;
+    cleanliness_rating: number;
+    location_rating: number;
+    comfort_rating: number;
+    homeowner_rating: number;
+    comment: string;
+    has_rated?: boolean;
+  } | null;
   description: string;
+  houseRules?: string;
+  cancellationPolicy?: string;
+  mapAddress?: string;
   tags: string[];
   image: string;
   images?: string[];
   lat: number;
   lng: number;
   premium?: boolean;
+  isFavorite?: boolean;
   bookedDays?: number[];
   occupiedRanges?: Array<{
     check_in: string;

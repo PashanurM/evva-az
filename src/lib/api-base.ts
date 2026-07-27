@@ -21,6 +21,28 @@ export function getApiBackendBase(): string {
 }
 
 /**
+ * Secondary backend used when the primary (often local XAMPP) is unreachable.
+ * Defaults to Alwaysdata in development.
+ */
+export function getApiBackendFallbackBase(): string | null {
+  const fromEnv = (
+    process.env.API_FALLBACK_URL ||
+    process.env.ASSET_FALLBACK_URL ||
+    ""
+  ).replace(/\/$/, "");
+
+  if (fromEnv) return fromEnv;
+
+  if (process.env.NODE_ENV === "development") {
+    const primary = getApiBackendBase();
+    const remote = "https://pashanur.alwaysdata.net";
+    return primary === remote ? null : remote;
+  }
+
+  return null;
+}
+
+/**
  * Admin panel API backend.
  * Prefer ADMIN_API_URL; otherwise same as public API (Alwaysdata / production).
  * Set ADMIN_API_URL=http://localhost/evva only when testing against local XAMPP DB.

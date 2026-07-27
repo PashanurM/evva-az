@@ -46,11 +46,49 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
     permanentRedirect(`/restaurants/${canonicalSlug}`);
   }
 
+  const cover = assetUrl(restaurant.cover_url || restaurant.cover_path);
+  const images = [
+    ...(cover && !cover.endsWith("no-image.svg") ? [cover] : []),
+    ...(restaurant.images || [])
+      .map((image) => assetUrl(image.url || image.path))
+      .filter((image) => Boolean(image) && image !== cover),
+  ];
+
+  const lat = restaurant.latitude != null ? Number(restaurant.latitude) : NaN;
+  const lng = restaurant.longitude != null ? Number(restaurant.longitude) : NaN;
+  const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0;
+  const mapsQuery = hasCoords
+    ? `${lat},${lng}`
+    : restaurant.address || restaurant.location || "";
+  const mapsUrl = mapsQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`
+    : "";
+
   return (
     <RestaurantDetailClient
       restaurant={{
-        ...restaurant,
-        cover: assetUrl(restaurant.cover_url || restaurant.cover_path),
+        id: restaurant.id,
+        name: restaurant.name,
+        location: restaurant.location,
+        address: restaurant.address,
+        opening_hours: restaurant.opening_hours,
+        phone: restaurant.phone,
+        whatsapp: restaurant.whatsapp,
+        average_price: restaurant.average_price,
+        avg_rating: restaurant.avg_rating,
+        rating_count: restaurant.rating_count,
+        is_featured: restaurant.is_featured,
+        description: restaurant.description,
+        short_description: restaurant.short_description,
+        cuisine_tags: restaurant.cuisine_tags,
+        discount_text: restaurant.discount_text,
+        local_foods: restaurant.local_foods,
+        foreign_foods: restaurant.foreign_foods,
+        desserts: restaurant.desserts,
+        drinks: restaurant.drinks,
+        cover,
+        images,
+        mapsUrl,
       }}
     />
   );

@@ -38,16 +38,58 @@ export function mapApiProperty(property: ApiProperty): Property {
           username: property.owner.username,
           profileImage: assetUrl(property.owner.profile_image),
           bio: property.owner.bio,
+          avgRating: property.owner.avg_rating,
+          ratingCount: property.owner.rating_count,
         }
       : undefined,
     rating: property.avg_rating,
+    ratingCount: property.rating_count,
+    ratingSummary: property.rating_summary
+      ? {
+          avg_rating: property.rating_summary.avg_rating,
+          rating_count: property.rating_summary.rating_count,
+          cleanliness_avg: property.rating_summary.cleanliness_avg,
+          location_avg: property.rating_summary.location_avg,
+          comfort_avg: property.rating_summary.comfort_avg,
+          homeowner_avg: property.rating_summary.homeowner_avg,
+        }
+      : undefined,
+    reviews: (property.reviews || []).map((review) => ({
+      rating: review.rating,
+      cleanliness_rating: review.cleanliness_rating,
+      location_rating: review.location_rating,
+      comfort_rating: review.comfort_rating,
+      homeowner_rating: review.homeowner_rating,
+      comment: review.comment,
+      created_at: review.created_at,
+      full_name: review.full_name,
+      username: review.username,
+      profile_image: assetUrl(review.profile_image),
+    })),
+    canRate: Boolean(property.can_rate),
+    hasConfirmedBooking: Boolean(property.has_confirmed_booking),
+    userRating: property.user_rating
+      ? {
+          rating: property.user_rating.rating,
+          cleanliness_rating: property.user_rating.cleanliness_rating,
+          location_rating: property.user_rating.location_rating,
+          comfort_rating: property.user_rating.comfort_rating,
+          homeowner_rating: property.user_rating.homeowner_rating,
+          comment: property.user_rating.comment,
+          has_rated: Boolean(property.user_rating.has_rated),
+        }
+      : null,
     description: property.description,
+    houseRules: property.house_rules || "",
+    cancellationPolicy: property.cancellation_policy || "",
+    mapAddress: property.map_address || "",
     tags: property.tags,
     image: assetUrl(property.cover_url || property.cover_path),
     images: property.images?.map((img) => assetUrl(img.url || img.path)),
     lat: coords?.lat ?? 0,
     lng: coords?.lng ?? 0,
     premium: property.is_premium,
+    isFavorite: Boolean(property.is_favorite),
     occupiedRanges: property.occupied_ranges || property.booked_ranges || [],
   };
 }
@@ -70,6 +112,8 @@ export function mapApiRestaurant(restaurant: ApiRestaurant): Restaurant {
 
 export function mapApiPlace(place: ApiPlace): Place {
   const cover = assetUrl(place.cover_url || place.cover_path);
+  const lat = place.latitude != null ? Number(place.latitude) : NaN;
+  const lng = place.longitude != null ? Number(place.longitude) : NaN;
 
   return {
     id: place.id,
@@ -101,5 +145,7 @@ export function mapApiPlace(place: ApiPlace): Place {
       price: Number(activity.price || 0),
       image: activity.image ? assetUrl(activity.image) : undefined,
     })),
+    lat: Number.isFinite(lat) && lat !== 0 ? lat : undefined,
+    lng: Number.isFinite(lng) && lng !== 0 ? lng : undefined,
   };
 }

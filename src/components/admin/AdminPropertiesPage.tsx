@@ -142,6 +142,7 @@ export function AdminPropertiesPage() {
                   <th>Ev</th>
                   <th>Sahib</th>
                   <th>Qiymət</th>
+                  <th>Reytinq</th>
                   <th>Baxış</th>
                   <th>Status</th>
                   <th>Əməliyyat</th>
@@ -180,6 +181,19 @@ export function AdminPropertiesPage() {
                       )}
                     </td>
                     <td data-label="Qiymət">{p.price} ₼</td>
+                    <td data-label="Reytinq">
+                      {Number(p.rating_count || 0) > 0 ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <Star size={14} fill="currentColor" />
+                          <strong>{Number(p.avg_rating || 0).toFixed(1)}</strong>
+                          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                            ({p.rating_count})
+                          </span>
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)" }}>—</span>
+                      )}
+                    </td>
                     <td data-label="Baxış">{p.views}</td>
                     <td data-label="Status">
                       <span className="admin-table-badges">

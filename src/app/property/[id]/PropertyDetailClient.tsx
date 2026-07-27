@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -15,12 +16,25 @@ import {
   Bed,
   Moon,
   Clock3,
-  UserRound,
+  Star,
+  ShieldCheck,
 } from "lucide-react";
 import type { Property } from "@/types";
 import { useLocale } from "@/providers/LocaleProvider";
 import { AvailabilityCalendar } from "@/components/property/AvailabilityCalendar";
+import { FavoriteToggle } from "@/components/property/FavoriteToggle";
 import { PropertyGallery } from "@/components/property/PropertyGallery";
+import { PropertyRatingSection } from "@/components/property/PropertyRatingSection";
+
+const PropertyMap = dynamic(
+  () => import("@/components/home/PropertyMap").then((m) => m.PropertyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="property-detail-map property-detail-map--loading">Xəritə yüklənir…</div>
+    ),
+  },
+);
 
 interface PropertyDetailClientProps {
   property: Property;
@@ -66,6 +80,13 @@ export function PropertyDetailClient({
     .trim()
     .charAt(0)
     .toLocaleUpperCase("az");
+  const hasMap =
+    Number.isFinite(property.lat) &&
+    Number.isFinite(property.lng) &&
+    property.lat !== 0 &&
+    property.lng !== 0;
+  const houseRules = (property.houseRules || "").trim();
+  const cancellationPolicy = (property.cancellationPolicy || "").trim();
 
   return (
     <section className="property-shell">
@@ -77,8 +98,12 @@ export function PropertyDetailClient({
         </nav>
 
         <div className="property-hero">
-          <div className="glass gallery-card">
+          <div className="glass gallery-card property-gallery-wrap">
             <PropertyGallery images={gallery} title={property.title} />
+            <FavoriteToggle
+              propertyId={property.id}
+              initialFavorite={Boolean(property.isFavorite)}
+            />
           </div>
 
           <div className="glass property-hero-panel">
@@ -90,9 +115,26 @@ export function PropertyDetailClient({
               <div className="loc-row">
                 <MapPin size={16} /> {property.location}
               </div>
+              {(property.ratingCount || 0) > 0 ? (
+                <div className="property-rating-pill">
+                  <Star size={15} fill="currentColor" />
+                  <strong>{Number(property.rating || 0).toFixed(1)}</strong>
+                  <span>
+                    ({property.ratingCount} {t("property.reviewCount")})
+                  </span>
+                </div>
+              ) : (
+                <div className="property-rating-pill property-rating-pill--empty">
+                  {t("property.ratingNone")}
+                </div>
+              )}
 
-              {property.owner?.name || property.owner?.username ? (
-                <div className="property-owner-card">
+              {property.owner?.id && (property.owner.name || property.owner.username) ? (
+                <Link
+                  href={`/owners/${property.owner.id}`}
+                  className="property-owner-card"
+                  aria-label={`${property.owner.name || property.owner.username} — ev sahibi profili`}
+                >
                   <span className="property-owner-avatar">
                     {property.owner.profileImage ? (
                       <Image
@@ -109,23 +151,23 @@ export function PropertyDetailClient({
                   <span className="property-owner-copy">
                     <small>Ev sahibi</small>
                     <strong>{property.owner.name || property.owner.username}</strong>
-                    {property.owner.username ? <span>@{property.owner.username}</span> : null}
+                    {(property.owner.ratingCount || 0) > 0 ? (
+                      <em className="property-owner-rating">
+                        <Star size={12} fill="currentColor" />
+                        {Number(property.owner.avgRating || 0).toFixed(1)}
+                      </em>
+                    ) : null}
                   </span>
-                </div>
+                </Link>
               ) : null}
 
-              <div className="property-detail-meta">
-                {createdDate ? (
+              {createdDate ? (
+                <div className="property-detail-meta">
                   <span>
                     <CalendarPlus size={15} /> {createdDate}
                   </span>
-                ) : null}
-                {property.owner?.username ? (
-                  <span>
-                    <UserRound size={15} /> @{property.owner.username}
-                  </span>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
 
               <div className="stats-grid detail-primary-stats">
                 <div className="stat-box">
@@ -216,6 +258,56 @@ export function PropertyDetailClient({
             {(property.description || "").slice(0, 2000)}
           </div>
         </section>
+
+        {(houseRules || cancellationPolicy) ? (
+          <section className="glass section-block property-rules-section">
+            <div className="section-title">
+              <h2>
+                <ShieldCheck size={20} aria-hidden />{" "}
+                {houseRules && cancellationPolicy
+                  ? `${t("property.houseRules")} & ${t("property.cancellationPolicy")}`
+                  : cancellationPolicy
+                    ? t("property.cancellationPolicy")
+                    : t("property.houseRules")}
+              </h2>
+            </div>
+            <div className={`property-rules-grid${!(houseRules && cancellationPolicy) ? " property-rules-grid--single" : ""}`}>
+              {houseRules ? (
+                <div className="property-rules-card">
+                  <h3>{t("property.houseRules")}</h3>
+                  <p>{houseRules}</p>
+                </div>
+              ) : null}
+              {cancellationPolicy ? (
+                <div className="property-rules-card">
+                  <h3>{t("property.cancellationPolicy")}</h3>
+                  <p>{cancellationPolicy}</p>
+                </div>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
+        {hasMap ? (
+          <section className="glass section-block">
+            <div className="section-title">
+              <h2>{t("property.locationMap")}</h2>
+              {property.mapAddress ? (
+                <div style={{ fontSize: 13, opacity: 0.72 }}>{property.mapAddress}</div>
+              ) : null}
+            </div>
+            <PropertyMap
+              properties={[property]}
+              mapId={`property-detail-map-${property.id}`}
+              className="property-detail-map"
+            />
+          </section>
+        ) : null}
+
+        <PropertyRatingSection
+          key={`${property.id}-${property.canRate ? 1 : 0}-${property.ratingCount || 0}-${property.hasConfirmedBooking ? 1 : 0}`}
+          property={property}
+        />
 
         <section className="glass section-block">
           <div className="section-title">

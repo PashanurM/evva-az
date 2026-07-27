@@ -1,6 +1,6 @@
 import https from "node:https";
 import { URL } from "node:url";
-import { getApiBackendBase } from "./api-base";
+import { getApiBackendBase, getApiBackendFallbackBase } from "./api-base";
 
 type BackendFetchInit = RequestInit & {
   next?: {
@@ -60,6 +60,7 @@ function nodeHttpsFetch(url: string, init: RequestInit = {}): Promise<Response> 
         method,
         headers,
         agent: insecureHttpsAgent,
+        timeout: 12_000,
       },
       (res) => {
         const chunks: Buffer[] = [];
@@ -85,12 +86,58 @@ function nodeHttpsFetch(url: string, init: RequestInit = {}): Promise<Response> 
       },
     );
 
+    req.on("timeout", () => {
+      req.destroy(new Error("Upstream request timed out"));
+    });
     req.on("error", reject);
     if (body && method !== "GET" && method !== "HEAD") {
       req.write(body);
     }
     req.end();
   });
+}
+
+async function rawBackendFetch(url: string, options: BackendFetchInit): Promise<Response> {
+  if (url.startsWith("https://") && process.env.NODE_ENV === "development") {
+    return nodeHttpsFetch(url, options);
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4_000);
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: options.signal ?? controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function swapBackendHost(url: string, fromBase: string, toBase: string): string {
+  if (url.startsWith(fromBase)) {
+    return `${toBase}${url.slice(fromBase.length)}`;
+  }
+  try {
+    const parsed = new URL(url);
+    const from = new URL(fromBase);
+    if (parsed.host === from.host) {
+      return `${toBase}${parsed.pathname}${parsed.search}`;
+    }
+  } catch {
+    // ignore
+  }
+  return url;
+}
+
+function isRetryableUpstreamError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const anyErr = err as { name?: string; code?: string; cause?: { code?: string } };
+  if (anyErr.name === "AbortError" || anyErr.name === "TimeoutError") return true;
+  const code = anyErr.code || anyErr.cause?.code || "";
+  return ["ECONNREFUSED", "ETIMEDOUT", "ECONNRESET", "ENOTFOUND", "UND_ERR_CONNECT_TIMEOUT"].includes(
+    code,
+  );
 }
 
 /** Server-side fetch to the PHP backend (Next route handler + SSR). */
@@ -111,11 +158,17 @@ export async function backendFetch(
     delete options.cache;
   }
 
-  if (url.startsWith("https://") && process.env.NODE_ENV === "development") {
-    return nodeHttpsFetch(url, options);
+  try {
+    return await rawBackendFetch(url, options);
+  } catch (err) {
+    const fallback = getApiBackendFallbackBase();
+    if (!fallback || !isRetryableUpstreamError(err)) {
+      throw err;
+    }
+    const retryUrl = swapBackendHost(url, base, fallback);
+    if (retryUrl === url) throw err;
+    return rawBackendFetch(retryUrl, options);
   }
-
-  return fetch(url, options);
 }
 
 /** Copy response headers from PHP backend to the Next.js proxy response. */
@@ -138,12 +191,35 @@ export function forwardBackendHeaders(source: Headers): Headers {
 
   const setCookies =
     typeof source.getSetCookie === "function" ? source.getSetCookie() : [];
-  if (setCookies.length > 0) {
-    setCookies.forEach((cookie) => headers.append("set-cookie", cookie));
-  } else {
-    const single = source.get("set-cookie");
-    if (single) headers.append("set-cookie", single);
+  const cookies =
+    setCookies.length > 0
+      ? setCookies
+      : source.get("set-cookie")
+        ? [source.get("set-cookie") as string]
+        : [];
+
+  for (const cookie of cookies) {
+    headers.append("set-cookie", rewriteCookieForLocalProxy(cookie));
   }
 
   return headers;
+}
+
+/**
+ * Alwaysdata sets Secure session cookies. Next.js on http://localhost cannot
+ * store Secure cookies, so strip Secure/Domain in development.
+ */
+function rewriteCookieForLocalProxy(cookie: string): string {
+  if (process.env.NODE_ENV === "production") return cookie;
+
+  return cookie
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => {
+      const lower = part.toLowerCase();
+      if (lower === "secure") return false;
+      if (lower.startsWith("domain=")) return false;
+      return part.length > 0;
+    })
+    .join("; ");
 }

@@ -23,7 +23,10 @@ export function FavoritesList() {
         setError(res.error || t("favorites.loadFailed"));
         setItems([]);
       } else {
-        setItems((res.data?.items || []).map(mapApiProperty));
+        setItems((res.data?.items || []).map((item) => ({
+          ...mapApiProperty(item),
+          isFavorite: true,
+        })));
       }
       setLoading(false);
     });
@@ -66,7 +69,15 @@ export function FavoritesList() {
   return (
     <div className="properties-grid">
       {items.map((property) => (
-        <PropertyCard key={property.id} property={property} />
+        <PropertyCard
+          key={property.id}
+          property={property}
+          onFavoriteChange={(favorite) => {
+            if (!favorite) {
+              setItems((prev) => prev.filter((item) => item.id !== property.id));
+            }
+          }}
+        />
       ))}
     </div>
   );

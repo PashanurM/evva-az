@@ -7,6 +7,7 @@ import type {
   Property,
   PropertyFilters,
   PropertyListResult,
+  PublicOwnerProfile,
   Restaurant,
   RestaurantListResult,
   SiteConfig,
@@ -125,6 +126,61 @@ export const getProperty = cache(async (id: number): Promise<Property | null> =>
     return null;
   }
 });
+
+export const getPublicOwner = cache(async (id: number): Promise<PublicOwnerProfile | null> => {
+  if (!Number.isFinite(id) || id <= 0) return null;
+
+  const data = await serverFetch<PublicOwnerProfile>(`/owners/${id}`);
+  if (data?.owner?.id) {
+    return {
+      ...data,
+      properties: (data.properties || []).map(normalizeProperty),
+    };
+  }
+
+  // Fallback when /owners/{id} is not deployed yet (e.g. Alwaysdata lagging local PHP).
+  return buildPublicOwnerFromProperties(id);
+});
+
+async function buildPublicOwnerFromProperties(ownerId: number): Promise<PublicOwnerProfile | null> {
+  const listed = await getProperties({ sort: "newest" });
+  const candidates = listed.items || [];
+  if (candidates.length === 0) return null;
+
+  const details = await Promise.all(
+    candidates.slice(0, 60).map((item) => getProperty(Number(item.id))),
+  );
+
+  const owned = details.filter(
+    (item): item is Property =>
+      !!item && Number(item.owner?.id) === ownerId,
+  );
+
+  if (owned.length === 0) return null;
+
+  const owner = owned[0].owner!;
+  const profileImage = owner.profile_image || "";
+
+  return {
+    owner: {
+      id: owner.id,
+      name: owner.name || "",
+      bio: owner.bio || "",
+      profile_image: profileImage,
+      profile_image_url: profileImage,
+      created_at: owned[0].created_at || "",
+    },
+    stats: {
+      property_count: owned.length,
+      total_views: owned.reduce((sum, item) => sum + (item.views || 0), 0),
+      approved_bookings: 0,
+      avg_rating: 0,
+      rating_count: 0,
+    },
+    properties: owned.map(normalizeProperty),
+    total: owned.length,
+  };
+}
 
 export async function getRestaurants(
   filters: Record<string, string | undefined> = {},

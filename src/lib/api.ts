@@ -6,6 +6,9 @@ import type {
   Property,
   PropertyFilters,
   PropertyListResult,
+  PropertyRatingSummary,
+  PropertyReview,
+  PropertyUserRating,
   Restaurant,
   RestaurantListResult,
   SiteConfig,
@@ -271,6 +274,27 @@ export const api = {
 
   getProperty: (id: number) => apiFetch<Property>(`/properties/${id}`),
 
+  rateProperty: (
+    id: number,
+    payload: {
+      cleanliness_rating: number;
+      location_rating: number;
+      comfort_rating: number;
+      homeowner_rating: number;
+      comment?: string;
+    },
+  ) =>
+    apiFetch<{
+      message: string;
+      avg_rating: number;
+      rating_count: number;
+      rating_summary: PropertyRatingSummary;
+      user_rating: PropertyUserRating | null;
+      reviews: PropertyReview[];
+      can_rate: boolean;
+      has_confirmed_booking: boolean;
+    }>(`/properties/${id}/ratings`, { method: "POST", body: JSON.stringify(payload) }, true),
+
   toggleFavorite: (propertyId: number, action: "add" | "remove") =>
     apiFetch<{ action: string }>(
       "/favorites",
@@ -309,6 +333,17 @@ export const api = {
         rooms: number;
         views: number;
         booking_count: number;
+        favorite_count: number;
+        avg_rating?: number;
+        rating_count?: number;
+        rating_summary?: {
+          avg_rating: number;
+          rating_count: number;
+          cleanliness_avg: number;
+          location_avg: number;
+          comfort_avg: number;
+          homeowner_avg: number;
+        };
         is_active: boolean;
         is_featured: boolean;
         cover_url: string;
@@ -362,6 +397,11 @@ export const api = {
           check_out: string;
           source?: string;
         }>;
+        avg_rating?: number;
+        rating_count?: number;
+        rating_summary?: PropertyRatingSummary;
+        reviews?: PropertyReview[];
+        favorite_count?: number;
       };
       tags: string[];
     }>(`/owner/properties/${id}`),
@@ -372,6 +412,35 @@ export const api = {
       { method: "PUT", body: JSON.stringify(payload) },
       true,
     ),
+
+  patchOwnerProperty: (id: number, payload: { is_active?: boolean; is_featured?: boolean }) =>
+    apiFetch<{
+      message: string;
+      id: number;
+      property_id: number;
+      is_active?: boolean;
+      is_featured?: boolean;
+    }>(`/owner/properties/${id}`, { method: "PATCH", body: JSON.stringify(payload) }, true),
+
+  getMyRatings: () =>
+    apiFetch<{
+      items: Array<{
+        property_id: number;
+        title: string;
+        location: string;
+        price: number;
+        cover_url: string;
+        rating: number;
+        cleanliness_rating: number;
+        location_rating: number;
+        comfort_rating: number;
+        homeowner_rating: number;
+        comment: string;
+        created_at: string;
+        updated_at: string;
+      }>;
+      total: number;
+    }>("/auth/ratings"),
 
   saveOwnerBlockedDates: (id: number, dates: string[]) =>
     apiFetch<{ message: string; items: string[]; total: number }>(
@@ -520,27 +589,13 @@ export const api = {
     ),
 
   getConversation: (conversationId: number) =>
-    apiFetch<{
-      id: number;
-      property_id: number;
-      property_title: string;
-      guest_name: string;
-      owner_name: string;
-      messages: ChatMessage[];
-      total_messages: number;
-    }>(`/chat/conversations/${conversationId}`),
+    apiFetch<ConversationPayload>(`/chat/conversations/${conversationId}`),
 
   sendChatMessage: (conversationId: number, message: string) =>
     apiFetch<{
       message: string;
       message_id: number;
-      conversation: {
-        id: number;
-        property_id: number;
-        property_title: string;
-        messages: ChatMessage[];
-        total_messages: number;
-      };
+      conversation: ConversationPayload;
     }>(
       `/chat/conversations/${conversationId}/messages`,
       { method: "POST", body: JSON.stringify({ message }) },
@@ -550,13 +605,7 @@ export const api = {
   deleteChatMessage: (conversationId: number, messageId: number) =>
     apiFetch<{
       message: string;
-      conversation: {
-        id: number;
-        property_id: number;
-        property_title: string;
-        messages: ChatMessage[];
-        total_messages: number;
-      };
+      conversation: ConversationPayload;
     }>(
       `/chat/conversations/${conversationId}/messages/${messageId}/delete`,
       { method: "POST", body: JSON.stringify({ message_id: messageId }) },
@@ -586,6 +635,7 @@ export const api = {
         id: number;
         property_id: number;
         property_title: string;
+        conversation_id?: number;
         status: string;
         payment_status: string;
         check_in: string;
@@ -595,9 +645,58 @@ export const api = {
         guest_count: number;
         note: string;
         created_at: string;
+        contact_unlocked?: boolean;
+        can_confirm?: boolean;
+        can_cancel?: boolean;
+        confirm_blocked_reason?: string;
       }>;
       total: number;
     }>("/owner/bookings"),
+
+  ownerBookingAction: (bookingId: number, action: "confirm" | "cancel") =>
+    apiFetch<{
+      message: string;
+      booking: {
+        id: number;
+        property_id: number;
+        property_title: string;
+        conversation_id?: number;
+        status: string;
+        payment_status: string;
+        check_in: string;
+        check_out: string;
+        guest_name: string;
+        guest_phone: string;
+        guest_count: number;
+        note: string;
+        created_at: string;
+        contact_unlocked?: boolean;
+        can_confirm?: boolean;
+        can_cancel?: boolean;
+        confirm_blocked_reason?: string;
+      } | null;
+    }>(
+      `/owner/bookings/${bookingId}/action`,
+      { method: "POST", body: JSON.stringify({ action }) },
+      true,
+    ),
+
+  getOwnerRatings: () =>
+    apiFetch<{
+      items: Array<{
+        rating: number;
+        comment: string;
+        created_at: string;
+        full_name: string;
+        username: string;
+        property_id?: number;
+        property_title?: string;
+        source?: string;
+      }>;
+      total: number;
+      avg_rating: number;
+      rating_count: number;
+    }>("/owner/ratings"),
 
   updateProfile: (username: string) =>
     apiFetch<{ message: string; user: User }>(
@@ -628,4 +727,32 @@ type ChatMessage = {
   sender_name: string;
   sender_role: string;
   is_mine: boolean;
+};
+
+type ConversationPayload = {
+  id: number;
+  property_id: number;
+  property_title: string;
+  guest_name: string;
+  owner_name: string;
+  messages: ChatMessage[];
+  total_messages: number;
+  contact_unlocked?: boolean;
+  peer_name?: string;
+  peer_phone?: string;
+  phone_locked_message?: string;
+  both_sides_chatted?: boolean;
+  viewer_is_owner?: boolean;
+  booking?: {
+    id: number;
+    status: string;
+    payment_status: string;
+    check_in: string;
+    check_out: string;
+    guest_count: number;
+    guest_name: string;
+    can_confirm: boolean;
+    can_cancel: boolean;
+    confirm_blocked_reason: string;
+  } | null;
 };

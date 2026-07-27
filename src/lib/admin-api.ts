@@ -310,6 +310,27 @@ export interface AdminPropertyDetail {
   cover_path?: string;
   cover_image: AdminPropertyImage | null;
   images: AdminPropertyImage[];
+  avg_rating?: number;
+  rating_count?: number;
+  rating_summary?: {
+    avg_rating: number;
+    rating_count: number;
+    cleanliness_avg: number;
+    location_avg: number;
+    comfort_avg: number;
+    homeowner_avg: number;
+  };
+  reviews?: Array<{
+    rating: number;
+    cleanliness_rating: number;
+    location_rating: number;
+    comfort_rating: number;
+    homeowner_rating: number;
+    comment: string;
+    full_name: string;
+    username: string;
+    created_at: string;
+  }>;
 }
 
 export type AdminPropertyPayload = Record<string, unknown>;

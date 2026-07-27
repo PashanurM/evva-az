@@ -14,6 +14,7 @@ import {
   MapPin,
   Menu,
   MessageSquare,
+  Heart,
   Shield,
   UserRound,
   UtensilsCrossed,
@@ -34,7 +35,7 @@ import type { SiteConfig } from "@/lib/types";
 const SCROLL_THRESHOLD = 56;
 const SCROLL_RANGE = 180;
 const SCROLL_SMOOTHING = 0.14;
-const MOBILE_NAV_BREAKPOINT = 768;
+const MOBILE_NAV_BREAKPOINT = 1100;
 
 function syncHeaderHeight(el: HTMLElement) {
   document.documentElement.style.setProperty(
@@ -256,6 +257,9 @@ export function Header() {
           {t("nav.myBookings")}
         </Link>
       )}
+      <Link href="/favorites" className="auth-btn" onClick={() => setMenuOpen(false)}>
+        {t("nav.favorites")}
+      </Link>
       {showOwnerPanelLink && (
         <Link href="/my-houses" className="auth-btn primary" onClick={() => setMenuOpen(false)}>
           {t("nav.ownerPanel")}
@@ -337,6 +341,10 @@ export function Header() {
             {t("nav.myBookings")}
           </Link>
         )}
+        <Link href="/favorites" className="profile-menu-item" role="menuitem">
+          <Heart size={18} aria-hidden />
+          {t("nav.favorites")}
+        </Link>
         {showOwnerPanelLink && (
           <Link href="/my-houses" className="profile-menu-item" role="menuitem">
             <Home size={18} aria-hidden />

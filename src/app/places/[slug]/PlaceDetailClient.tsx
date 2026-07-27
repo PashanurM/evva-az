@@ -152,15 +152,17 @@ export function PlaceDetailClient({ place, images, mapsUrl }: PlaceDetailClientP
               )}
             </dl>
 
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="premium-map-btn"
-              style={{ marginTop: 16, marginBottom: 20 }}
-            >
-              <MapPin size={16} /> {t("common.viewOnMap")}
-            </a>
+            {mapsUrl ? (
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="premium-map-btn"
+                style={{ marginTop: 16, marginBottom: 20 }}
+              >
+                <MapPin size={16} /> {t("common.viewOnMap")}
+              </a>
+            ) : null}
 
             <h3>{t("common.rating")}</h3>
             <PlaceRatingForm />

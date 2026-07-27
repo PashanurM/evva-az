@@ -8,6 +8,7 @@ import {
   CalendarRange,
   ChevronLeft,
   ChevronRight,
+  Heart,
   Home,
   ImageIcon,
   MapPin,
@@ -19,6 +20,7 @@ import { BusyDaysPicker } from "@/components/property/BusyDaysPicker";
 import { api, assetUrl, type OwnerPropertyImage } from "@/lib/api";
 import { consumePostLogoutRedirect, markAdminOwnerMode } from "@/lib/auth-redirect";
 import { GABALA_LOCATIONS, resolveLocationOptions } from "@/lib/locations";
+import type { PropertyRatingSummary, PropertyReview } from "@/lib/types";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
 
@@ -55,6 +57,7 @@ type FormState = {
   house_rules: string;
   cancellation_policy: string;
   is_active: boolean;
+  is_featured: boolean;
   tags: string[];
   amenities: Record<string, boolean>;
 };
@@ -79,6 +82,7 @@ const emptyForm = (): FormState => ({
   house_rules: "",
   cancellation_policy: "",
   is_active: true,
+  is_featured: false,
   tags: [],
   amenities: Object.fromEntries(AMENITIES.map((a) => [a.key, false])),
 });
@@ -117,6 +121,9 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
   const [imageBusy, setImageBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [ratingSummary, setRatingSummary] = useState<PropertyRatingSummary | null>(null);
+  const [reviews, setReviews] = useState<PropertyReview[]>([]);
+  const [favoriteCount, setFavoriteCount] = useState(0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -175,6 +182,7 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
         house_rules: p.house_rules || "",
         cancellation_policy: p.cancellation_policy || "",
         is_active: Boolean(p.is_active),
+        is_featured: Boolean(p.is_featured),
         tags: p.tags_list || [],
         amenities: Object.fromEntries(
           AMENITIES.map((a) => [a.key, Boolean((p as Record<string, unknown>)[a.key])]),
@@ -196,6 +204,9 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
       setBookedRanges(
         (p.occupied_ranges || []).filter((r) => (r.source || "booking") === "booking"),
       );
+      setRatingSummary(p.rating_summary || null);
+      setReviews(p.reviews || []);
+      setFavoriteCount(Number(p.favorite_count || 0));
       setLoading(false);
     })();
   }, [authLoading, user, router, propertyId]);
@@ -395,6 +406,7 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
       house_rules: form.house_rules,
       cancellation_policy: form.cancellation_policy,
       is_active: form.is_active,
+      is_featured: form.is_featured,
       tags: form.tags,
       ...form.amenities,
     });
@@ -488,6 +500,58 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
             {notice}
           </div>
         ) : null}
+
+        <div className="owner-edit-section" style={{ marginBottom: 18 }}>
+          <h2>
+            <Star size={18} /> Reytinq və sevimlilər
+          </h2>
+          <div className="owner-house-meta" style={{ marginBottom: 10 }}>
+            <span>
+              <Heart size={13} /> {favoriteCount} sevimli
+            </span>
+            <span>
+              <Star size={13} fill={Number(ratingSummary?.rating_count || 0) > 0 ? "currentColor" : "none"} />
+              {Number(ratingSummary?.rating_count || 0) > 0
+                ? `${Number(ratingSummary?.avg_rating || 0).toFixed(1)} / 10 · ${ratingSummary?.rating_count} rəy`
+                : "Hələ reytinq yoxdur"}
+            </span>
+          </div>
+          {ratingSummary && Number(ratingSummary.rating_count || 0) > 0 ? (
+            <div className="owner-house-ratings">
+              <span>Təmizlik {Number(ratingSummary.cleanliness_avg || 0).toFixed(1)}</span>
+              <span>Yerləşmə {Number(ratingSummary.location_avg || 0).toFixed(1)}</span>
+              <span>Rahatlıq {Number(ratingSummary.comfort_avg || 0).toFixed(1)}</span>
+              <span>Ev sahibi {Number(ratingSummary.homeowner_avg || 0).toFixed(1)}</span>
+            </div>
+          ) : null}
+          {reviews.length > 0 ? (
+            <div className="property-reviews-list" style={{ marginTop: 8 }}>
+              <h3 style={{ fontSize: 15, margin: "4px 0 0" }}>Reytinq tarixçəsi</h3>
+              {reviews.map((review, index) => (
+                <article
+                  key={`${review.username}-${review.created_at}-${index}`}
+                  className="property-review-card"
+                >
+                  <div className="property-review-head">
+                    <strong>{review.full_name || review.username || "Qonaq"}</strong>
+                    <span>{Number(review.rating || 0).toFixed(1)}/10</span>
+                  </div>
+                  {review.comment ? <p>{review.comment}</p> : null}
+                  <div className="property-review-cats">
+                    <span>Təmizlik: {review.cleanliness_rating}</span>
+                    <span>Yerləşmə: {review.location_rating}</span>
+                    <span>Rahatlıq: {review.comfort_rating}</span>
+                    <span>Ev sahibi: {review.homeowner_rating}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="owner-edit-hint" style={{ marginTop: 8 }}>
+              Bu ev üçün hələ rəy/rating tarixçəsi yoxdur.
+            </p>
+          )}
+        </div>
 
         <form className="owner-edit-form" onSubmit={(e) => void handleSave(e)}>
           <div className="owner-edit-section">
@@ -600,6 +664,14 @@ export function OwnerPropertyEditClient({ propertyId }: { propertyId: number }) 
                 onChange={(e) => update("is_active", e.target.checked)}
               />
               <span>Ev aktiv olsun (saytda görünsün)</span>
+            </label>
+            <label className="owner-edit-switch">
+              <input
+                type="checkbox"
+                checked={form.is_featured}
+                onChange={(e) => update("is_featured", e.target.checked)}
+              />
+              <span>Premium / seçilmiş ev et</span>
             </label>
           </div>
 

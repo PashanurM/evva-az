@@ -50,7 +50,13 @@ export default async function PlaceDetailPage({ params }: PageProps) {
       ? [place.image]
       : [];
 
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.location)}`;
+  const mapsQuery =
+    place.lat && place.lng
+      ? `${place.lat},${place.lng}`
+      : place.address || place.location;
+  const mapsUrl = mapsQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`
+    : "";
 
   return (
     <PlaceDetailClient place={place} images={images} mapsUrl={mapsUrl} />

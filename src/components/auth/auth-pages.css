@@ -376,3 +376,22 @@
 .dark .login-switch button.active {
   color: var(--primary-light);
 }
+
+.profile-favorites-card {
+  margin-top: 22px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border-color));
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-primary));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.profile-favorites-card p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}

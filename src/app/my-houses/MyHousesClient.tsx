@@ -8,10 +8,12 @@ import {
   Building2,
   CalendarCheck,
   Eye,
+  Heart,
   MapPin,
   MessageCircle,
   Pencil,
   Sparkles,
+  Star,
 } from "lucide-react";
 import { api, assetUrl } from "@/lib/api";
 import {
@@ -31,6 +33,17 @@ type OwnerProperty = {
   rooms: number;
   views: number;
   booking_count: number;
+  favorite_count: number;
+  avg_rating?: number;
+  rating_count?: number;
+  rating_summary?: {
+    avg_rating: number;
+    rating_count: number;
+    cleanliness_avg: number;
+    location_avg: number;
+    comfort_avg: number;
+    homeowner_avg: number;
+  };
   is_active: boolean;
   is_featured: boolean;
   cover_url: string;
@@ -40,13 +53,19 @@ type OwnerBooking = {
   id: number;
   property_id: number;
   property_title: string;
+  conversation_id?: number;
   status: string;
+  payment_status?: string;
   check_in: string;
   check_out: string;
   guest_name: string;
   guest_phone: string;
   guest_count: number;
   created_at: string;
+  contact_unlocked?: boolean;
+  can_confirm?: boolean;
+  can_cancel?: boolean;
+  confirm_blocked_reason?: string;
 };
 
 type ConversationItem = {
@@ -58,9 +77,21 @@ type ConversationItem = {
   updated_at: string;
 };
 
+type OwnerRatingItem = {
+  rating: number;
+  comment: string;
+  created_at: string;
+  full_name: string;
+  username: string;
+  property_id?: number;
+  property_title?: string;
+  source?: string;
+};
+
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
     pending: "Gözləyir",
+    payment_pending: "Sayt payı gözlənilir",
     approved: "Təsdiqlənib",
     rejected: "Rədd edilib",
     cancelled: "Ləğv edilib",
@@ -89,9 +120,14 @@ export function MyHousesClient() {
   const [items, setItems] = useState<OwnerProperty[]>([]);
   const [bookings, setBookings] = useState<OwnerBooking[]>([]);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [ownerRatings, setOwnerRatings] = useState<OwnerRatingItem[]>([]);
+  const [ownerRatingAvg, setOwnerRatingAvg] = useState(0);
+  const [ownerRatingCount, setOwnerRatingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [authRetrying, setAuthRetrying] = useState(false);
+  const [premiumBusy, setPremiumBusy] = useState<number | null>(null);
+  const [bookingBusy, setBookingBusy] = useState<number | null>(null);
   const authRetryDone = useRef(false);
 
   useEffect(() => {
@@ -126,10 +162,11 @@ export function MyHousesClient() {
     void (async () => {
       setLoading(true);
       setError("");
-      const [housesRes, bookingsRes, chatsRes] = await Promise.all([
+      const [housesRes, bookingsRes, chatsRes, ratingsRes] = await Promise.all([
         api.getOwnerProperties(),
         api.getOwnerBookings(),
         api.getMyConversations(),
+        api.getOwnerRatings(),
       ]);
 
       const failures: string[] = [];
@@ -154,6 +191,16 @@ export function MyHousesClient() {
         setConversations(chatsRes.data.items);
       }
 
+      if (ratingsRes.success && ratingsRes.data) {
+        setOwnerRatings(ratingsRes.data.items || []);
+        setOwnerRatingAvg(Number(ratingsRes.data.avg_rating || 0));
+        setOwnerRatingCount(Number(ratingsRes.data.rating_count || 0));
+      } else {
+        setOwnerRatings([]);
+        setOwnerRatingAvg(0);
+        setOwnerRatingCount(0);
+      }
+
       setError(failures[0] || "");
       setLoading(false);
     })();
@@ -172,6 +219,62 @@ export function MyHousesClient() {
       messages: conversations.length,
     };
   }, [items, bookings, conversations]);
+
+  async function handleBookingAction(booking: OwnerBooking, action: "confirm" | "cancel") {
+    if (action === "confirm" && !booking.can_confirm) {
+      setError(booking.confirm_blocked_reason || "Təsdiq üçün əvvəlcə chatda mesajlaşın.");
+      return;
+    }
+    if (action === "cancel" && !booking.can_cancel) {
+      setError("Bu rezerv artıq ləğv edilə bilməz.");
+      return;
+    }
+    if (action === "cancel") {
+      const ok = window.confirm("Bu rezerv sorğusunu ləğv etmək istəyirsiniz?");
+      if (!ok) return;
+    }
+
+    setBookingBusy(booking.id);
+    setError("");
+    const res = await api.ownerBookingAction(booking.id, action);
+    if (!res.success) {
+      setError(res.error || "Əməliyyat uğursuz oldu");
+      setBookingBusy(null);
+      return;
+    }
+    if (res.data?.booking) {
+      setBookings((current) =>
+        current.map((item) => (item.id === booking.id ? { ...item, ...res.data!.booking! } : item)),
+      );
+    } else {
+      const refreshed = await api.getOwnerBookings();
+      if (refreshed.success && refreshed.data) {
+        setBookings(refreshed.data.items);
+      }
+    }
+    setBookingBusy(null);
+  }
+
+  async function togglePremium(house: OwnerProperty) {
+    const next = !house.is_featured;
+    setPremiumBusy(house.id);
+    setError("");
+    setItems((current) =>
+      current.map((item) =>
+        item.id === house.id ? { ...item, is_featured: next } : item,
+      ),
+    );
+    const res = await api.patchOwnerProperty(house.id, { is_featured: next });
+    if (!res.success) {
+      setItems((current) =>
+        current.map((item) =>
+          item.id === house.id ? { ...item, is_featured: house.is_featured } : item,
+        ),
+      );
+      setError(res.error || "Premium status yenilənmədi");
+    }
+    setPremiumBusy(null);
+  }
 
   if (authLoading || authRetrying || (loading && Boolean(user))) {
     return (
@@ -271,25 +374,61 @@ export function MyHousesClient() {
                 <div className="owner-house-body">
                   <div className="owner-house-topline">
                     <h2>{house.title}</h2>
-                    <span className={`admin-badge${house.is_active ? " admin-badge--ok" : ""}`}>
+                    <span
+                      className={`owner-status-badge${house.is_active ? " owner-status-badge--active" : " owner-status-badge--inactive"}`}
+                    >
                       {house.is_active ? "Aktiv" : "Deaktiv"}
                     </span>
                   </div>
-                  <p>
+                  <p className="owner-house-location">
                     <MapPin size={14} /> {house.location}
                   </p>
+                  <div className="owner-house-price-row">
+                    <strong>{house.price} ₼</strong>
+                    <span>/gecə</span>
+                  </div>
                   <div className="owner-house-meta">
-                    <span>{house.price} ₼/gecə</span>
                     <span>{house.rooms} otaq</span>
                     <span>{house.capacity} nəfər</span>
                     <span>
                       <Eye size={13} /> {house.views}
                     </span>
                     <span>
-                      <CalendarCheck size={13} /> {house.booking_count} rezerv
+                      <CalendarCheck size={13} /> {house.booking_count}
+                    </span>
+                    <span>
+                      <Heart size={13} /> {house.favorite_count ?? 0}
                     </span>
                   </div>
+                  <div className="owner-house-rating-line">
+                    <Star size={14} fill={(house.rating_count || 0) > 0 ? "currentColor" : "none"} />
+                    {(house.rating_count || 0) > 0 ? (
+                      <span>
+                        <b>{Number(house.avg_rating || 0).toFixed(1)}</b>
+                        <em>({house.rating_count} rəy)</em>
+                      </span>
+                    ) : (
+                      <span className="owner-house-rating-empty">Ev üçün dəyərləndirmə edilməyib</span>
+                    )}
+                  </div>
+                  {(house.rating_count || 0) > 0 && house.rating_summary ? (
+                    <div className="owner-house-ratings">
+                      <span>Təmizlik {Number(house.rating_summary.cleanliness_avg || 0).toFixed(1)}</span>
+                      <span>Yerləşmə {Number(house.rating_summary.location_avg || 0).toFixed(1)}</span>
+                      <span>Rahatlıq {Number(house.rating_summary.comfort_avg || 0).toFixed(1)}</span>
+                      <span>Ev sahibi {Number(house.rating_summary.homeowner_avg || 0).toFixed(1)}</span>
+                    </div>
+                  ) : null}
                   <div className="owner-house-actions">
+                    <button
+                      type="button"
+                      className={`auth-btn owner-house-btn${house.is_featured ? " is-premium-on" : ""}`}
+                      disabled={premiumBusy === house.id}
+                      onClick={() => void togglePremium(house)}
+                    >
+                      <Sparkles size={14} />
+                      {house.is_featured ? "Premiumdur" : "Premium et"}
+                    </button>
                     <Link href={`/my-houses/${house.id}/edit`} className="auth-btn primary owner-house-btn">
                       <Pencil size={14} /> Redaktə et
                     </Link>
@@ -306,7 +445,7 @@ export function MyHousesClient() {
           </div>
         ) : null}
 
-        <div className="owner-panel-section owner-inbox-section">
+        <div className="owner-panel-section owner-inbox-section owner-panel-card">
           <div className="owner-panel-section-head">
             <div className="owner-inbox-title">
               <MessageCircle size={18} aria-hidden />
@@ -349,33 +488,112 @@ export function MyHousesClient() {
           )}
         </div>
 
-        <div className="owner-panel-section">
+        <div className="owner-panel-section owner-panel-card">
           <div className="owner-panel-section-head">
             <h2>Rezervasiyalar</h2>
             <span>{bookings.length} ümumi</span>
           </div>
           {bookings.length === 0 ? (
-            <p style={{ color: "var(--text-secondary)" }}>Hələ rezerv sorğusu yoxdur.</p>
+            <p className="owner-panel-empty">Hələ rezerv sorğusu yoxdur.</p>
           ) : (
             <div className="messages-list">
               {bookings.map((b) => (
-                <div key={b.id} className="messages-list-item">
+                <div key={b.id} className="messages-list-item owner-booking-card">
                   <div>
                     <strong>{b.property_title || `Elan #${b.property_id}`}</strong>
                     <span>
-                      {b.guest_name} · {b.guest_phone}
+                      {b.guest_name}
+                      {b.contact_unlocked && b.guest_phone
+                        ? ` · ${b.guest_phone}`
+                        : " · Nömrə təsdiqdən sonra görünəcək"}
                     </span>
                   </div>
                   <p>
                     {b.check_in} — {b.check_out} · {b.guest_count} nəfər
                   </p>
                   <div className="owner-booking-footer">
-                    <span className={`admin-badge${b.status === "approved" ? " admin-badge--ok" : ""}`}>
+                    <span
+                      className={`admin-badge${
+                        b.status === "approved" || b.status === "payment_pending"
+                          ? " admin-badge--ok"
+                          : ""
+                      }`}
+                    >
                       {statusLabel(b.status)}
                     </span>
                     <small>{b.created_at}</small>
                   </div>
+                  {b.status === "pending" && b.confirm_blocked_reason ? (
+                    <p className="owner-booking-hint">{b.confirm_blocked_reason}</p>
+                  ) : null}
+                  <div className="owner-booking-actions">
+                    {b.conversation_id ? (
+                      <Link
+                        href={`/chat?conversation_id=${b.conversation_id}&property_id=${b.property_id}`}
+                        className="auth-btn owner-house-btn"
+                      >
+                        Chat
+                      </Link>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="auth-btn primary owner-house-btn"
+                      disabled={!b.can_confirm || bookingBusy === b.id}
+                      onClick={() => void handleBookingAction(b, "confirm")}
+                      title={b.confirm_blocked_reason || "Təsdiqlə"}
+                    >
+                      Təsdiqlə
+                    </button>
+                    <button
+                      type="button"
+                      className="auth-btn owner-house-btn"
+                      disabled={!b.can_cancel || bookingBusy === b.id}
+                      onClick={() => void handleBookingAction(b, "cancel")}
+                    >
+                      Ləğv et
+                    </button>
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="owner-panel-section owner-panel-card">
+          <div className="owner-panel-section-head">
+            <div className="owner-inbox-title">
+              <Star size={18} aria-hidden />
+              <h2>Reytinq tarixçəm</h2>
+            </div>
+            {ownerRatingCount > 0 ? (
+              <span>
+                {ownerRatingAvg.toFixed(1)} / 10 · {ownerRatingCount} rəy
+              </span>
+            ) : (
+              <span>Rəy yoxdur</span>
+            )}
+          </div>
+          {ownerRatings.length === 0 ? (
+            <p className="owner-panel-empty">Sənin haqqında hələ reytinq yoxdur.</p>
+          ) : (
+            <div className="owner-rating-history">
+              {ownerRatings.slice(0, 10).map((item, index) => (
+                <article key={`${item.created_at}-${index}`} className="owner-rating-history-item">
+                  <div className="owner-rating-history-head">
+                    <strong>{item.full_name || item.username || "Qonaq"}</strong>
+                    <span>{Number(item.rating || 0).toFixed(1)}/10</span>
+                  </div>
+                  {item.property_title ? (
+                    <small>
+                      {item.property_id ? (
+                        <Link href={`/property/${item.property_id}`}>{item.property_title}</Link>
+                      ) : (
+                        item.property_title
+                      )}
+                    </small>
+                  ) : null}
+                  {item.comment ? <p>{item.comment}</p> : null}
+                </article>
               ))}
             </div>
           )}

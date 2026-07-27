@@ -120,11 +120,17 @@ export function PropertyDetailLoader({
         const direct = await api.getProperty(propertyId);
         if (active && direct.success && direct.data?.id) {
           const mapped = mapApiProperty(direct.data);
+          const nextMaps =
+            mapped.lat && mapped.lng
+              ? `https://www.google.com/maps/search/?api=1&query=${mapped.lat},${mapped.lng}`
+              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapped.location)}`;
+          setMapsUrl(nextMaps);
           setProperty((prev) =>
             prev
               ? {
                   ...prev,
-                  occupiedRanges: mapped.occupiedRanges || [],
+                  ...mapped,
+                  occupiedRanges: mapped.occupiedRanges || prev.occupiedRanges || [],
                   images:
                     (mapped.images || []).length > (prev.images || []).length
                       ? mapped.images
