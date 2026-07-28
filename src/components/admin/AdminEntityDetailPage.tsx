@@ -93,10 +93,8 @@ const RESOURCE_META: Record<
         label: "Status",
         type: "select",
         options: [
-          { value: "pending", label: "Gözləyən" },
-          { value: "payment_pending", label: "Ödəniş gözləyir" },
+          { value: "pending", label: "Təsdiq gözləyir" },
           { value: "approved", label: "Təsdiqlənib" },
-          { value: "rejected", label: "Rədd edilib" },
           { value: "cancelled", label: "Ləğv edilib" },
         ],
       },
@@ -105,14 +103,13 @@ const RESOURCE_META: Record<
         label: "Ödəniş statusu",
         type: "select",
         options: [
-          { value: "none", label: "Yoxdur" },
           { value: "awaiting_site_fee", label: "Platforma ödənişi gözləyir" },
           { value: "site_fee_paid", label: "Platforma ödənişi edilib" },
           { value: "cancelled", label: "Ləğv edilib" },
         ],
       },
-      { key: "platform_fee_per_night", label: "Gecəlik platforma haqqı", type: "number" },
-      { key: "platform_fee_total", label: "Ümumi platforma haqqı", type: "number" },
+      { key: "platform_fee_per_night", label: "Gecəlik platforma haqqı (₼)", type: "number" },
+      { key: "platform_fee_total", label: "Ümumi platforma haqqı (₼)", type: "number" },
       { key: "admin_payment_note", label: "Admin ödəniş qeydi", type: "textarea" },
       { key: "owner_cancel_locked", label: "Sahib üçün ləğv kilidi", type: "boolean" },
     ],
@@ -230,10 +227,24 @@ const FIELD_LABELS: Record<string, string> = {
   property_id: "Mülk ID",
   property_title: "Mülk",
   property_location: "Mülkün məkanı",
+  guest_name: "Qonaq adı",
+  guest_phone: "Qonaq telefonu",
+  guest_count: "Qonaq sayı",
   guest_user_name: "Qeydiyyatlı qonaq",
   guest_username: "Qonaq istifadəçi adı",
   owner_name: "Sahib",
   owner_phone: "Sahib telefonu",
+  check_in: "Giriş tarixi",
+  check_out: "Çıxış tarixi",
+  note: "Qeyd",
+  status: "Status",
+  payment_status: "Ödəniş statusu",
+  platform_fee_per_night: "Gecəlik platforma haqqı",
+  platform_fee_total: "Ümumi platforma haqqı",
+  admin_payment_note: "Admin ödəniş qeydi",
+  owner_cancel_locked: "Sahib üçün ləğv kilidi",
+  owner_confirmed_at: "Sahib təsdiq tarixi",
+  contact_unlocked_at: "Nömrələrin açılma tarixi",
   created_at: "Yaradılma tarixi",
   updated_at: "Yenilənmə tarixi",
   menu_count: "Menyu sayı",
@@ -776,19 +787,51 @@ function RestaurantDetailView({ entity }: { entity: Record<string, unknown> }) {
 
       <section className="admin-panel-card admin-property-section">
         <h2><CookingPot size={20} /> Menyu kateqoriyaları</h2>
-        <div className="admin-detail-text-grid">
-          {[
-            ["local_foods", "Yerli yeməklər"],
-            ["foreign_foods", "Xarici yeməklər"],
-            ["desserts", "Desertlər"],
-            ["drinks", "İçkilər"],
-          ].map(([key, label]) => (
-            <label key={key}>
-              <span>{label}</span>
-              <textarea value={String(entity[key] || "Məlumat əlavə edilməyib.")} readOnly rows={4} />
-            </label>
-          ))}
-        </div>
+        {Array.isArray((entity.menu as { categories?: unknown[] } | undefined)?.categories) &&
+        ((entity.menu as { categories: Array<Record<string, unknown>> }).categories.length > 0) ? (
+          <div className="admin-detail-text-grid">
+            {(entity.menu as { categories: Array<Record<string, unknown>> }).categories.map((category) => {
+              const items = Array.isArray(category.items) ? category.items as Array<Record<string, unknown>> : [];
+              return (
+                <label key={String(category.id)}>
+                  <span>
+                    {String(category.title)}
+                    {(category.kind === "meal_set" ? " (Set)" : "")}
+                  </span>
+                  <textarea
+                    value={
+                      items.length
+                        ? items
+                            .map((item) => {
+                              const price = Number(item.price || 0).toFixed(2);
+                              const ingredients = String(item.ingredients || item.description || "").trim();
+                              return `${item.title} — ${price} ₼${ingredients ? ` (${ingredients})` : ""}`;
+                            })
+                            .join("\n")
+                        : "Məhsul yoxdur."
+                    }
+                    readOnly
+                    rows={Math.min(8, Math.max(3, items.length + 1))}
+                  />
+                </label>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="admin-detail-text-grid">
+            {[
+              ["local_foods", "Yerli yeməklər"],
+              ["foreign_foods", "Xarici yeməklər"],
+              ["desserts", "Desertlər"],
+              ["drinks", "İçkilər"],
+            ].map(([key, label]) => (
+              <label key={key}>
+                <span>{label}</span>
+                <textarea value={String(entity[key] || "Məlumat əlavə edilməyib.")} readOnly rows={4} />
+              </label>
+            ))}
+          </div>
+        )}
       </section>
 
       <ModuleGallery images={entity.images} />
@@ -1018,6 +1061,109 @@ function UserDetailView({ entity }: { entity: Record<string, unknown> }) {
   );
 }
 
+function bookingStatusAz(status: string): string {
+  if (status === "approved") return "Təsdiqlənib";
+  if (status === "pending" || status === "payment_pending") return "Təsdiq gözləyir";
+  if (status === "cancelled" || status === "rejected") return "Ləğv edilib";
+  return status || "—";
+}
+
+function paymentStatusAz(status: string): string {
+  if (status === "site_fee_paid") return "Platforma ödənişi edilib";
+  if (status === "awaiting_site_fee") return "Platforma ödənişi gözləyir";
+  if (status === "cancelled") return "Ləğv edilib";
+  if (!status || status === "none") return "—";
+  return status;
+}
+
+function ReservationDetailView({ entity }: { entity: Record<string, unknown> }) {
+  const status = String(entity.status || "");
+  const payment = String(entity.payment_status || "");
+  const fee = Number(entity.platform_fee_total || 0);
+
+  return (
+    <div className="admin-reservation-detail">
+      <section className="admin-panel-card admin-reservation-hero">
+        <div>
+          <span className="section-kicker">Rezervasiya</span>
+          <h2>{String(entity.property_title || `Mülk #${entity.property_id || ""}`)}</h2>
+          <p>{String(entity.property_location || "Ünvan göstərilməyib")}</p>
+        </div>
+        <div className="admin-reservation-badges">
+          <span className={`admin-badge${status === "approved" ? " admin-badge--ok" : status === "pending" || status === "payment_pending" ? " admin-badge--warn" : ""}`}>
+            {bookingStatusAz(status)}
+          </span>
+          <span className={`admin-badge${payment === "site_fee_paid" ? " admin-badge--ok" : payment === "awaiting_site_fee" ? " admin-badge--warn" : ""}`}>
+            {paymentStatusAz(payment)}
+          </span>
+        </div>
+      </section>
+
+      <section className="admin-detail-grid">
+        <div className="admin-detail-item">
+          <span>Qonaq</span>
+          <strong>{String(entity.guest_name || "—")}</strong>
+        </div>
+        <div className="admin-detail-item">
+          <span>Qonaq telefonu</span>
+          <strong>{String(entity.guest_phone || "—")}</strong>
+        </div>
+        <div className="admin-detail-item">
+          <span>Qonaq sayı</span>
+          <strong>{String(entity.guest_count || "—")}</strong>
+        </div>
+        <div className="admin-detail-item">
+          <span>Ev sahibi</span>
+          <strong>{String(entity.owner_name || "—")}</strong>
+        </div>
+        <div className="admin-detail-item">
+          <span>Sahib telefonu</span>
+          <strong>{String(entity.owner_phone || "—")}</strong>
+        </div>
+        <div className="admin-detail-item">
+          <span>Giriş / Çıxış</span>
+          <strong>
+            {String(entity.check_in || "—")} → {String(entity.check_out || "—")}
+          </strong>
+        </div>
+        <div className="admin-detail-item">
+          <span>Platforma haqqı</span>
+          <strong>{fee.toFixed(2)} ₼</strong>
+        </div>
+        <div className="admin-detail-item">
+          <span>Gecəlik haqq</span>
+          <strong>{Number(entity.platform_fee_per_night || 0).toFixed(2)} ₼</strong>
+        </div>
+        <div className="admin-detail-item">
+          <span>Yaradılma</span>
+          <strong>{String(entity.created_at || "—")}</strong>
+        </div>
+        <div className="admin-detail-item">
+          <span>Sahib təsdiqi</span>
+          <strong>{String(entity.owner_confirmed_at || "—")}</strong>
+        </div>
+      </section>
+
+      <section className="admin-panel-card">
+        <h3 style={{ marginTop: 0 }}>Ödəniş qeydi</h3>
+        <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+          {String(entity.admin_payment_note || "Qeyd yoxdur.")}
+        </p>
+        {entity.note ? (
+          <>
+            <h3>Qonaq qeydi</h3>
+            <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{String(entity.note)}</p>
+          </>
+        ) : null}
+        <p style={{ marginTop: 16, color: "var(--text-secondary)", lineHeight: 1.55 }}>
+          Platforma ödənişini aldığınızda “Redaktə et”dən ödəniş statusunu
+          <strong> Platforma ödənişi edilib</strong> edin. Bu məbləğ ümumi qazanca əlavə olunur.
+        </p>
+      </section>
+    </div>
+  );
+}
+
 export function AdminEntityDetailPage({
   resource,
   id,
@@ -1041,8 +1187,23 @@ export function AdminEntityDetailPage({
     setError("");
     const res = await adminApi.getEntityDetail(resource, id);
     if (res.success && res.data) {
-      setEntity(res.data.entity);
-      setForm(res.data.entity);
+      const raw = res.data.entity;
+      const normalized = { ...raw };
+      if (resource === "reservations") {
+        const st = String(raw.status || "");
+        const pay = String(raw.payment_status || "");
+        if (st === "payment_pending" || st === "rejected") {
+          normalized.status = st === "rejected" ? "cancelled" : "pending";
+        }
+        if (!pay || pay === "none") {
+          normalized.payment_status =
+            st === "approved" ? "site_fee_paid" : st === "cancelled" || st === "rejected"
+              ? "cancelled"
+              : "awaiting_site_fee";
+        }
+      }
+      setEntity(raw);
+      setForm(normalized);
     } else {
       setError(res.error || "Məlumat yüklənmədi");
     }
@@ -1228,6 +1389,8 @@ export function AdminEntityDetailPage({
           <PlaceDetailView entity={entity} />
         ) : entity && resource === "users" ? (
           <UserDetailView entity={entity} />
+        ) : entity && resource === "reservations" ? (
+          <ReservationDetailView entity={entity} />
         ) : entity ? (
           <>
             <section className="admin-detail-grid">

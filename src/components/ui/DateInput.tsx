@@ -47,12 +47,38 @@ export interface DateInputProps {
   onChange?: (value: string) => void;
   min?: string;
   max?: string;
+  /** ISO dates that cannot be selected (occupied nights: check_in inclusive, check_out exclusive). */
+  occupiedRanges?: Array<{ check_in: string; check_out: string; source?: string }>;
+  /** When set (checkout picker), disable days whose stay from rangeStart would cross occupied nights. */
+  rangeStart?: string;
   required?: boolean;
   disabled?: boolean;
   placeholder?: string;
   "aria-label"?: string;
   className?: string;
   variant?: "default" | "search" | "admin";
+}
+
+function isOccupiedIso(
+  iso: string,
+  ranges: Array<{ check_in: string; check_out: string }>,
+): boolean {
+  for (const range of ranges) {
+    if (iso >= range.check_in && iso < range.check_out) return true;
+  }
+  return false;
+}
+
+function stayCrossesOccupied(
+  start: string,
+  end: string,
+  ranges: Array<{ check_in: string; check_out: string }>,
+): boolean {
+  if (!start || !end || end <= start) return false;
+  for (const range of ranges) {
+    if (start < range.check_out && end > range.check_in) return true;
+  }
+  return false;
 }
 
 export function DateInput({
@@ -63,6 +89,8 @@ export function DateInput({
   onChange,
   min,
   max,
+  occupiedRanges = [],
+  rangeStart,
   required,
   disabled,
   placeholder,
@@ -171,9 +199,11 @@ export function DateInput({
       }
       left = Math.max(12, left);
 
-      const top = openUp
-        ? Math.max(12, rect.top - estimatedHeight - gap)
+      const headerOffset = 100;
+      let top = openUp
+        ? Math.max(headerOffset, rect.top - estimatedHeight - gap)
         : Math.min(rect.bottom + gap, window.innerHeight - estimatedHeight - 12);
+      top = Math.max(headerOffset, top);
 
       setPopoverStyle({
         position: "fixed",
@@ -223,7 +253,13 @@ export function DateInput({
   function isDisabledDay(iso: string) {
     if (min && iso < min) return true;
     if (max && iso > max) return true;
+    if (isOccupiedIso(iso, occupiedRanges)) return true;
+    if (rangeStart && stayCrossesOccupied(rangeStart, iso, occupiedRanges)) return true;
     return false;
+  }
+
+  function isBusyDay(iso: string) {
+    return isOccupiedIso(iso, occupiedRanges);
   }
 
   function pickDay(iso: string) {
@@ -298,10 +334,12 @@ export function DateInput({
                       cell.iso === selected ? "is-selected" : "",
                       cell.iso === todayIso ? "is-today" : "",
                       isDisabledDay(cell.iso) ? "is-disabled" : "",
+                      isBusyDay(cell.iso) ? "is-busy" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                     disabled={isDisabledDay(cell.iso)}
+                    title={isBusyDay(cell.iso) ? "Bu gün doludur" : undefined}
                     onClick={() => pickDay(cell.iso!)}
                   >
                     {cell.day}

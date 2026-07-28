@@ -17,24 +17,42 @@ export function FavoritesList() {
   useEffect(() => {
     let active = true;
 
-    void api.getFavorites().then((res) => {
-      if (!active) return;
-      if (!res.success) {
-        setError(res.error || t("favorites.loadFailed"));
+    void (async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await api.getFavorites();
+        if (!active) return;
+        if (!res.success) {
+          setError(res.error || t("favorites.loadFailed"));
+          setItems([]);
+          return;
+        }
+        const mapped: Property[] = [];
+        for (const item of res.data?.items || []) {
+          try {
+            mapped.push({
+              ...mapApiProperty(item),
+              isFavorite: true,
+            });
+          } catch {
+            // Skip broken favorite rows so one bad item does not hang the page.
+          }
+        }
+        setItems(mapped);
+      } catch {
+        if (!active) return;
+        setError(t("favorites.loadFailed"));
         setItems([]);
-      } else {
-        setItems((res.data?.items || []).map((item) => ({
-          ...mapApiProperty(item),
-          isFavorite: true,
-        })));
+      } finally {
+        if (active) setLoading(false);
       }
-      setLoading(false);
-    });
+    })();
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [t]);
 
   if (loading) {
     return (
@@ -48,7 +66,7 @@ export function FavoritesList() {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px" }}>
         <p>{error}</p>
-        <Link href="/login" className="auth-btn primary" style={{ marginTop: 16, display: "inline-flex" }}>
+        <Link href="/login?next=/favorites" className="auth-btn primary" style={{ marginTop: 16, display: "inline-flex" }}>
           {t("common.login")}
         </Link>
       </div>

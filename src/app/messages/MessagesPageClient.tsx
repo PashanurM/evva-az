@@ -15,6 +15,8 @@ type ConversationItem = {
   property_title: string;
   guest_name: string;
   owner_name: string;
+  peer_name?: string;
+  viewer_is_owner?: boolean;
   last_message: string;
   updated_at: string;
   unread_count?: number;
@@ -52,18 +54,39 @@ export function MessagesPageClient() {
       return;
     }
 
-    void (async () => {
-      setLoading(true);
-      const res = await api.getMyConversations();
-      if (!res.success || !res.data) {
-        setError(res.error || "Söhbətlər yüklənmədi");
-        setItems([]);
-      } else {
-        setItems(res.data.items);
-        setError("");
+    let cancelled = false;
+
+    const load = async (showSpinner: boolean) => {
+      if (showSpinner) setLoading(true);
+      try {
+        const res = await api.getMyConversations();
+        if (cancelled) return;
+        if (!res.success || !res.data) {
+          setError(res.error || "Söhbətlər yüklənmədi");
+          setItems([]);
+        } else {
+          setItems(res.data.items);
+          setError("");
+        }
+      } catch {
+        if (!cancelled) {
+          setError("Söhbətlər yüklənmədi");
+          setItems([]);
+        }
+      } finally {
+        if (!cancelled && showSpinner) setLoading(false);
       }
-      setLoading(false);
-    })();
+    };
+
+    void load(true);
+    const timer = window.setInterval(() => {
+      void load(false);
+    }, 8000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, [authLoading, user]);
 
   if (authLoading || (user && loading)) {
@@ -130,9 +153,10 @@ export function MessagesPageClient() {
           <div className="chat-inbox-list">
             {items.map((item) => {
               const peer =
-                user.role === "owner" || user.role === "admin"
+                item.peer_name ||
+                (item.viewer_is_owner
                   ? item.guest_name || "Qonaq"
-                  : item.owner_name || "Ev sahibi";
+                  : item.owner_name || "Ev sahibi");
               const unread = item.unread_count || 0;
               return (
                 <Link

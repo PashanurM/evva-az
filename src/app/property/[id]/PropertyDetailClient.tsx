@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import {
   MapPin,
   Users,
@@ -25,6 +26,17 @@ import { AvailabilityCalendar } from "@/components/property/AvailabilityCalendar
 import { FavoriteToggle } from "@/components/property/FavoriteToggle";
 import { PropertyGallery } from "@/components/property/PropertyGallery";
 import { PropertyRatingSection } from "@/components/property/PropertyRatingSection";
+
+const ADMIN_WHATSAPP = "994554440830";
+
+function adminWhatsAppHref(property: Property, origin = "https://evva.az"): string {
+  const pageUrl = `${origin.replace(/\/$/, "")}/property/${property.id}`;
+  const text =
+    `Salam! Bu ev haqqında məlumat almaq istəyirəm.\n` +
+    `${property.title}\n` +
+    `${pageUrl}`;
+  return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`;
+}
 
 const PropertyMap = dynamic(
   () => import("@/components/home/PropertyMap").then((m) => m.PropertyMap),
@@ -75,6 +87,7 @@ export function PropertyDetailClient({
   gallery,
 }: PropertyDetailClientProps) {
   const { t } = useLocale();
+  const [adminHref, setAdminHref] = useState(() => adminWhatsAppHref(property));
   const createdDate = formatPropertyDate(property.createdAt);
   const ownerInitial = (property.owner?.name || property.owner?.username || "E")
     .trim()
@@ -87,6 +100,10 @@ export function PropertyDetailClient({
     property.lng !== 0;
   const houseRules = (property.houseRules || "").trim();
   const cancellationPolicy = (property.cancellationPolicy || "").trim();
+
+  useEffect(() => {
+    setAdminHref(adminWhatsAppHref(property, window.location.origin));
+  }, [property]);
 
   return (
     <section className="property-shell">
@@ -236,6 +253,16 @@ export function PropertyDetailClient({
                 <CalendarCheck size={18} aria-hidden />
                 <span className="btn-label">{t("common.reserve")}</span>
               </Link>
+              <a
+                href={adminHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-write-btn"
+                aria-label={t("property.writeAdmin")}
+              >
+                <ShieldCheck size={18} aria-hidden />
+                <span className="btn-label">{t("property.writeAdmin")}</span>
+              </a>
               <a
                 href={mapsUrl}
                 target="_blank"

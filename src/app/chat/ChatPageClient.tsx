@@ -31,6 +31,7 @@ type ChatMessage = {
   created_at: string;
   sender_name: string;
   is_mine: boolean;
+  is_system?: boolean;
 };
 
 type ChatBooking = {
@@ -221,6 +222,56 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
     })();
   }, [authLoading, user, conversationFromUrl, propertyId, applyConversation, router]);
 
+  // Auto-receive new messages without full page refresh.
+  useEffect(() => {
+    if (!user || conversationId <= 0 || loading) return;
+
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await api.getConversation(conversationId);
+        if (cancelled || !res.success || !res.data) return;
+        const next = res.data;
+        setMessages((prev) => {
+          const prevIds = prev.map((m) => m.id).join(",");
+          const nextMsgs = next.messages || [];
+          const nextIds = nextMsgs.map((m) => m.id).join(",");
+          if (prevIds === nextIds && prev.length === nextMsgs.length) return prev;
+          return nextMsgs;
+        });
+        setBooking(next.booking || null);
+        setContactUnlocked(Boolean(next.contact_unlocked));
+        setPeerName(next.peer_name || "");
+        setPeerPhone(next.peer_phone || "");
+        setPhoneLockedMessage(next.phone_locked_message || "");
+        setViewerIsOwner(Boolean(next.viewer_is_owner));
+        if (next.property_title) setTitle(next.property_title);
+      } catch {
+        // Keep last known state on transient poll failures.
+      }
+    };
+
+    const timer = window.setInterval(() => {
+      void poll();
+    }, 4000);
+
+    const onFocus = () => {
+      void poll();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void poll();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [user, conversationId, loading]);
+
   useEffect(() => {
     const el = threadRef.current;
     if (!el) return;
@@ -288,10 +339,39 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
 
   async function handleBookingAction(action: "confirm" | "cancel") {
     if (!booking?.id) return;
-    if (action === "cancel") {
-      const ok = window.confirm("Bu rezerv sorğusunu ləğv etmək istəyirsiniz?");
+
+    if (action === "confirm") {
+      if (!booking.can_confirm) {
+        setError(booking.confirm_blocked_reason || "Təsdiq üçün əvvəlcə chatda mesajlaşın.");
+        return;
+      }
+      const nights = Math.max(
+        1,
+        Math.round(
+          (new Date(`${booking.check_out}T12:00:00`).getTime() -
+            new Date(`${booking.check_in}T12:00:00`).getTime()) /
+            86400000,
+        ),
+      );
+      const feePerNight = 10;
+      const feeTotal = nights * feePerNight;
+      const ok = window.confirm(
+        `Rezervasiya təsdiqlənəcək.\n\n` +
+          `Tarix: ${booking.check_in} — ${booking.check_out}\n` +
+          `Sayt payı: ${feeTotal} AZN (${nights} gecə × ${feePerNight} AZN)\n\n` +
+          `Nömrələr açılacaq və sayt payı ödənişi gözləniləcək.\nDavam etmək istəyirsiniz?`,
+      );
       if (!ok) return;
     }
+
+    if (action === "cancel") {
+      if (!booking.can_cancel) return;
+      const ok = window.confirm(
+        "Bu rezervasiya ləğv ediləcək.\nQonağa ləğv bildirişi gedəcək.\nDavam etmək istəyirsiniz?",
+      );
+      if (!ok) return;
+    }
+
     setBookingBusy(true);
     setError("");
     try {
@@ -436,11 +516,13 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
                 <span>
                   {booking.guest_name} · {booking.guest_count} nəfər ·{" "}
                   {booking.status === "payment_pending"
-                    ? "Sayt payı gözlənilir"
+                    ? viewerIsOwner
+                      ? "Platforma ödənişi gözləyir"
+                      : "Təsdiqlənib"
                     : booking.status === "approved"
                       ? "Təsdiqlənib"
                       : booking.status === "pending"
-                        ? "Gözləyir"
+                        ? "Təsdiq gözləyir"
                         : booking.status}
                 </span>
               </div>
@@ -493,6 +575,12 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
                       <span>{dayDividerLabel(msg.created_at)}</span>
                     </div>
                   ) : null}
+                  {msg.is_system ? (
+                    <div className="chat-system-msg" role="status">
+                      <p>{msg.message}</p>
+                      <time>{stamp.primary}</time>
+                    </div>
+                  ) : (
                   <div
                     className={`chat-bubble${msg.is_mine ? " is-mine" : ""}${menuOpen ? " is-menu-open" : ""}`}
                     data-msg-menu={msg.id}
@@ -552,6 +640,7 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
                       </time>
                     </div>
                   </div>
+                  )}
                 </div>
               );
             })

@@ -12,13 +12,13 @@ export function mapApiProperty(property: ApiProperty): Property {
   const coords = resolvePropertyCoordinates(
     property.latitude,
     property.longitude,
-    property.location,
+    property.location || "",
   );
 
   return {
     id: property.id,
     title: property.title,
-    location: property.location,
+    location: property.location || "",
     price: property.price,
     guests: property.capacity,
     rooms: property.rooms,
@@ -83,7 +83,7 @@ export function mapApiProperty(property: ApiProperty): Property {
     houseRules: property.house_rules || "",
     cancellationPolicy: property.cancellation_policy || "",
     mapAddress: property.map_address || "",
-    tags: property.tags,
+    tags: property.tags || [],
     image: assetUrl(property.cover_url || property.cover_path),
     images: property.images?.map((img) => assetUrl(img.url || img.path)),
     lat: coords?.lat ?? 0,

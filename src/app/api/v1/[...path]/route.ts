@@ -350,9 +350,13 @@ async function proxyRequest(request: Request, context: RouteContext) {
       status: res.status,
       headers: forwardBackendHeaders(res.headers),
     });
-  } catch {
+  } catch (err) {
+    const message =
+      err instanceof Error && (err.name === "AbortError" || /timeout/i.test(err.message))
+        ? "Server cavab vermədi (timeout). Bir az sonra yenidən yoxlayın."
+        : "Backend API unreachable";
     return Response.json(
-      { success: false, error: "Backend API unreachable" },
+      { success: false, error: message },
       { status: 502 },
     );
   }

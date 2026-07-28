@@ -29,7 +29,7 @@ export function resolvePropertyCoordinates(
     return { lat: latitude, lng: longitude };
   }
 
-  const normalized = location.toLowerCase();
+  const normalized = (location || "").toLowerCase();
   for (const entry of LOCATION_COORDS) {
     if (normalized.includes(entry.match)) {
       return { lat: entry.lat, lng: entry.lng };

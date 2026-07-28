@@ -220,6 +220,7 @@ export const ru = {
     cancellationPolicy: "Правила отмены",
     noHouseRules: "Правила дома ещё не добавлены.",
     noCancellationPolicy: "Правила отмены ещё не добавлены.",
+    writeAdmin: "Написать админу об этом доме",
     rateCleanliness: "Чистота",
     rateLocation: "Расположение",
     rateComfort: "Комфорт",

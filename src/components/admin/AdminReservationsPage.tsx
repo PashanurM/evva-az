@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Ban, Check, Info, Pencil, Trash2 } from "lucide-react";
+import { Ban, Info, Pencil, Trash2, Wallet } from "lucide-react";
 import { toast } from "react-toastify";
 import { adminApi, type AdminBooking } from "@/lib/admin-api";
 import { useAdminConfirm } from "@/components/admin/AdminConfirmModal";
@@ -11,13 +11,19 @@ import { AdminSearchField } from "@/components/admin/AdminSearchField";
 import { AdminTableActions } from "@/components/admin/AdminTableActions";
 import { useAdmin } from "@/providers/AdminProvider";
 
-function canConfirmBooking(b: AdminBooking): boolean {
-  if (["approved", "cancelled", "rejected"].includes(b.status)) return false;
-  return (
-    b.payment_status === "awaiting_site_fee" ||
-    b.status === "pending" ||
-    b.status === "payment_pending"
-  );
+function bookingStatusLabel(status: string): string {
+  if (status === "approved") return "Təsdiqlənib";
+  if (status === "pending" || status === "payment_pending") return "Təsdiq gözləyir";
+  if (status === "cancelled" || status === "rejected") return "Ləğv edilib";
+  return status;
+}
+
+function paymentStatusLabel(status: string): string {
+  if (status === "site_fee_paid") return "Platforma ödənişi edilib";
+  if (status === "awaiting_site_fee") return "Platforma ödənişi gözləyir";
+  if (status === "cancelled") return "Ləğv edilib";
+  if (status === "none") return "—";
+  return status;
 }
 
 function bookingStatusBadge(status: string): string {
@@ -28,10 +34,9 @@ function bookingStatusBadge(status: string): string {
 }
 
 function paymentStatusBadge(status: string): string {
-  if (status === "paid" || status === "completed") return "admin-badge admin-badge--ok";
-  if (status === "awaiting_site_fee" || status === "pending" || status === "none") {
-    return "admin-badge admin-badge--warn";
-  }
+  if (status === "site_fee_paid") return "admin-badge admin-badge--ok";
+  if (status === "awaiting_site_fee") return "admin-badge admin-badge--warn";
+  if (status === "cancelled") return "admin-badge";
   return "admin-badge admin-badge--muted";
 }
 
@@ -41,6 +46,7 @@ export function AdminReservationsPage() {
   const [items, setItems] = useState<AdminBooking[]>([]);
   const [summary, setSummary] = useState<Record<string, number>>({});
   const [status, setStatus] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("");
   const [q, setQ] = useState("");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState<number | null>(null);
@@ -50,7 +56,11 @@ export function AdminReservationsPage() {
   const load = useCallback(async () => {
     setPageLoading(true);
     setError("");
-    const res = await adminApi.getBookings({ status: status || undefined, q: search || undefined });
+    const res = await adminApi.getBookings({
+      status: status || undefined,
+      payment_status: paymentStatus || undefined,
+      q: search || undefined,
+    });
     if (res.success && res.data) {
       setItems(res.data.items);
       setSummary(res.data.summary);
@@ -58,7 +68,7 @@ export function AdminReservationsPage() {
       setError(res.error || "Yüklənmədi");
     }
     setPageLoading(false);
-  }, [status, search]);
+  }, [status, paymentStatus, search]);
 
   useEffect(() => {
     if (!admin) return;
@@ -73,10 +83,10 @@ export function AdminReservationsPage() {
       });
       if (!ok) return;
     }
-    if (act === "payment_paid" || act === "approved") {
+    if (act === "cancelled") {
       const ok = await confirm({
-        title: "Rezervasiyanı təsdiqlə",
-        message: "Ödəniş alındı və rezervasiya təsdiqlənsin?",
+        title: "Rezervasiyanı ləğv et",
+        message: "Bu rezervasiya ləğv edilsin?",
       });
       if (!ok) return;
     }
@@ -86,8 +96,8 @@ export function AdminReservationsPage() {
       toast.success(
         act === "delete"
           ? "Rezervasiya silindi."
-          : act === "payment_paid" || act === "approved"
-            ? "Rezervasiya təsdiqləndi."
+          : act === "cancelled"
+            ? "Rezervasiya ləğv edildi."
             : "Rezervasiya yeniləndi.",
       );
       await load();
@@ -100,22 +110,47 @@ export function AdminReservationsPage() {
   if (loading) return <div className="admin-loading">Yüklənir...</div>;
   if (!admin) return null;
 
+  const paidTotal = Number(summary.paid_fee_total ?? 0);
+  const pendingTotal = Number(summary.pending_fee_total ?? 0);
+
   return (
     <AdminShell>
       <div className="admin-page">
         <div className="admin-page-head">
           <span className="section-kicker">Rezervasiyalar</span>
           <h1>Rezervasiya idarəetməsi</h1>
-          <p>Ödəniş təsdiqi, ləğv və silmə əməliyyatları.</p>
+          <p>
+            Ev sahibi təsdiqindən sonra platforma ödənişini buradan izləyin.
+            Ödəniş statusunu ətraflı səhifədən dəyişə bilərsiniz.
+          </p>
         </div>
 
-        <div className="admin-summary-row">
-          <span className="admin-summary-chip">
-            Gözləyən ödəniş: {summary.pending_fee_count ?? 0} ({summary.pending_fee_total ?? 0} ₼)
-          </span>
-          <span className="admin-summary-chip">
-            Ödənilmiş: {summary.paid_fee_count ?? 0} ({summary.paid_fee_total ?? 0} ₼)
-          </span>
+        <div className="admin-summary-row admin-summary-row--earnings">
+          <div className="admin-summary-card admin-summary-card--ok">
+            <Wallet size={18} aria-hidden />
+            <div>
+              <small>Ümumi qazanc</small>
+              <strong>{paidTotal.toFixed(2)} ₼</strong>
+              <span>{summary.paid_fee_count ?? 0} ödəniş (platforma ödənişi edilib)</span>
+            </div>
+          </div>
+          <div className="admin-summary-card admin-summary-card--warn">
+            <Wallet size={18} aria-hidden />
+            <div>
+              <small>Gözləmədə olan qazanc</small>
+              <strong>{pendingTotal.toFixed(2)} ₼</strong>
+              <span>{summary.pending_fee_count ?? 0} gözləyən (platforma ödənişi gözləyir)</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-panel-card" style={{ marginBottom: 16 }}>
+          <p style={{ margin: 0, lineHeight: 1.55 }}>
+            <strong>Sayt ödənişi necə olur?</strong> Ev sahibi rezervi təsdiqləyəndə status
+            “Təsdiq gözləyir”, ödəniş isə “Platforma ödənişi gözləyir” olur. Admin ödənişi
+            aldıqdan sonra rezervasiyanın ödəniş statusunu “Platforma ödənişi edilib” edir —
+            bu məbləğ ümumi qazanca düşür.
+          </p>
         </div>
 
         <div className="admin-toolbar admin-toolbar--split">
@@ -129,11 +164,15 @@ export function AdminReservationsPage() {
             />
             <select value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="">Bütün statuslar</option>
-              <option value="pending">Gözləyən</option>
-              <option value="payment_pending">Ödəniş gözləyir</option>
-              <option value="approved">Təsdiqlənmiş</option>
-              <option value="cancelled">Ləğv</option>
-              <option value="rejected">Rədd</option>
+              <option value="awaiting_confirm">Təsdiq gözləyir</option>
+              <option value="approved">Təsdiqlənib</option>
+              <option value="cancelled">Ləğv edilib</option>
+            </select>
+            <select value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)}>
+              <option value="">Bütün ödənişlər</option>
+              <option value="awaiting_site_fee">Platforma ödənişi gözləyir</option>
+              <option value="site_fee_paid">Platforma ödənişi edilib</option>
+              <option value="cancelled">Ləğv edilib</option>
             </select>
             <button type="button" className="admin-btn admin-btn--primary" onClick={() => setSearch(q.trim())}>
               Axtar
@@ -154,18 +193,26 @@ export function AdminReservationsPage() {
                   <th>Qonaq</th>
                   <th>Tarix</th>
                   <th>Status</th>
-                  <th>Ödəniş</th>
-                  <th>Platforma</th>
+                  <th>Ödəniş statusu</th>
+                  <th>Platforma haqqı</th>
                   <th>Əməliyyat</th>
                 </tr>
               </thead>
               <tbody>
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: "center", padding: 28 }}>
+                      Rezervasiya tapılmadı.
+                    </td>
+                  </tr>
+                ) : null}
                 {items.map((b) => (
                   <tr key={b.id}>
                     <td>
                       <div className="admin-table-row-title">
                         <strong>{b.property_title || `#${b.property_id}`}</strong>
                         {b.property_location ? <small>{b.property_location}</small> : null}
+                        {b.owner_name ? <small>Sahib: {b.owner_name}</small> : null}
                       </div>
                     </td>
                     <td data-label="Qonaq">
@@ -181,46 +228,28 @@ export function AdminReservationsPage() {
                       </div>
                     </td>
                     <td data-label="Status">
-                      <span className={bookingStatusBadge(b.status)}>{b.status}</span>
+                      <span className={bookingStatusBadge(b.status)}>
+                        {bookingStatusLabel(b.status)}
+                      </span>
                     </td>
-                    <td data-label="Ödəniş">
-                      <span className={paymentStatusBadge(b.payment_status)}>{b.payment_status}</span>
+                    <td data-label="Ödəniş statusu">
+                      <span className={paymentStatusBadge(b.payment_status)}>
+                        {paymentStatusLabel(b.payment_status)}
+                      </span>
                     </td>
-                    <td data-label="Platforma">{b.platform_fee_total.toFixed(2)} ₼</td>
+                    <td data-label="Platforma haqqı">{Number(b.platform_fee_total || 0).toFixed(2)} ₼</td>
                     <td>
                       <AdminTableActions
                         info={
-                          <>
-                            <Link
-                              href={`/admin/reservations/${b.id}`}
-                              className="admin-btn admin-icon-btn"
-                              style={{ textDecoration: "none" }}
-                              title="Ətraflı məlumat"
-                              aria-label={`#${b.id} rezervasiyasının ətraflı məlumatı`}
-                            >
-                              <Info size={15} aria-hidden="true" />
-                            </Link>
-                            {canConfirmBooking(b) ? (
-                              <button
-                                type="button"
-                                className="admin-btn admin-btn--primary admin-icon-btn"
-                                title="Təsdiqlə"
-                                aria-label={`#${b.id} rezervasiyasını təsdiqlə`}
-                                disabled={busy === b.id}
-                                onClick={() =>
-                                  void action(
-                                    b.id,
-                                    b.payment_status === "awaiting_site_fee" ||
-                                      b.status === "payment_pending"
-                                      ? "payment_paid"
-                                      : "approved",
-                                  )
-                                }
-                              >
-                                <Check size={15} aria-hidden="true" />
-                              </button>
-                            ) : null}
-                          </>
+                          <Link
+                            href={`/admin/reservations/${b.id}`}
+                            className="admin-btn admin-icon-btn"
+                            style={{ textDecoration: "none" }}
+                            title="Ətraflı məlumat"
+                            aria-label={`#${b.id} rezervasiyasının ətraflı məlumatı`}
+                          >
+                            <Info size={15} aria-hidden="true" />
+                          </Link>
                         }
                       >
                         <Link

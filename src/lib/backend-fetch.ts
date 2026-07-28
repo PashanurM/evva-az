@@ -60,7 +60,7 @@ function nodeHttpsFetch(url: string, init: RequestInit = {}): Promise<Response> 
         method,
         headers,
         agent: insecureHttpsAgent,
-        timeout: 12_000,
+        timeout: 25_000,
       },
       (res) => {
         const chunks: Buffer[] = [];
@@ -103,7 +103,10 @@ async function rawBackendFetch(url: string, options: BackendFetchInit): Promise<
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 4_000);
+  // Alwaysdata PHP can be cold / run schema checks on first hit.
+  // 4s was too aggressive → AbortError → proxy 502 "Backend API unreachable".
+  const timeoutMs = Number(process.env.EVVA_BACKEND_TIMEOUT_MS || 20000);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(url, {
       ...options,

@@ -73,6 +73,8 @@ type ConversationItem = {
   property_id: number;
   property_title: string;
   guest_name: string;
+  peer_name?: string;
+  viewer_is_owner?: boolean;
   last_message: string;
   updated_at: string;
 };
@@ -90,10 +92,10 @@ type OwnerRatingItem = {
 
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
-    pending: "Gözləyir",
-    payment_pending: "Sayt payı gözlənilir",
+    pending: "Təsdiq gözləyir",
+    payment_pending: "Təsdiq gözləyir",
     approved: "Təsdiqlənib",
-    rejected: "Rədd edilib",
+    rejected: "Ləğv edilib",
     cancelled: "Ləğv edilib",
     completed: "Tamamlanıb",
   };
@@ -162,33 +164,35 @@ export function MyHousesClient() {
     void (async () => {
       setLoading(true);
       setError("");
-      const [housesRes, bookingsRes, chatsRes, ratingsRes] = await Promise.all([
-        api.getOwnerProperties(),
+
+      // Load houses first so panel is usable even if chat/bookings time out.
+      const housesRes = await api.getOwnerProperties();
+      if (!housesRes.success || !housesRes.data) {
+        setItems([]);
+        setError(housesRes.error || "Evlər yüklənmədi");
+      } else {
+        setItems(housesRes.data.items || []);
+      }
+
+      const [bookingsRes, chatsRes, ratingsRes] = await Promise.all([
         api.getOwnerBookings(),
         api.getMyConversations(),
         api.getOwnerRatings(),
       ]);
 
-      const failures: string[] = [];
-      if (!housesRes.success || !housesRes.data) {
-        failures.push(housesRes.error || "Evlər yüklənmədi");
-        setItems([]);
-      } else {
-        setItems(housesRes.data.items);
-      }
-
+      const softFailures: string[] = [];
       if (!bookingsRes.success || !bookingsRes.data) {
-        failures.push(bookingsRes.error || "Rezervlər yüklənmədi");
+        softFailures.push(bookingsRes.error || "Rezervlər yüklənmədi");
         setBookings([]);
       } else {
-        setBookings(bookingsRes.data.items);
+        setBookings(bookingsRes.data.items || []);
       }
 
       if (!chatsRes.success || !chatsRes.data) {
-        failures.push(chatsRes.error || "Mesajlar yüklənmədi");
+        softFailures.push(chatsRes.error || "Mesajlar yüklənmədi");
         setConversations([]);
       } else {
-        setConversations(chatsRes.data.items);
+        setConversations(chatsRes.data.items || []);
       }
 
       if (ratingsRes.success && ratingsRes.data) {
@@ -201,7 +205,13 @@ export function MyHousesClient() {
         setOwnerRatingCount(0);
       }
 
-      setError(failures[0] || "");
+      if (!housesRes.success) {
+        setError(housesRes.error || softFailures[0] || "Evlər yüklənmədi");
+      } else if (softFailures.length > 0) {
+        setError(softFailures[0]);
+      } else {
+        setError("");
+      }
       setLoading(false);
     })();
   }, [authLoading, authRetrying, user, router, refresh]);
@@ -221,6 +231,8 @@ export function MyHousesClient() {
   }, [items, bookings, conversations]);
 
   async function handleBookingAction(booking: OwnerBooking, action: "confirm" | "cancel") {
+    if (booking.status !== "pending") return;
+
     if (action === "confirm" && !booking.can_confirm) {
       setError(booking.confirm_blocked_reason || "Təsdiq üçün əvvəlcə chatda mesajlaşın.");
       return;
@@ -229,8 +241,32 @@ export function MyHousesClient() {
       setError("Bu rezerv artıq ləğv edilə bilməz.");
       return;
     }
+
+    if (action === "confirm") {
+      const nights = Math.max(
+        1,
+        Math.round(
+          (new Date(`${booking.check_out}T12:00:00`).getTime() -
+            new Date(`${booking.check_in}T12:00:00`).getTime()) /
+            86400000,
+        ),
+      );
+      const feePerNight = 10;
+      const feeTotal = nights * feePerNight;
+      const ok = window.confirm(
+        `Rezervasiya təsdiqlənəcək.\n\n` +
+          `Ev: ${booking.property_title || `#${booking.property_id}`}\n` +
+          `Tarix: ${booking.check_in} — ${booking.check_out}\n` +
+          `Sayt payı: ${feeTotal} AZN (${nights} gecə × ${feePerNight} AZN)\n\n` +
+          `Nömrələr açılacaq və sayt payı ödənişi gözləniləcək.\nDavam etmək istəyirsiniz?`,
+      );
+      if (!ok) return;
+    }
+
     if (action === "cancel") {
-      const ok = window.confirm("Bu rezerv sorğusunu ləğv etmək istəyirsiniz?");
+      const ok = window.confirm(
+        "Bu rezervasiya ləğv ediləcək.\nQonağa ləğv bildirişi gedəcək.\nDavam etmək istəyirsiniz?",
+      );
       if (!ok) return;
     }
 
@@ -339,7 +375,7 @@ export function MyHousesClient() {
           </div>
         </div>
 
-        {!error && items.length === 0 ? (
+        {items.length === 0 ? (
           <div className="discover-card" style={{ marginTop: 24, textAlign: "center" }}>
             <Building2 size={40} style={{ margin: "0 auto 12px", color: "var(--primary)" }} />
             <p>Hələ heç bir ev əlavə olunmayıb.</p>
@@ -460,8 +496,12 @@ export function MyHousesClient() {
             </div>
           ) : (
             <div className="owner-inbox-list">
-              {conversations.slice(0, 5).map((item) => {
-                const initial = (item.guest_name || "Q").trim().charAt(0).toUpperCase();
+              {conversations
+                .filter((item) => item.viewer_is_owner !== false)
+                .slice(0, 5)
+                .map((item) => {
+                const peer = item.peer_name || item.guest_name || "Qonaq";
+                const initial = peer.trim().charAt(0).toUpperCase() || "Q";
                 return (
                   <Link
                     key={item.id}
@@ -476,7 +516,7 @@ export function MyHousesClient() {
                         <strong>{item.property_title || "Söhbət"}</strong>
                         <small>{formatOwnerTime(item.updated_at)}</small>
                       </span>
-                      <span className="owner-inbox-guest">{item.guest_name || "Qonaq"}</span>
+                      <span className="owner-inbox-guest">{peer}</span>
                       <span className="owner-inbox-preview">
                         {item.last_message || "Mesaj yoxdur"}
                       </span>
@@ -491,13 +531,13 @@ export function MyHousesClient() {
         <div className="owner-panel-section owner-panel-card">
           <div className="owner-panel-section-head">
             <h2>Rezervasiyalar</h2>
-            <span>{bookings.length} ümumi</span>
+            <Link href="/my-houses/reservations">Hamısı</Link>
           </div>
           {bookings.length === 0 ? (
             <p className="owner-panel-empty">Hələ rezerv sorğusu yoxdur.</p>
           ) : (
             <div className="messages-list">
-              {bookings.map((b) => (
+              {bookings.slice(0, 5).map((b) => (
                 <div key={b.id} className="messages-list-item owner-booking-card">
                   <div>
                     <strong>{b.property_title || `Elan #${b.property_id}`}</strong>
@@ -535,23 +575,27 @@ export function MyHousesClient() {
                         Chat
                       </Link>
                     ) : null}
-                    <button
-                      type="button"
-                      className="auth-btn primary owner-house-btn"
-                      disabled={!b.can_confirm || bookingBusy === b.id}
-                      onClick={() => void handleBookingAction(b, "confirm")}
-                      title={b.confirm_blocked_reason || "Təsdiqlə"}
-                    >
-                      Təsdiqlə
-                    </button>
-                    <button
-                      type="button"
-                      className="auth-btn owner-house-btn"
-                      disabled={!b.can_cancel || bookingBusy === b.id}
-                      onClick={() => void handleBookingAction(b, "cancel")}
-                    >
-                      Ləğv et
-                    </button>
+                    {b.status === "pending" ? (
+                      <>
+                        <button
+                          type="button"
+                          className="auth-btn primary owner-house-btn"
+                          disabled={!b.can_confirm || bookingBusy === b.id}
+                          onClick={() => void handleBookingAction(b, "confirm")}
+                          title={b.confirm_blocked_reason || "Təsdiqlə"}
+                        >
+                          Təsdiqlə
+                        </button>
+                        <button
+                          type="button"
+                          className="auth-btn owner-house-btn"
+                          disabled={!b.can_cancel || bookingBusy === b.id}
+                          onClick={() => void handleBookingAction(b, "cancel")}
+                        >
+                          Ləğv et
+                        </button>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               ))}

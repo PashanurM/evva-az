@@ -198,6 +198,25 @@ export interface Restaurant {
   drinks?: string;
   discount_text?: string;
   images?: Array<{ path: string; url: string }>;
+  menu?: RestaurantMenuCategoryPublic[];
+  meal_sets?: RestaurantMenuCategoryPublic[];
+}
+
+export interface RestaurantMenuItemPublic {
+  id: number;
+  title: string;
+  ingredients?: string;
+  description?: string;
+  price: number;
+  image_url?: string;
+  image_path?: string;
+}
+
+export interface RestaurantMenuCategoryPublic {
+  id: number;
+  title: string;
+  kind: "menu" | "meal_set";
+  items: RestaurantMenuItemPublic[];
 }
 
 export interface RestaurantListResult {

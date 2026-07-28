@@ -14,6 +14,7 @@ import {
 import { toast } from "react-toastify";
 import { useAdminConfirm } from "@/components/admin/AdminConfirmModal";
 import { MapLocationPicker } from "@/components/map/MapLocationPicker";
+import { AdminRestaurantMenuEditor } from "@/components/admin/AdminRestaurantMenuEditor";
 import { adminApi } from "@/lib/admin-api";
 import { assetUrl } from "@/lib/assets";
 import { isPhoneFieldKey, sanitizePhoneInput } from "@/lib/phone";
@@ -53,16 +54,6 @@ const RESTAURANT_GROUPS: Array<{ title: string; icon: React.ReactNode; fields: M
       { key: "phone", label: "Telefon" },
       { key: "whatsapp", label: "WhatsApp" },
       { key: "opening_hours", label: "İş saatları" },
-    ],
-  },
-  {
-    title: "Menyu kateqoriyaları",
-    icon: <CookingPot size={18} />,
-    fields: [
-      { key: "local_foods", label: "Yerli yeməklər", type: "textarea" },
-      { key: "foreign_foods", label: "Xarici yeməklər", type: "textarea" },
-      { key: "desserts", label: "Desertlər", type: "textarea" },
-      { key: "drinks", label: "İçkilər", type: "textarea" },
     ],
   },
 ];
@@ -476,6 +467,17 @@ export function AdminModuleForm({
             </div>
           </div>
         </section>
+
+        {resource === "restaurants" && editing && Number(entity?.id) > 0 ? (
+          <AdminRestaurantMenuEditor restaurantId={Number(entity?.id)} />
+        ) : resource === "restaurants" && !editing ? (
+          <section className="admin-form-section">
+            <h3><CookingPot size={18} /> Menyu</h3>
+            <p className="admin-module-image-hint">
+              Restoranı yaratdıqdan sonra strukturlaşdırılmış menyu (yeməklər, salatlar, içkilər) və hazır setlər əlavə edə biləcəksiniz.
+            </p>
+          </section>
+        ) : null}
 
         <div className="admin-property-form-actions">
           <button type="button" className="admin-btn admin-btn--primary admin-btn--nowrap" disabled={saving} onClick={() => void save()}>

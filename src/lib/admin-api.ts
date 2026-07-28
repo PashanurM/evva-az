@@ -834,4 +834,102 @@ export const adminApi = {
       { method: "DELETE", body: "{}" },
       true,
     ),
+
+  getRestaurantMenu: (id: number, seed = true) =>
+    adminFetch<RestaurantMenuTree>(
+      `/admin/restaurants/${id}/menu${seed ? "?seed=1" : ""}`,
+    ),
+
+  saveRestaurantMenuCategory: (
+    restaurantId: number,
+    body: { title: string; kind?: "menu" | "meal_set"; sort_order?: number; is_active?: boolean },
+    categoryId?: number,
+  ) =>
+    adminFetch<{ message: string; category: RestaurantMenuCategory; menu: RestaurantMenuTree }>(
+      categoryId
+        ? `/admin/restaurants/${restaurantId}/menu/categories/${categoryId}`
+        : `/admin/restaurants/${restaurantId}/menu/categories`,
+      {
+        method: categoryId ? "PUT" : "POST",
+        body: JSON.stringify(body),
+      },
+      true,
+    ),
+
+  deleteRestaurantMenuCategory: (restaurantId: number, categoryId: number) =>
+    adminFetch<{ message: string; menu: RestaurantMenuTree }>(
+      `/admin/restaurants/${restaurantId}/menu/categories/${categoryId}`,
+      { method: "DELETE", body: "{}" },
+      true,
+    ),
+
+  saveRestaurantMenuItem: (
+    restaurantId: number,
+    body: {
+      category_id: number;
+      title: string;
+      ingredients?: string;
+      description?: string;
+      price?: number;
+      is_available?: boolean;
+      is_featured?: boolean;
+      sort_order?: number;
+    },
+    itemId?: number,
+  ) =>
+    adminFetch<{ message: string; item: RestaurantMenuItem; menu: RestaurantMenuTree }>(
+      itemId
+        ? `/admin/restaurants/${restaurantId}/menu/items/${itemId}`
+        : `/admin/restaurants/${restaurantId}/menu/items`,
+      {
+        method: itemId ? "PUT" : "POST",
+        body: JSON.stringify(body),
+      },
+      true,
+    ),
+
+  deleteRestaurantMenuItem: (restaurantId: number, itemId: number) =>
+    adminFetch<{ message: string; menu: RestaurantMenuTree }>(
+      `/admin/restaurants/${restaurantId}/menu/items/${itemId}`,
+      { method: "DELETE", body: "{}" },
+      true,
+    ),
+
+  uploadRestaurantMenuItemImage: (restaurantId: number, itemId: number, file: File) =>
+    uploadCompressedFile<{ message: string; item: RestaurantMenuItem; menu: RestaurantMenuTree }>(
+      `/admin/restaurants/${restaurantId}/menu/items/${itemId}/image`,
+      "image",
+      file,
+    ),
+};
+
+export type RestaurantMenuItem = {
+  id: number;
+  restaurant_id: number;
+  category_id: number;
+  title: string;
+  description: string;
+  ingredients: string;
+  price: number;
+  image_path: string;
+  image_url: string;
+  is_available: boolean;
+  is_featured: boolean;
+  sort_order: number;
+};
+
+export type RestaurantMenuCategory = {
+  id: number;
+  restaurant_id: number;
+  title: string;
+  kind: "menu" | "meal_set";
+  sort_order: number;
+  is_active: boolean;
+  items: RestaurantMenuItem[];
+};
+
+export type RestaurantMenuTree = {
+  restaurant_id: number;
+  categories: RestaurantMenuCategory[];
+  total_items: number;
 };

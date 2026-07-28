@@ -573,6 +573,33 @@
   letter-spacing: 0.02em;
 }
 
+.chat-system-msg {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin: 6px auto 10px;
+  max-width: min(92%, 420px);
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent);
+  text-align: center;
+}
+
+.chat-system-msg p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  font-weight: 650;
+}
+
+.chat-system-msg time {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
 .chat-page .chat-bubble {
   position: relative;
   max-width: min(85%, 420px);

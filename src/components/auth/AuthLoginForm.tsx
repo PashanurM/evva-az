@@ -6,6 +6,7 @@ import { FormEvent, useState } from "react";
 import { AtSign, Lock, LogIn, Phone, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { sanitizePhoneInput } from "@/lib/phone";
+import { resolvePostLoginPath } from "@/lib/auth-redirect";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
 import { PasswordInput } from "@/components/auth/PasswordInput";
@@ -47,9 +48,7 @@ export function AuthLoginForm() {
 
     await refresh();
     const next = searchParams.get("next") || searchParams.get("return");
-    const safeNext =
-      next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
-    router.push(safeNext);
+    router.push(resolvePostLoginPath(res.data, next));
     router.refresh();
   }
 

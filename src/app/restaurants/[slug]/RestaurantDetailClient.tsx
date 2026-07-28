@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Clock, MapPin, Phone, Star } from "lucide-react";
+import Image from "next/image";
+import { ChevronRight, Clock, MapPin, Package, Phone, Star, UtensilsCrossed } from "lucide-react";
 import { PlaceGallery } from "@/components/places/PlaceGallery";
+import { assetUrl } from "@/lib/assets";
+import type { RestaurantMenuCategoryPublic } from "@/lib/types";
 import { useLocale } from "@/providers/LocaleProvider";
 
 export interface RestaurantDetailData {
@@ -28,6 +31,8 @@ export interface RestaurantDetailData {
   cover: string;
   images?: string[];
   mapsUrl?: string;
+  menu?: RestaurantMenuCategoryPublic[];
+  meal_sets?: RestaurantMenuCategoryPublic[];
 }
 
 interface RestaurantDetailClientProps {
@@ -42,12 +47,53 @@ function splitMenuItems(text?: string): string[] {
     .filter(Boolean);
 }
 
-const MENU_SECTIONS: Array<{ key: keyof RestaurantDetailData; title: string }> = [
-  { key: "local_foods", title: "Yerli yeməklər" },
-  { key: "foreign_foods", title: "Xarici yeməklər" },
-  { key: "desserts", title: "Desertlər" },
-  { key: "drinks", title: "İçkilər" },
-];
+function MenuCategoryBlock({
+  category,
+  setStyle = false,
+}: {
+  category: RestaurantMenuCategoryPublic;
+  setStyle?: boolean;
+}) {
+  if (!category.items?.length) return null;
+  return (
+    <section className={`restaurant-menu-category${setStyle ? " is-set" : ""}`}>
+      <div className="restaurant-menu-category-head">
+        {setStyle ? <Package size={18} aria-hidden /> : <UtensilsCrossed size={18} aria-hidden />}
+        <h3>{category.title}</h3>
+      </div>
+      <div className="restaurant-menu-items">
+        {category.items.map((item) => {
+          const image = item.image_url ? assetUrl(item.image_url) : "";
+          const ingredients = (item.ingredients || item.description || "").trim();
+          return (
+            <article key={item.id} className="restaurant-menu-item">
+              <div className="restaurant-menu-item-media">
+                {image ? (
+                  <Image
+                    src={image}
+                    alt={item.title}
+                    width={320}
+                    height={220}
+                    unoptimized
+                  />
+                ) : (
+                  <span>{setStyle ? <Package size={28} /> : <UtensilsCrossed size={28} />}</span>
+                )}
+              </div>
+              <div className="restaurant-menu-item-copy">
+                <div className="restaurant-menu-item-topline">
+                  <strong>{item.title}</strong>
+                  <em>{Number(item.price || 0).toFixed(2)} ₼</em>
+                </div>
+                {ingredients ? <p>{ingredients}</p> : null}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientProps) {
   const { t } = useLocale();
@@ -58,14 +104,17 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
         ? [restaurant.cover]
         : [];
 
-  const menuSections = MENU_SECTIONS.map((section) => ({
-    ...section,
-    items: splitMenuItems(
-      typeof restaurant[section.key] === "string"
-        ? (restaurant[section.key] as string)
-        : undefined,
-    ),
-  })).filter((section) => section.items.length > 0);
+  const structuredMenu = (restaurant.menu || []).filter((c) => (c.items || []).length > 0);
+  const mealSets = (restaurant.meal_sets || []).filter((c) => (c.items || []).length > 0);
+
+  const legacySections = [
+    { key: "local_foods", title: "Yerli yeməklər", items: splitMenuItems(restaurant.local_foods) },
+    { key: "foreign_foods", title: "Xarici yeməklər", items: splitMenuItems(restaurant.foreign_foods) },
+    { key: "desserts", title: "Desertlər", items: splitMenuItems(restaurant.desserts) },
+    { key: "drinks", title: "İçkilər", items: splitMenuItems(restaurant.drinks) },
+  ].filter((section) => section.items.length > 0);
+
+  const showLegacy = structuredMenu.length === 0 && mealSets.length === 0 && legacySections.length > 0;
 
   return (
     <section className="place-detail">
@@ -103,9 +152,31 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
           <PlaceGallery images={gallery} title={restaurant.name} />
         ) : null}
 
-        {menuSections.length > 0 ? (
+        {structuredMenu.length > 0 ? (
+          <section className="restaurant-structured-menu">
+            <div className="section-title">
+              <h2>Menyu</h2>
+            </div>
+            {structuredMenu.map((category) => (
+              <MenuCategoryBlock key={category.id} category={category} />
+            ))}
+          </section>
+        ) : null}
+
+        {mealSets.length > 0 ? (
+          <section className="restaurant-structured-menu restaurant-meal-sets">
+            <div className="section-title">
+              <h2>Hazır yemək setləri</h2>
+            </div>
+            {mealSets.map((category) => (
+              <MenuCategoryBlock key={category.id} category={category} setStyle />
+            ))}
+          </section>
+        ) : null}
+
+        {showLegacy ? (
           <section className="restaurant-menu-grid">
-            {menuSections.map((section) => (
+            {legacySections.map((section) => (
               <div key={section.key} className="place-info-box restaurant-menu-box">
                 <h3>{section.title}</h3>
                 <div className="restaurant-menu-tags">

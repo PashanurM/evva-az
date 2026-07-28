@@ -86,6 +86,8 @@ export default async function RestaurantDetailPage({ params }: PageProps) {
         foreign_foods: restaurant.foreign_foods,
         desserts: restaurant.desserts,
         drinks: restaurant.drinks,
+        menu: restaurant.menu || [],
+        meal_sets: restaurant.meal_sets || [],
         cover,
         images,
         mapsUrl,

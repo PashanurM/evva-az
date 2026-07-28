@@ -39,6 +39,18 @@ function shiftIso(iso: string, days: number): string {
   return `${y}-${m}-${d}`;
 }
 
+function stayCrossesOccupied(
+  checkIn: string,
+  checkOut: string,
+  ranges: Array<{ check_in: string; check_out: string }>,
+): boolean {
+  if (!checkIn || !checkOut || checkOut <= checkIn) return false;
+  for (const range of ranges) {
+    if (checkIn < range.check_out && checkOut > range.check_in) return true;
+  }
+  return false;
+}
+
 export function BookingPageClient({ property }: BookingPageClientProps) {
   const { t } = useLocale();
   const { user, loading: authLoading } = useAuth();
@@ -51,6 +63,8 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const occupiedRanges = property?.occupiedRanges || [];
+
   const nights = useMemo(() => {
     if (!checkIn || !checkOut) return 0;
     const start = new Date(`${checkIn}T12:00:00`);
@@ -61,6 +75,13 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
 
   const estimatedTotal =
     property && nights > 0 ? property.price * nights : null;
+
+  function handleCheckInChange(value: string) {
+    setCheckIn(value);
+    if (checkOut && (checkOut <= value || stayCrossesOccupied(value, checkOut, occupiedRanges))) {
+      setCheckOut("");
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -79,6 +100,10 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
     }
     if (!checkIn || !checkOut) {
       setError("Giriş və çıxış tarixlərini seçin.");
+      return;
+    }
+    if (stayCrossesOccupied(checkIn, checkOut, occupiedRanges)) {
+      setError("Seçilmiş tarixlər dolu günlərlə üst-üstə düşür. Başqa tarix seçin.");
       return;
     }
 
@@ -213,9 +238,10 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
                   id="checkin"
                   name="checkin"
                   value={checkIn}
-                  onChange={setCheckIn}
+                  onChange={handleCheckInChange}
                   min={toIsoToday()}
                   max={checkOut ? shiftIso(checkOut, -1) : undefined}
+                  occupiedRanges={occupiedRanges}
                   required
                   placeholder={t("booking.checkIn")}
                   aria-label={t("booking.checkIn")}
@@ -229,6 +255,8 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
                   value={checkOut}
                   onChange={setCheckOut}
                   min={checkIn ? shiftIso(checkIn, 1) : shiftIso(toIsoToday(), 1)}
+                  occupiedRanges={occupiedRanges}
+                  rangeStart={checkIn || undefined}
                   required
                   placeholder={t("booking.checkOut")}
                   aria-label={t("booking.checkOut")}

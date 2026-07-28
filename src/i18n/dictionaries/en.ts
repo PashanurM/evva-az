@@ -219,6 +219,7 @@ export const en = {
     cancellationPolicy: "Cancellation policy",
     noHouseRules: "No house rules added yet.",
     noCancellationPolicy: "No cancellation policy added yet.",
+    writeAdmin: "Message admin about this home",
     rateCleanliness: "Cleanliness",
     rateLocation: "Location",
     rateComfort: "Comfort",

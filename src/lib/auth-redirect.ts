@@ -52,3 +52,20 @@ export function resolveAdminOwnerLogoutPath(user: {
 
   return isAdminAccount ? "/admin/login" : "/login";
 }
+
+/** Prefer deep-link return URL; otherwise send owners/admins to their panel. */
+export function resolvePostLoginPath(
+  user: { role?: string; base_role?: string } | null | undefined,
+  returnUrl?: string | null,
+): string {
+  const next = (returnUrl || "").trim();
+  const safeNext =
+    next.startsWith("/") && !next.startsWith("//") && next !== "/" ? next : "";
+
+  if (safeNext) return safeNext;
+
+  const role = user?.role || user?.base_role || "";
+  if (role === "owner") return "/my-houses";
+  if (role === "admin") return "/admin";
+  return "/";
+}
