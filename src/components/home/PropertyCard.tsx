@@ -8,11 +8,24 @@ import {
   MapPin,
   Eye,
   MessageCircle,
-  CalendarCheck,
+  ShieldCheck,
 } from "lucide-react";
 import type { Property } from "@/types";
 import { useLocale } from "@/providers/LocaleProvider";
 import { FavoriteToggle } from "@/components/property/FavoriteToggle";
+
+const ADMIN_WHATSAPP = "994554440830";
+
+function adminWhatsAppHref(property: Property): string {
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://evva.az";
+  const pageUrl = `${origin.replace(/\/$/, "")}/property/${property.id}`;
+  const text =
+    `Salam! Bu ev haqqında məlumat almaq istəyirəm.\n` +
+    `${property.title}\n` +
+    `${pageUrl}`;
+  return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`;
+}
 
 export function PropertyCard({
   property,
@@ -27,7 +40,7 @@ export function PropertyCard({
 
   const viewLabel = t("common.viewMore");
   const messageLabel = t("common.message");
-  const reserveLabel = t("common.reserve");
+  const adminLabel = t("property.writeAdmin");
 
   function showTip(key: string) {
     setTipKey(key);
@@ -101,17 +114,19 @@ export function PropertyCard({
             <MessageCircle size={16} aria-hidden />
             <span className="btn-label">{messageLabel}</span>
           </Link>
-          <Link
-            href={`/booking?property_id=${property.id}`}
-            className={`reserve-btn${tipKey === "reserve" ? " is-tip-open" : ""}`}
-            aria-label={reserveLabel}
-            title={reserveLabel}
-            data-tooltip={reserveLabel}
-            onPointerDown={() => showTip("reserve")}
+          <a
+            href={adminWhatsAppHref(property)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`admin-write-btn${tipKey === "admin" ? " is-tip-open" : ""}`}
+            aria-label={adminLabel}
+            title={adminLabel}
+            data-tooltip={adminLabel}
+            onPointerDown={() => showTip("admin")}
           >
-            <CalendarCheck size={16} aria-hidden />
-            <span className="btn-label">{reserveLabel}</span>
-          </Link>
+            <ShieldCheck size={16} aria-hidden />
+            <span className="btn-label">{adminLabel}</span>
+          </a>
         </div>
       </div>
     </div>

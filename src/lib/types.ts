@@ -33,6 +33,7 @@ export interface User {
   has_owner_properties?: boolean;
   is_verified: boolean;
   is_approved: boolean;
+  wallet_balance?: number;
   role_links: Array<{ url: string; label: string; icon: string; mode?: string }>;
 }
 

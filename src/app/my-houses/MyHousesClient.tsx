@@ -128,7 +128,6 @@ export function MyHousesClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [authRetrying, setAuthRetrying] = useState(false);
-  const [premiumBusy, setPremiumBusy] = useState<number | null>(null);
   const [bookingBusy, setBookingBusy] = useState<number | null>(null);
   const authRetryDone = useRef(false);
 
@@ -292,24 +291,7 @@ export function MyHousesClient() {
   }
 
   async function togglePremium(house: OwnerProperty) {
-    const next = !house.is_featured;
-    setPremiumBusy(house.id);
-    setError("");
-    setItems((current) =>
-      current.map((item) =>
-        item.id === house.id ? { ...item, is_featured: next } : item,
-      ),
-    );
-    const res = await api.patchOwnerProperty(house.id, { is_featured: next });
-    if (!res.success) {
-      setItems((current) =>
-        current.map((item) =>
-          item.id === house.id ? { ...item, is_featured: house.is_featured } : item,
-        ),
-      );
-      setError(res.error || "Premium status yenilənmədi");
-    }
-    setPremiumBusy(null);
+    router.push(`/my-houses/wallet?property_id=${house.id}`);
   }
 
   if (authLoading || authRetrying || (loading && Boolean(user))) {
@@ -329,7 +311,8 @@ export function MyHousesClient() {
         <h1>{t("comingSoon.myHousesTitle")}</h1>
         <p>
           Xoş gəldin{user?.full_name ? `, ${user.full_name}` : ""}. Evlərini, rezervləri və
-          mesajları bir yerdən izlə.
+          mesajları bir yerdən izlə. Saytdakı digər evlərə baxmaq üçün{" "}
+          <Link href="/">Sayta bax</Link>.
         </p>
 
         {error ? (
@@ -459,11 +442,10 @@ export function MyHousesClient() {
                     <button
                       type="button"
                       className={`auth-btn owner-house-btn${house.is_featured ? " is-premium-on" : ""}`}
-                      disabled={premiumBusy === house.id}
                       onClick={() => void togglePremium(house)}
                     >
                       <Sparkles size={14} />
-                      {house.is_featured ? "Premiumdur" : "Premium et"}
+                      {house.is_featured ? "Premiumdur · uzat" : "Premium et (ödənişli)"}
                     </button>
                     <Link href={`/my-houses/${house.id}/edit`} className="auth-btn primary owner-house-btn">
                       <Pencil size={14} /> Redaktə et

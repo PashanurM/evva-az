@@ -5,6 +5,7 @@ import { DiscoverHub } from "@/components/home/DiscoverHub";
 import { MapSection } from "@/components/home/MapSection";
 import { GuideSection } from "@/components/home/GuideSection";
 import { BottomCta } from "@/components/home/BottomCta";
+import { SiteVisitTracker } from "@/components/home/SiteVisitTracker";
 import { mapApiProperty } from "@/lib/mappers";
 import { getProperties, getSiteConfig } from "@/lib/server-api";
 import { pageMetadata } from "@/lib/site-metadata";
@@ -56,6 +57,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <>
+      <SiteVisitTracker />
       <Suspense fallback={<div className="hero" />}>
         <SearchBox
           totalCount={listing.total}

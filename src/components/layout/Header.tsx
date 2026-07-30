@@ -9,6 +9,7 @@ import {
   CalendarDays,
   ChevronDown,
   CircleUserRound,
+  ExternalLink,
   Home,
   LogOut,
   MapPin,
@@ -65,10 +66,11 @@ export function Header() {
 
   const canSwitchProfiles = Boolean(user?.can_switch_owner) || user?.base_role === "admin";
   const inOwnerMode = user?.role === "owner" || user?.view_mode === "owner";
-  const isOwnerHome = inOwnerMode || user?.role === "owner";
-  const showOwnerPanelLink = user?.role === "owner" && !canSwitchProfiles;
+  const showOwnerPanelLink = user?.role === "owner";
   const showAdminEntry = canSwitchProfiles && !inOwnerMode;
-  const logoHref = isOwnerHome ? "/my-houses" : "/";
+  const onOwnerPanel = pathname.startsWith("/my-houses");
+  // Logo always opens the public site so owners can browse & book other homes.
+  const logoHref = "/";
 
   async function handleSwitchMode(mode: "admin" | "owner") {
     if (switching) return;
@@ -265,6 +267,11 @@ export function Header() {
           {t("nav.ownerPanel")}
         </Link>
       )}
+      {showOwnerPanelLink && onOwnerPanel ? (
+        <Link href="/" className="auth-btn" onClick={() => setMenuOpen(false)}>
+          <ExternalLink size={16} aria-hidden /> Sayta bax
+        </Link>
+      ) : null}
       {canSwitchProfiles ? (
         <button
           type="button"
@@ -351,6 +358,12 @@ export function Header() {
             {t("nav.ownerPanel")}
           </Link>
         )}
+        {showOwnerPanelLink && onOwnerPanel ? (
+          <Link href="/" className="profile-menu-item" role="menuitem">
+            <ExternalLink size={18} aria-hidden />
+            Sayta bax
+          </Link>
+        ) : null}
         {canSwitchProfiles ? (
           <button
             type="button"

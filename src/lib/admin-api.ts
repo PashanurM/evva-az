@@ -226,6 +226,9 @@ export interface AdminDashboard {
   restaurants: number;
   places: number;
   favorites: number;
+  site_visits_total?: number;
+  site_visits_today?: number;
+  property_views_total?: number;
   modules: {
     restaurants: boolean;
     places: boolean;

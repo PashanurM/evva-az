@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Building2,
   CalendarCheck,
+  Eye,
   Heart,
   MapPin,
   Users,
@@ -99,6 +100,20 @@ export function AdminDashboardPage() {
                 href="/admin/reservations"
               />
               <StatCard label="Sevimlilər" value={stats.favorites} icon={Heart} href="/admin/properties" />
+              <StatCard
+                label="Sayt girişləri"
+                value={stats.site_visits_total ?? 0}
+                hint={`Bu gün: ${stats.site_visits_today ?? 0}`}
+                icon={Eye}
+                href="/admin"
+              />
+              <StatCard
+                label="Ev baxışları"
+                value={stats.property_views_total ?? 0}
+                hint="Bütün elanların ümumi baxışı"
+                icon={Eye}
+                href="/admin/properties"
+              />
               <StatCard label="Restoranlar" value={stats.restaurants} icon={UtensilsCrossed} href="/admin/restaurants" />
               <StatCard label="Görməli yerlər" value={stats.places} icon={MapPin} href="/admin/places" />
             </div>

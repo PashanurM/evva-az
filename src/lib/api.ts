@@ -422,6 +422,39 @@ export const api = {
       is_featured?: boolean;
     }>(`/owner/properties/${id}`, { method: "PATCH", body: JSON.stringify(payload) }, true),
 
+  getOwnerWallet: () =>
+    apiFetch<{
+      balance: number;
+      packages: Array<{ key: string; label: string; days: number; price: number }>;
+      payment_accounts: Array<{
+        account_title: string;
+        bank_name: string;
+        card_holder: string;
+        card_number_masked: string;
+        card_number: string;
+        phone: string;
+        whatsapp: string;
+      }>;
+      topup_hint: string;
+      admin_whatsapp: string;
+    }>("/owner/wallet"),
+
+  buyOwnerPremium: (propertyId: number, packageKey: string) =>
+    apiFetch<{
+      message: string;
+      balance: number;
+      property_id: number;
+      is_featured: boolean;
+      days: number;
+      price: number;
+    }>(
+      `/owner/properties/${propertyId}/premium`,
+      { method: "POST", body: JSON.stringify({ package: packageKey }) },
+      true,
+    ),
+
+  trackSiteVisit: () => apiFetch<{ total: number; today: number; date: string }>("/analytics/visit", { method: "POST" }),
+
   getMyRatings: () =>
     apiFetch<{
       items: Array<{
