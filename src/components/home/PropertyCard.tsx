@@ -15,11 +15,13 @@ import { useLocale } from "@/providers/LocaleProvider";
 import { FavoriteToggle } from "@/components/property/FavoriteToggle";
 
 const ADMIN_WHATSAPP = "994554440830";
+/** Canonical site URL — must be identical on SSR and client to avoid hydration mismatches. */
+const SITE_ORIGIN = (
+  process.env.NEXT_PUBLIC_SITE_URL || "https://evva.az"
+).replace(/\/$/, "");
 
 function adminWhatsAppHref(property: Property): string {
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "https://evva.az";
-  const pageUrl = `${origin.replace(/\/$/, "")}/property/${property.id}`;
+  const pageUrl = `${SITE_ORIGIN}/property/${property.id}`;
   const text =
     `Salam! Bu ev haqqında məlumat almaq istəyirəm.\n` +
     `${property.title}\n` +
