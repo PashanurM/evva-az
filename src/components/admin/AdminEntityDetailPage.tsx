@@ -641,10 +641,11 @@ function DetailHero({
 }) {
   const active = asBoolean(entity.is_active);
   const featured = asBoolean(entity.is_featured);
+  const heroSrc = resolveAdminCover(image);
   return (
     <section className="admin-property-hero">
-      {image ? (
-        <Image src={assetUrl(image)} alt={String(entity[titleKey] || "")} width={1200} height={560} unoptimized />
+      {heroSrc ? (
+        <Image src={assetUrl(heroSrc)} alt={String(entity[titleKey] || "")} width={1200} height={560} unoptimized />
       ) : (
         <div className="admin-property-hero-empty">{fallbackIcon}</div>
       )}
@@ -666,6 +667,17 @@ function DetailHero({
       </div>
     </section>
   );
+}
+
+/** Prefer real covers; ignore PHP placeholder no-image paths. */
+function resolveAdminCover(...candidates: Array<string | null | undefined>): string {
+  for (const candidate of candidates) {
+    const value = String(candidate || "").trim();
+    if (!value) continue;
+    if (/no-image\.svg/i.test(value)) continue;
+    return value;
+  }
+  return "";
 }
 
 function ModuleGallery({ images }: { images: unknown }) {
@@ -739,7 +751,11 @@ function ModuleMapSection({
 }
 
 function RestaurantDetailView({ entity }: { entity: Record<string, unknown> }) {
-  const cover = String(entity.cover_url || entity.cover_path || entity.logo_path || "");
+  const cover = resolveAdminCover(
+    String(entity.cover_url || ""),
+    String(entity.cover_path || ""),
+    String(entity.logo_path || ""),
+  );
   return (
     <>
       <DetailHero
@@ -847,7 +863,7 @@ function PlaceDetailView({ entity }: { entity: Record<string, unknown> }) {
       <DetailHero
         entity={entity}
         titleKey="title"
-        image={String(entity.cover_url || entity.cover_path || "")}
+        image={resolveAdminCover(String(entity.cover_url || ""), String(entity.cover_path || ""))}
         fallbackIcon={<MapPin size={44} />}
       />
 

@@ -220,7 +220,7 @@ export const az = {
     cancellationPolicy: "Ləğv qaydaları",
     noHouseRules: "Ev qaydaları əlavə edilməyib.",
     noCancellationPolicy: "Ləğv qaydaları əlavə edilməyib.",
-    writeAdmin: "Bu ev üçün adminə yaz",
+    writeAdmin: "Adminə yaz",
     rateCleanliness: "Təmizlik",
     rateLocation: "Yerləşmə",
     rateComfort: "Rahatlıq",
