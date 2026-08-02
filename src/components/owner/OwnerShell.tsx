@@ -60,7 +60,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
                 <Icon size={17} aria-hidden />
                 <span>{item.label}</span>
                 {item.href === "/messages" ? (
-                  <UnreadDot show={hasUnread} className="evva-unread-dot--corner" />
+                  <UnreadDot show={hasUnread} className="evva-unread-dot--end" />
                 ) : null}
               </Link>
             );

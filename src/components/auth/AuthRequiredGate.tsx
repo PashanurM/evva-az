@@ -32,6 +32,10 @@ export function AuthRequiredGate({
     <section className="chat-page">
       <div className="chat-page-glow" aria-hidden />
       <div className="chat-panel chat-panel--gate">
+        <Link href={backHref} className="chat-back-btn chat-gate-back">
+          <ArrowLeft size={18} aria-hidden />
+          <span>{backLabel || t("common.back")}</span>
+        </Link>
         <div className="chat-gate-icon" aria-hidden>
           <Lock size={28} />
         </div>
@@ -44,6 +48,10 @@ export function AuthRequiredGate({
             <span>{propertyTitle}</span>
           </div>
         ) : null}
+        <div className="chat-alert chat-alert--login" role="status">
+          <strong>{t("common.loginRequiredShort")}</strong>
+          <span>{description}</span>
+        </div>
         <div className="chat-gate-actions">
           <Link href={loginHref} className="chat-btn chat-btn--primary">
             <LogIn size={18} aria-hidden />
@@ -54,10 +62,6 @@ export function AuthRequiredGate({
             {t("common.register")}
           </Link>
         </div>
-        <Link href={backHref} className="chat-back-link">
-          <ArrowLeft size={16} aria-hidden />
-          {backLabel || t("common.back")}
-        </Link>
       </div>
     </section>
   );

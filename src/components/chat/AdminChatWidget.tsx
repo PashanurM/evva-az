@@ -235,7 +235,10 @@ export function AdminChatWidget() {
         aria-expanded={open}
       >
         {open ? <X size={24} aria-hidden /> : <MessageCircle size={24} aria-hidden />}
-        <UnreadDot show={!open && hasUnread && Boolean(user)} />
+        <UnreadDot
+          show={!open && hasUnread && Boolean(user)}
+          className="evva-unread-dot--corner"
+        />
       </button>
     </div>
   );

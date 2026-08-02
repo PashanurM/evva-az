@@ -2,13 +2,24 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, Loader2, MessageCircle } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, LogIn, MessageCircle } from "lucide-react";
 import { api } from "@/lib/api";
 import { AuthRequiredGate } from "@/components/auth/AuthRequiredGate";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
 import { notifyChatUnreadRefresh } from "@/providers/UnreadMessagesProvider";
 import "@/app/chat/chat-page.css";
+
+function isAuthError(message: string): boolean {
+  const text = message.toLowerCase();
+  return (
+    text.includes("giriş tələb") ||
+    text.includes("login required") ||
+    text.includes("unauthorized") ||
+    text.includes("401") ||
+    text.includes("daxil ol")
+  );
+}
 
 type ConversationItem = {
   id: number;
@@ -47,13 +58,16 @@ export function MessagesPageClient() {
   const [items, setItems] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
       setLoading(false);
+      setNeedsLogin(true);
       return;
     }
+    setNeedsLogin(false);
 
     let cancelled = false;
 
@@ -63,11 +77,16 @@ export function MessagesPageClient() {
         const res = await api.getMyConversations();
         if (cancelled) return;
         if (!res.success || !res.data) {
-          setError(res.error || "Söhbətlər yüklənmədi");
+          const err = res.error || "Söhbətlər yüklənmədi";
+          setError(err);
           setItems([]);
+          if (isAuthError(err)) {
+            setNeedsLogin(true);
+          }
         } else {
           setItems(res.data.items);
           setError("");
+          setNeedsLogin(false);
           notifyChatUnreadRefresh();
         }
       } catch {
@@ -103,7 +122,7 @@ export function MessagesPageClient() {
     );
   }
 
-  if (!user) {
+  if (!user || needsLogin) {
     return (
       <AuthRequiredGate
         kicker={t("messages.contactKicker")}
@@ -118,6 +137,7 @@ export function MessagesPageClient() {
   }
 
   const backHref = user.role === "owner" || user.role === "admin" ? "/my-houses" : "/";
+  const loginHref = `/login?return=${encodeURIComponent("/messages")}`;
 
   return (
     <section className="chat-page">
@@ -136,8 +156,14 @@ export function MessagesPageClient() {
         </header>
 
         {error ? (
-          <div className="chat-alert" role="alert">
-            {error}
+          <div className="chat-alert chat-alert--with-action" role="alert">
+            <p>{error}</p>
+            {isAuthError(error) ? (
+              <Link href={loginHref} className="chat-btn chat-btn--primary">
+                <LogIn size={18} aria-hidden />
+                {t("common.login")}
+              </Link>
+            ) : null}
           </div>
         ) : null}
 

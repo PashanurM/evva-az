@@ -161,7 +161,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <Icon size={16} />
         <span>{label}</span>
         {href === "/admin/messages" ? (
-          <UnreadDot show={hasUnread} className="evva-unread-dot--corner" />
+          <UnreadDot show={hasUnread} className="evva-unread-dot--end" />
         ) : null}
       </Link>
     );
@@ -171,58 +171,62 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className={`admin-app${menuOpen ? " admin-app--menu-open" : ""}`}>
       <header className="admin-app-header">
         <div className="admin-app-header-top">
-          <Link href="/admin" className="admin-brand">
-            <span className="admin-brand-mark">
-              <Shield size={18} />
-            </span>
-            <span className="admin-brand-text">
-              <strong>EVVA Admin</strong>
-              <small>İdarəetmə paneli</small>
-            </span>
-          </Link>
+          <div className="admin-header-row admin-header-row--actions">
+            <div className="admin-header-actions">
+              <button
+                type="button"
+                className={`admin-nav-link admin-nav-link--ghost admin-header-icon-btn${tipKey === "owner" ? " is-tip-open" : ""}`}
+                disabled={switching}
+                onClick={() => void switchToOwnerProfile()}
+                onPointerDown={() => showTip("owner")}
+                aria-label="Ev sahibi profilinə keç"
+                title="Ev sahibi profilinə keç"
+                data-tooltip="Ev sahibi profilinə keç"
+              >
+                <UserRound size={16} aria-hidden />
+                <span className="admin-header-action-label">
+                  {switching ? "Keçilir..." : "Ev sahibi profili"}
+                </span>
+              </button>
+              <Link
+                href="/"
+                className={`admin-nav-link admin-nav-link--ghost admin-nav-link--site admin-header-icon-btn${tipKey === "site" ? " is-tip-open" : ""}`}
+                onPointerDown={() => showTip("site")}
+                aria-label="Sayta qayıt"
+                title="Sayta qayıt"
+                data-tooltip="Sayta qayıt"
+              >
+                <Home size={16} aria-hidden />
+                <span className="admin-header-action-label">Sayta qayıt</span>
+              </Link>
+              {admin && (
+                <span className="admin-user-chip">{admin.full_name || admin.username}</span>
+              )}
+              <button
+                type="button"
+                className={`admin-nav-link admin-nav-link--ghost admin-header-icon-btn${tipKey === "logout" ? " is-tip-open" : ""}`}
+                onClick={() => void logout()}
+                onPointerDown={() => showTip("logout")}
+                aria-label="Çıxış"
+                title="Çıxış"
+                data-tooltip="Çıxış"
+              >
+                <LogOut size={16} aria-hidden />
+                <span className="admin-header-action-label">Çıxış</span>
+              </button>
+            </div>
+          </div>
 
-          <div className="admin-header-actions">
-            <button
-              type="button"
-              className={`admin-nav-link admin-nav-link--ghost admin-header-icon-btn${tipKey === "owner" ? " is-tip-open" : ""}`}
-              disabled={switching}
-              onClick={() => void switchToOwnerProfile()}
-              onPointerDown={() => showTip("owner")}
-              aria-label="Ev sahibi profilinə keç"
-              title="Ev sahibi profilinə keç"
-              data-tooltip="Ev sahibi profilinə keç"
-            >
-              <UserRound size={16} aria-hidden />
-              <span className="admin-header-action-label">
-                {switching ? "Keçilir..." : "Ev sahibi profili"}
+          <div className="admin-header-row admin-header-row--brand">
+            <Link href="/admin" className="admin-brand">
+              <span className="admin-brand-mark">
+                <Shield size={18} />
               </span>
-            </button>
-            <Link
-              href="/"
-              className={`admin-nav-link admin-nav-link--ghost admin-nav-link--site admin-header-icon-btn${tipKey === "site" ? " is-tip-open" : ""}`}
-              onPointerDown={() => showTip("site")}
-              aria-label="Sayta qayıt"
-              title="Sayta qayıt"
-              data-tooltip="Sayta qayıt"
-            >
-              <Home size={16} aria-hidden />
-              <span className="admin-header-action-label">Sayta qayıt</span>
+              <span className="admin-brand-text">
+                <strong>EVVA Admin</strong>
+                <small>İdarəetmə paneli</small>
+              </span>
             </Link>
-            {admin && (
-              <span className="admin-user-chip">{admin.full_name || admin.username}</span>
-            )}
-            <button
-              type="button"
-              className={`admin-nav-link admin-nav-link--ghost admin-header-icon-btn${tipKey === "logout" ? " is-tip-open" : ""}`}
-              onClick={() => void logout()}
-              onPointerDown={() => showTip("logout")}
-              aria-label="Çıxış"
-              title="Çıxış"
-              data-tooltip="Çıxış"
-            >
-              <LogOut size={16} aria-hidden />
-              <span className="admin-header-action-label">Çıxış</span>
-            </button>
             <button
               ref={menuToggleRef}
               type="button"

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Crown, Copy, Wallet } from "lucide-react";
+import { ArrowLeft, Crown, Copy, Wallet } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/providers/AuthProvider";
 import { AuthRequiredGate } from "@/components/auth/AuthRequiredGate";
@@ -212,9 +212,12 @@ export function OwnerWalletClient() {
                 );
               })}
             </div>
-            <p style={{ marginTop: 12 }}>
-              <Link href="/my-houses">Evlərimə qayıt</Link>
-            </p>
+            <div className="owner-wallet-back">
+              <Link href="/my-houses" className="auth-btn owner-wallet-back-btn">
+                <ArrowLeft size={16} aria-hidden />
+                Evlərimə qayıt
+              </Link>
+            </div>
           </section>
         </div>
       </div>

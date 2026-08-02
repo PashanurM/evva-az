@@ -7,6 +7,7 @@ export const az = {
     login: "Daxil ol",
     register: "Qeydiyyat",
     logout: "Çıxış",
+    loginRequiredShort: "Giriş tələb olunur",
     back: "Geri",
     close: "Bağla",
     home: "Ana səhifə",

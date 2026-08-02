@@ -10,6 +10,7 @@ import {
   Banknote,
   Bath,
   BedDouble,
+  Bike,
   Building2,
   CalendarCheck,
   Car,
@@ -354,6 +355,11 @@ function PropertyDetailView({ entity }: { entity: Record<string, unknown> }) {
   const tags = Array.isArray(entity.tags_list) ? entity.tags_list : [];
   const isActive = asBoolean(entity.is_active);
   const isFeatured = asBoolean(entity.is_featured);
+  const deliveryActive = asBoolean(entity.delivery_active);
+  const deliveryFee =
+    entity.delivery_fee != null && entity.delivery_fee !== ""
+      ? Number(entity.delivery_fee)
+      : null;
   const lat = Number(entity.latitude);
   const lng = Number(entity.longitude);
   const hasMap = Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0;
@@ -403,6 +409,12 @@ function PropertyDetailView({ entity }: { entity: Record<string, unknown> }) {
             <span className={isFeatured ? "admin-property-status is-premium" : "admin-property-status"}>
               <Star size={16} fill={isFeatured ? "currentColor" : "none"} />
               {isFeatured ? "Premium" : "Premium deyil"}
+            </span>
+            <span className={deliveryActive ? "admin-property-status is-delivery" : "admin-property-status"}>
+              <Bike size={16} />
+              {deliveryActive
+                ? `Delivery aktiv${deliveryFee != null && Number.isFinite(deliveryFee) ? ` · ${deliveryFee} ₼` : ""}`
+                : "Delivery deaktiv"}
             </span>
           </div>
         </div>

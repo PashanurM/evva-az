@@ -7,6 +7,7 @@ export const ru = {
     login: "Войти",
     register: "Регистрация",
     logout: "Выйти",
+    loginRequiredShort: "Требуется вход",
     back: "Назад",
     close: "Закрыть",
     home: "Главная",

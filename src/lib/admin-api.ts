@@ -283,6 +283,7 @@ export interface AdminProperty {
   cover_url: string;
   is_active: boolean;
   is_featured: boolean;
+  delivery_active?: boolean;
   owner_user_id: number;
   owner_name: string;
   owner_username?: string;

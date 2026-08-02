@@ -1,54 +1,58 @@
+/* Crisp unread badge — no glow, no overlap on icons/text */
 .evva-unread-dot {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #ef4444;
-  border: 2px solid var(--bg-card, #fff);
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25);
+  background: #dc2626;
+  border: none;
+  box-shadow: 0 0 0 2px #fff;
   pointer-events: none;
 }
 
-.evva-unread-dot--nav {
-  top: 6px;
-  right: 8px;
+.dark .evva-unread-dot {
+  box-shadow: 0 0 0 2px #1a2820;
 }
 
+/* End of a flex row (sidebar / nav links) */
+.evva-unread-dot--end,
 .evva-unread-dot--menu {
   position: relative;
   top: auto;
   right: auto;
+  left: auto;
   margin-left: auto;
-  flex-shrink: 0;
-  border-color: var(--bg-card);
 }
 
+/* After a label in a button/link */
 .evva-unread-dot--inline {
   position: relative;
   top: auto;
   right: auto;
-  margin-left: 4px;
-  border-color: transparent;
+  left: auto;
+  margin-left: 6px;
+  align-self: center;
 }
 
-.profile-menu-item,
-.owner-shell-link,
-.admin-nav-link,
+/* Corner of an icon button (profile trigger, FAB) */
+.evva-unread-dot--corner {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  left: auto;
+  margin: 0;
+}
+
 .profile-menu-trigger,
 .admin-chat-fab {
   position: relative;
 }
 
-.owner-shell-link .evva-unread-dot--corner,
-.admin-nav-link .evva-unread-dot--corner {
-  top: 10px;
-  left: 28px;
-  right: auto;
-}
-
-.profile-menu-trigger .evva-unread-dot--corner {
-  top: 8px;
-  right: 8px;
+/* Ensure row layouts can push --end to the right */
+.owner-shell-link,
+.admin-nav-link,
+.profile-menu-item,
+.auth-btn {
+  position: relative;
 }

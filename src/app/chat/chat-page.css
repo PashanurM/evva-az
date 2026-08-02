@@ -50,6 +50,8 @@
 
 .chat-panel--gate {
   width: min(100%, 440px);
+  display: grid;
+  justify-items: center;
   text-align: center;
   padding: 36px 28px 28px;
 }
@@ -508,6 +510,41 @@
   color: #be123c;
   font-weight: 700;
   font-size: 14px;
+}
+
+.chat-alert--login {
+  display: grid;
+  gap: 4px;
+  margin-top: 18px;
+  text-align: left;
+}
+
+.chat-alert--login strong {
+  font-size: 14px;
+}
+
+.chat-alert--login span {
+  font-weight: 600;
+  font-size: 13px;
+  color: color-mix(in srgb, #be123c 85%, var(--text-secondary));
+}
+
+.chat-alert--with-action {
+  display: grid;
+  gap: 12px;
+}
+
+.chat-alert--with-action p {
+  margin: 0;
+}
+
+.chat-gate-back {
+  align-self: flex-start;
+  margin-bottom: 8px;
+}
+
+.chat-panel--gate .chat-gate-actions {
+  width: 100%;
 }
 
 .chat-page .chat-thread {

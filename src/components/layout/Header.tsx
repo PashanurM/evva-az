@@ -483,7 +483,9 @@ export function Header() {
             </Link>
 
             <div className="header-actions header-actions--desktop">
-              <div className="discover-pills">{discoverLinks}</div>
+              {!onOwnerPanel ? (
+                <div className="discover-pills">{discoverLinks}</div>
+              ) : null}
               <LanguageSwitcher variant="nav" />
               <ThemeToggle />
               {desktopAuth}
@@ -520,10 +522,12 @@ export function Header() {
         className={`nav-mobile-drawer${menuOpen ? " open" : ""}`}
         aria-hidden={!menuOpen}
       >
-        <div className="nav-mobile-section nav-mobile-section--discover">
-          <span className="nav-mobile-label">{t("nav.discover")}</span>
-          <div className="nav-mobile-links">{discoverLinks}</div>
-        </div>
+        {!onOwnerPanel ? (
+          <div className="nav-mobile-section nav-mobile-section--discover">
+            <span className="nav-mobile-label">{t("nav.discover")}</span>
+            <div className="nav-mobile-links">{discoverLinks}</div>
+          </div>
+        ) : null}
         <div className="nav-mobile-section nav-mobile-section--lang">
           <span className="nav-mobile-label">{t("language.label")}</span>
           <LanguageSwitcher variant="menu" />

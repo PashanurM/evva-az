@@ -7,6 +7,7 @@ export const en = {
     login: "Log in",
     register: "Sign up",
     logout: "Log out",
+    loginRequiredShort: "Login required",
     back: "Back",
     close: "Close",
     home: "Home",

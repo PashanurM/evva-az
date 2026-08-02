@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Info, Plus, Pencil, Star, Trash2 } from "lucide-react";
+import { Bike, Info, Plus, Pencil, Star, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { adminApi, type AdminProperty } from "@/lib/admin-api";
 import { assetUrl } from "@/lib/assets";
@@ -203,6 +203,15 @@ export function AdminPropertiesPage() {
                         {p.is_featured ? (
                           <span className="admin-badge admin-badge--premium">
                             Premium
+                          </span>
+                        ) : null}
+                        {p.delivery_active ? (
+                          <span
+                            className="admin-badge admin-badge--delivery"
+                            title="Delivery aktiv"
+                            aria-label="Delivery aktiv"
+                          >
+                            <Bike size={12} aria-hidden /> Delivery
                           </span>
                         ) : null}
                       </span>
