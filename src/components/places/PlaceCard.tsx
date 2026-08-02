@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Crown, MapPin, Star } from "lucide-react";
+import { BadgePercent, Crown, MapPin, Star } from "lucide-react";
 import type { Place } from "@/types";
 import { placePath } from "@/lib/slug";
 import { useLocale } from "@/providers/LocaleProvider";
@@ -10,6 +10,7 @@ import { useLocale } from "@/providers/LocaleProvider";
 export function PlaceCard({ place }: { place: Place }) {
   const { t } = useLocale();
   const thumb = place.image ?? place.images?.[0];
+  const campaign = place.campaign?.active ? place.campaign : null;
 
   return (
     <Link href={placePath(place)} className="catalog-card place-card-link">
@@ -26,6 +27,13 @@ export function PlaceCard({ place }: { place: Place }) {
         ) : (
           <MapPin size={48} />
         )}
+        {campaign?.badge ? (
+          <span className="place-campaign-badge">{campaign.badge}</span>
+        ) : campaign ? (
+          <span className="place-campaign-badge">
+            <BadgePercent size={12} aria-hidden /> {t("places.campaignBadge")}
+          </span>
+        ) : null}
       </div>
       <div className="catalog-card-body">
         {place.premium && (

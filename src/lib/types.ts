@@ -73,6 +73,7 @@ export interface Property {
   map_address?: string;
   house_rules?: string;
   cancellation_policy?: string;
+  available_next_7_days?: boolean;
   occupied_ranges?: Array<{
     check_in: string;
     check_out: string;
@@ -93,6 +94,9 @@ export interface Property {
     bio: string;
     avg_rating?: number;
     rating_count?: number;
+    response_rate?: number | null;
+    avg_response_hours?: number | null;
+    approval_rate?: number | null;
   };
 }
 
@@ -168,6 +172,9 @@ export interface PublicOwnerProfile {
     approved_bookings: number;
     avg_rating: number;
     rating_count: number;
+    response_rate?: number | null;
+    avg_response_hours?: number | null;
+    approval_rate?: number | null;
   };
   properties: Property[];
   total: number;
@@ -211,6 +218,7 @@ export interface RestaurantMenuItemPublic {
   price: number;
   image_url?: string;
   image_path?: string;
+  is_featured?: boolean;
 }
 
 export interface RestaurantMenuCategoryPublic {
@@ -224,6 +232,14 @@ export interface RestaurantListResult {
   items: Restaurant[];
   total: number;
   locations: string[];
+}
+
+export interface PlaceCampaign {
+  active: boolean;
+  title: string;
+  badge?: string | null;
+  text?: string;
+  until?: string | null;
 }
 
 export interface Place {
@@ -252,6 +268,12 @@ export interface Place {
     price: number;
     image?: string;
   }>;
+  campaign?: PlaceCampaign | null;
+  campaign_active?: boolean;
+  campaign_title?: string;
+  campaign_badge?: string;
+  campaign_text?: string;
+  campaign_until?: string | null;
 }
 
 export interface PlaceListResult {
@@ -297,6 +319,20 @@ export interface DeliveryProduct {
 export interface DeliveryHouseListResult {
   items: DeliveryHouse[];
   total: number;
+}
+
+export interface MyDeliveryHouse {
+  id: number;
+  title: string;
+  address: string;
+  delivery_fee: number;
+  property_id: number;
+  guest_area_note?: string;
+  booking?: {
+    check_in: string;
+    check_out: string;
+    status: string;
+  };
 }
 
 export interface DeliveryOrderResult {

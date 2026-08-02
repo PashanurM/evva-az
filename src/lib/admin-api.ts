@@ -221,19 +221,44 @@ export interface AdminDashboard {
   pending_users: number;
   owners: number;
   bookings: number;
+  bookings_today?: number;
   pending_bookings: number;
   payment_pending_bookings: number;
+  delivery_orders_today?: number;
   restaurants: number;
   places: number;
   favorites: number;
   site_visits_total?: number;
   site_visits_today?: number;
   property_views_total?: number;
+  notifications?: AdminDashboardNotification[];
   modules: {
     restaurants: boolean;
     places: boolean;
     delivery: boolean;
   };
+}
+
+export interface AdminDashboardNotification {
+  type: "booking" | "delivery_order" | string;
+  id: number;
+  title: string;
+  created_at: string;
+}
+
+export interface AdminDeliveryProduct {
+  id: number;
+  name: string;
+  description: string;
+  image: string;
+  price: number;
+  unit: string;
+  is_active: boolean;
+  category_id: number;
+  category: string;
+  quantity: number;
+  reserved: number;
+  available: number;
 }
 
 export interface AdminDeliveryHouse {
@@ -799,6 +824,52 @@ export const adminApi = {
     adminFetch<{ message: string; house: AdminDeliveryHouse }>(
       `/admin/delivery/houses/${id}`,
       { method: "PATCH", body: JSON.stringify(body) },
+      true,
+    ),
+
+  getDeliveryProductsAdmin: () =>
+    adminFetch<{ items: AdminDeliveryProduct[]; total: number }>(
+      "/admin/delivery/products",
+    ),
+
+  createDeliveryProductAdmin: (body: {
+    name: string;
+    price: number;
+    category_id: number;
+    unit?: string;
+    description?: string;
+    is_active?: boolean;
+  }) =>
+    adminFetch<{ product: AdminDeliveryProduct }>(
+      "/admin/delivery/products",
+      { method: "POST", body: JSON.stringify(body) },
+      true,
+    ),
+
+  updateDeliveryProductAdmin: (
+    id: number,
+    body: {
+      name?: string;
+      price?: number;
+      category_id?: number;
+      unit?: string;
+      description?: string;
+      is_active?: boolean;
+    },
+  ) =>
+    adminFetch<{ product: AdminDeliveryProduct }>(
+      `/admin/delivery/products/${id}`,
+      { method: "PUT", body: JSON.stringify(body) },
+      true,
+    ),
+
+  adjustDeliveryProductStockAdmin: (
+    id: number,
+    body: { quantity_delta: number; note?: string },
+  ) =>
+    adminFetch<{ product: AdminDeliveryProduct }>(
+      `/admin/delivery/products/${id}/stock`,
+      { method: "POST", body: JSON.stringify(body) },
       true,
     ),
 

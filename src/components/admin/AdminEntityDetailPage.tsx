@@ -159,6 +159,11 @@ const RESOURCE_META: Record<
       { key: "tips", label: "Məsləhətlər", type: "textarea" },
       { key: "is_featured", label: "Premium", type: "boolean" },
       { key: "is_active", label: "Aktiv", type: "boolean" },
+      { key: "campaign_active", label: "Kampaniya aktiv", type: "boolean" },
+      { key: "campaign_title", label: "Kampaniya başlığı" },
+      { key: "campaign_badge", label: "Badge (məs. -15%)" },
+      { key: "campaign_text", label: "Kampaniya mətni" },
+      { key: "campaign_until", label: "Kampaniya bitmə tarixi", type: "date" },
     ],
   },
   payments: {

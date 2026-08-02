@@ -27,6 +27,23 @@ export type HubHomeCard = {
   image: string;
 };
 
+export type HubWeekPick = {
+  id: number;
+  title: string;
+  location: string;
+  price: number;
+  image: string;
+  story: string;
+};
+
+export type HubReviewCard = {
+  comment: string;
+  full_name: string;
+  propertyTitle: string;
+  propertyId: number;
+  rating: number;
+};
+
 export type HubRestaurantCard = {
   id: number;
   name: string;
@@ -49,6 +66,8 @@ export type HubPlaceCard = {
 
 interface HomeHubProps {
   homes: HubHomeCard[];
+  weekPick?: HubWeekPick | null;
+  reviews?: HubReviewCard[];
   restaurants: HubRestaurantCard[];
   places: HubPlaceCard[];
   modules: {
@@ -68,7 +87,7 @@ function RatingBadge({ rating, count }: { rating: number; count: number }) {
   );
 }
 
-export function HomeHub({ homes, restaurants, places, modules }: HomeHubProps) {
+export function HomeHub({ homes, weekPick, reviews = [], restaurants, places, modules }: HomeHubProps) {
   const { t } = useLocale();
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -140,6 +159,61 @@ export function HomeHub({ homes, restaurants, places, modules }: HomeHubProps) {
         </div>
       </section>
 
+      {weekPick ? (
+        <section className="hub-section hub-week-pick">
+          <div className="container">
+            <div className="week-pick">
+              <div className="week-pick-media">
+                <Image
+                  src={weekPick.image}
+                  alt={weekPick.title}
+                  width={720}
+                  height={480}
+                  unoptimized
+                />
+              </div>
+              <div className="week-pick-body">
+                <span className="section-kicker">{t("home.weekPickKicker")}</span>
+                <h2>{weekPick.title}</h2>
+                <p className="week-pick-loc">
+                  <MapPin size={16} aria-hidden /> {weekPick.location}
+                </p>
+                <p className="week-pick-story">{weekPick.story}</p>
+                <div className="week-pick-foot">
+                  <strong>
+                    {weekPick.price} {t("common.perNight")}
+                  </strong>
+                  <Link href={`/property/${weekPick.id}`} className="hub-cta hub-cta--primary">
+                    {t("home.weekPickCta")} <ArrowRight size={16} aria-hidden />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="hub-section hub-presets">
+        <div className="container">
+          <span className="section-kicker">{t("home.presetsKicker")}</span>
+          <h2 className="hub-presets-title">{t("home.presetsTitle")}</h2>
+          <div className="presets-row">
+            <Link href="/homes?tags=Hovuz" className="preset-chip">
+              {t("home.presetPool")}
+            </Link>
+            <Link href="/homes?tags=VİLLA&min_rooms=2" className="preset-chip">
+              {t("home.presetFamily")}
+            </Link>
+            <Link href="/homes?search=A-frame" className="preset-chip">
+              {t("home.presetRomantic")}
+            </Link>
+            <Link href="/homes?min_rooms=3" className="preset-chip">
+              {t("home.presetFriends")}
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="hub-section" id="hub-homes">
         <div className="container">
           <div className="hub-section-head">
@@ -183,6 +257,33 @@ export function HomeHub({ homes, restaurants, places, modules }: HomeHubProps) {
           </div>
         </div>
       </section>
+
+      {reviews.length > 0 ? (
+        <section className="hub-section hub-reviews">
+          <div className="container">
+            <div className="hub-section-head">
+              <div>
+                <span className="section-kicker">{t("home.reviewsKicker")}</span>
+                <h2>{t("home.reviewsTitle")}</h2>
+              </div>
+            </div>
+            <div className="reviews-showcase">
+              {reviews.map((review, index) => (
+                <article key={`${review.propertyId}-${index}`} className="review-quote-card">
+                  <blockquote>&ldquo;{review.comment}&rdquo;</blockquote>
+                  <footer>
+                    <strong>{review.full_name || t("home.reviewGuest")}</strong>
+                    <span>
+                      {review.propertyTitle} · {review.rating}/10
+                    </span>
+                    <Link href={`/property/${review.propertyId}`}>{t("common.viewDetails")}</Link>
+                  </footer>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {modules.places ? (
         <section className="hub-section hub-section--alt" id="hub-places">

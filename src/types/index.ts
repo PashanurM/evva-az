@@ -22,6 +22,9 @@ export interface Property {
     bio: string;
     avgRating?: number;
     ratingCount?: number;
+    responseRate?: number | null;
+    avgResponseHours?: number | null;
+    approvalRate?: number | null;
   };
   rating: number;
   ratingCount?: number;
@@ -73,6 +76,7 @@ export interface Property {
     check_out: string;
     source?: string;
   }>;
+  availableNext7Days?: boolean;
 }
 
 export interface Restaurant {
@@ -83,6 +87,14 @@ export interface Restaurant {
   premium?: boolean;
   image?: string;
   rating?: number;
+}
+
+export interface PlaceCampaign {
+  active: boolean;
+  title: string;
+  badge?: string | null;
+  text?: string;
+  until?: string | null;
 }
 
 export interface Place {
@@ -106,6 +118,7 @@ export interface Place {
     price: number;
     image?: string;
   }>;
+  campaign?: PlaceCampaign | null;
   lat?: number;
   lng?: number;
 }

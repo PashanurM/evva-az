@@ -26,6 +26,7 @@ import { AvailabilityCalendar } from "@/components/property/AvailabilityCalendar
 import { FavoriteToggle } from "@/components/property/FavoriteToggle";
 import { PropertyGallery } from "@/components/property/PropertyGallery";
 import { PropertyRatingSection } from "@/components/property/PropertyRatingSection";
+import { OwnerStatsRow } from "@/components/property/OwnerStatsRow";
 
 const ADMIN_WHATSAPP = "994554440830";
 
@@ -39,7 +40,10 @@ function adminWhatsAppHref(property: Property, origin = "https://evva.az"): stri
 }
 
 const PropertyMap = dynamic(
-  () => import("@/components/home/PropertyMap").then((m) => m.PropertyMap),
+  () =>
+    import("@/components/property/PropertyDetailNearbyMap").then(
+      (m) => m.PropertyDetailNearbyMap,
+    ),
   {
     ssr: false,
     loading: () => (
@@ -174,6 +178,7 @@ export function PropertyDetailClient({
                         {Number(property.owner.avgRating || 0).toFixed(1)}
                       </em>
                     ) : null}
+                    <OwnerStatsRow owner={property.owner} />
                   </span>
                 </Link>
               ) : null}
@@ -326,7 +331,7 @@ export function PropertyDetailClient({
               ) : null}
             </div>
             <PropertyMap
-              properties={[property]}
+              property={property}
               mapId={`property-detail-map-${property.id}`}
               className="property-detail-map"
             />

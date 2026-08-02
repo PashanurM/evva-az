@@ -40,6 +40,9 @@ export function mapApiProperty(property: ApiProperty): Property {
           bio: property.owner.bio,
           avgRating: property.owner.avg_rating,
           ratingCount: property.owner.rating_count,
+          responseRate: property.owner.response_rate ?? null,
+          avgResponseHours: property.owner.avg_response_hours ?? null,
+          approvalRate: property.owner.approval_rate ?? null,
         }
       : undefined,
     rating: property.avg_rating,
@@ -91,6 +94,9 @@ export function mapApiProperty(property: ApiProperty): Property {
     premium: property.is_premium,
     isFavorite: Boolean(property.is_favorite),
     occupiedRanges: property.occupied_ranges || property.booked_ranges || [],
+    availableNext7Days: Boolean(
+      (property as { available_next_7_days?: boolean }).available_next_7_days,
+    ),
   };
 }
 
@@ -145,6 +151,15 @@ export function mapApiPlace(place: ApiPlace): Place {
       price: Number(activity.price || 0),
       image: activity.image ? assetUrl(activity.image) : undefined,
     })),
+    campaign: place.campaign?.active
+      ? {
+          active: true,
+          title: place.campaign.title,
+          badge: place.campaign.badge || null,
+          text: place.campaign.text || "",
+          until: place.campaign.until || null,
+        }
+      : null,
     lat: Number.isFinite(lat) && lat !== 0 ? lat : undefined,
     lng: Number.isFinite(lng) && lng !== 0 ? lng : undefined,
   };

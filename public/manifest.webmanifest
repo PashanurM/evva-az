@@ -1,0 +1,24 @@
+{
+  "name": "EVVA.AZ",
+  "short_name": "EVVA",
+  "description": "Qəbələdə günlük kirayə evlər, villa, A-frame, restoranlar və gəzməli yerlər.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#0f172a",
+  "lang": "az",
+  "icons": [
+    {
+      "src": "/assets/evva-favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/evva-logo-mark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

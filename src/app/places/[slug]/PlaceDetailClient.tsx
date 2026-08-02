@@ -24,6 +24,16 @@ interface PlaceDetailClientProps {
 
 export function PlaceDetailClient({ place, images, mapsUrl }: PlaceDetailClientProps) {
   const { t } = useLocale();
+  const campaign = place.campaign?.active ? place.campaign : null;
+  const waText = encodeURIComponent(
+    campaign
+      ? `Salam! ${place.title} — ${campaign.title}${campaign.badge ? ` (${campaign.badge})` : ""} haqqında məlumat almaq istəyirəm.`
+      : `Salam! ${place.title} üçün EVVA.AZ endirimi haqqında məlumat almaq istəyirəm.`,
+  );
+  const waUrl = `https://wa.me/994554440830?text=${waText}`;
+  const untilLabel = campaign?.until
+    ? `${t("places.campaignUntil")} ${new Date(`${campaign.until}T00:00:00`).toLocaleDateString()}`
+    : null;
 
   return (
     <section className="place-detail">
@@ -47,6 +57,11 @@ export function PlaceDetailClient({ place, images, mapsUrl }: PlaceDetailClientP
             {place.premium ? (
               <span className="premium-label">{t("common.premium")}</span>
             ) : null}
+            {campaign?.badge ? (
+              <span className="place-campaign-badge place-campaign-badge--inline">
+                {campaign.badge}
+              </span>
+            ) : null}
           </div>
           <h1>{place.title}</h1>
           <p className="place-hero-loc">
@@ -57,6 +72,22 @@ export function PlaceDetailClient({ place, images, mapsUrl }: PlaceDetailClientP
         {images.length > 0 && (
           <PlaceGallery images={images} title={place.title} />
         )}
+
+        {campaign ? (
+          <section className="place-campaign-banner">
+            <BadgePercent size={28} aria-hidden />
+            <div>
+              <strong>{campaign.title}</strong>
+              <span>
+                {campaign.text || t("places.campaignFallbackText")}
+                {untilLabel ? ` · ${untilLabel}` : ""}
+              </span>
+            </div>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" className="auth-btn primary">
+              {t("places.campaignCta")}
+            </a>
+          </section>
+        ) : null}
 
         {(place.activities?.length ?? 0) > 0 && (
           <section className="place-activities-section">
@@ -69,8 +100,13 @@ export function PlaceDetailClient({ place, images, mapsUrl }: PlaceDetailClientP
               <div className="evva-ticket-discount">
                 <BadgePercent size={28} />
                 <div>
-                  <strong>EVVA.AZ endirimi</strong>
-                  <span>Bu məkanlara bileti EVVA.AZ üzərindən aldıqda xüsusi endirim əldə edəcəksiniz.</span>
+                  <strong>
+                    {campaign?.title || "EVVA.AZ endirimi"}
+                  </strong>
+                  <span>
+                    {campaign?.text ||
+                      "Bu məkanlara bileti EVVA.AZ üzərindən aldıqda xüsusi endirim əldə edəcəksiniz."}
+                  </span>
                 </div>
               </div>
             </div>
@@ -103,7 +139,12 @@ export function PlaceDetailClient({ place, images, mapsUrl }: PlaceDetailClientP
                     <div className="place-activity-body">
                       <small>Aktivlik</small>
                       <h3>{activity.name}</h3>
-                      <span><BadgePercent size={14} /> EVVA.AZ ilə endirim fürsəti</span>
+                      <span>
+                        <BadgePercent size={14} />{" "}
+                        {campaign?.badge
+                          ? `${campaign.badge} — EVVA.AZ`
+                          : "EVVA.AZ ilə endirim fürsəti"}
+                      </span>
                     </div>
                   </article>
                 );

@@ -59,6 +59,7 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(String(property?.guests ?? 2));
   const [note, setNote] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
@@ -116,6 +117,7 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
       note: note.trim(),
       guest_name: user.full_name || user.username,
       guest_phone: user.phone,
+      ...(referralCode.trim() ? { referral_code: referralCode.trim() } : {}),
     });
     setBusy(false);
 
@@ -206,7 +208,7 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
                 <p className="booking-aside-copy">
                   {t("booking.selectPropertyFirst")}
                 </p>
-                <Link href="/#properties" className="booking-aside-link">
+                <Link href="/homes#properties" className="booking-aside-link">
                   {t("common.browseHomes")}
                 </Link>
               </>
@@ -301,6 +303,19 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
               />
             </div>
 
+            <div className="form-field">
+              <label htmlFor="referral_code">{t("booking.referralCode")}</label>
+              <input
+                id="referral_code"
+                name="referral_code"
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value)}
+                placeholder={t("booking.referralCodePlaceholder")}
+                autoComplete="off"
+              />
+            </div>
+
             <button
               type="submit"
               className="auth-submit booking-submit"
@@ -309,11 +324,27 @@ export function BookingPageClient({ property }: BookingPageClientProps) {
               <CalendarCheck size={18} aria-hidden />
               {busy ? t("common.wait") : t("booking.submit")}
             </button>
+
+            {property ? (
+              <div className="booking-admin-help">
+                <p>{t("booking.adminHelpText")}</p>
+                <a
+                  href={`https://wa.me/994554440830?text=${encodeURIComponent(
+                    `${property.title} (${property.id}) - ${t("booking.adminHelpWhatsapp")}`,
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="booking-admin-help-btn"
+                >
+                  {t("booking.adminHelpButton")}
+                </a>
+              </div>
+            ) : null}
           </form>
 
           {!property ? (
             <div className="auth-links booking-links">
-              <Link href="/#properties">{t("common.browseHomes")}</Link>
+              <Link href="/homes#properties">{t("common.browseHomes")}</Link>
             </div>
           ) : null}
         </section>

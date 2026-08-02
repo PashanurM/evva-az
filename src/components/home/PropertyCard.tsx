@@ -4,37 +4,29 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import {
+  CalendarCheck,
+  CheckCircle2,
   Crown,
   MapPin,
   Eye,
   MessageCircle,
-  ShieldCheck,
 } from "lucide-react";
 import type { Property } from "@/types";
 import { useLocale } from "@/providers/LocaleProvider";
 import { FavoriteToggle } from "@/components/property/FavoriteToggle";
 
-const ADMIN_WHATSAPP = "994554440830";
-/** Canonical site URL — must be identical on SSR and client to avoid hydration mismatches. */
-const SITE_ORIGIN = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://evva.az"
-).replace(/\/$/, "");
-
-function adminWhatsAppHref(property: Property): string {
-  const pageUrl = `${SITE_ORIGIN}/property/${property.id}`;
-  const text =
-    `Salam! Bu ev haqqında məlumat almaq istəyirəm.\n` +
-    `${property.title}\n` +
-    `${pageUrl}`;
-  return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`;
-}
-
 export function PropertyCard({
   property,
   onFavoriteChange,
+  selectable = false,
+  selected = false,
+  onSelectToggle,
 }: {
   property: Property;
   onFavoriteChange?: (favorite: boolean) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectToggle?: (id: number) => void;
 }) {
   const { t } = useLocale();
   const [tipKey, setTipKey] = useState<string | null>(null);
@@ -42,7 +34,7 @@ export function PropertyCard({
 
   const viewLabel = t("common.viewMore");
   const messageLabel = t("common.message");
-  const adminLabel = t("property.writeAdmin");
+  const reserveLabel = t("common.reserve");
 
   function showTip(key: string) {
     setTipKey(key);
@@ -52,7 +44,7 @@ export function PropertyCard({
 
   return (
     <div
-      className={`property-card ${property.premium ? "premium-property-card" : ""}`}
+      className={`property-card ${property.premium ? "premium-property-card" : ""}${selected ? " is-compare-selected" : ""}`}
       id={`property-${property.id}`}
     >
       <div className="card-image">
@@ -71,6 +63,12 @@ export function PropertyCard({
             <Crown size={18} />
           </span>
         )}
+        {property.availableNext7Days ? (
+          <span className="availability-badge">
+            <CheckCircle2 size={12} aria-hidden />
+            {t("home.availableNext7")}
+          </span>
+        ) : null}
         <div className="card-badges">
           <span className="location-badge">
             <MapPin size={12} /> {property.location}
@@ -79,11 +77,22 @@ export function PropertyCard({
             {property.price} {t("common.perNight")}
           </span>
         </div>
-        <FavoriteToggle
-          propertyId={property.id}
-          initialFavorite={Boolean(property.isFavorite)}
-          onChange={onFavoriteChange}
-        />
+        {selectable ? (
+          <button
+            type="button"
+            className={`compare-select-btn${selected ? " is-on" : ""}`}
+            onClick={() => onSelectToggle?.(property.id)}
+            aria-pressed={selected}
+          >
+            {selected ? t("compare.selected") : t("compare.select")}
+          </button>
+        ) : (
+          <FavoriteToggle
+            propertyId={property.id}
+            initialFavorite={Boolean(property.isFavorite)}
+            onChange={onFavoriteChange}
+          />
+        )}
       </div>
 
       <div className="card-content">
@@ -116,19 +125,17 @@ export function PropertyCard({
             <MessageCircle size={16} aria-hidden />
             <span className="btn-label">{messageLabel}</span>
           </Link>
-          <a
-            href={adminWhatsAppHref(property)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`admin-write-btn${tipKey === "admin" ? " is-tip-open" : ""}`}
-            aria-label={adminLabel}
-            title={adminLabel}
-            data-tooltip={adminLabel}
-            onPointerDown={() => showTip("admin")}
+          <Link
+            href={`/booking?property_id=${property.id}`}
+            className={`reserve-btn${tipKey === "reserve" ? " is-tip-open" : ""}`}
+            aria-label={reserveLabel}
+            title={reserveLabel}
+            data-tooltip={reserveLabel}
+            onPointerDown={() => showTip("reserve")}
           >
-            <ShieldCheck size={16} aria-hidden />
-            <span className="btn-label">{adminLabel}</span>
-          </a>
+            <CalendarCheck size={16} aria-hidden />
+            <span className="btn-label">{reserveLabel}</span>
+          </Link>
         </div>
       </div>
     </div>

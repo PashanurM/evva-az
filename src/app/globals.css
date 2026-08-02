@@ -3595,6 +3595,7 @@ a.property-owner-card:hover .property-owner-copy strong {
 }
 
 .catalog-card-image {
+  position: relative;
   height: 200px;
   background: linear-gradient(135deg, #0f766e, #14b8a6);
   display: grid;
@@ -7717,5 +7718,854 @@ a.property-owner-card:hover .property-owner-copy strong {
   }
   .rmenu-dish-dots {
     display: none;
+  }
+}
+
+/* availability badge on property cards */
+.card-image .availability-badge {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 4;
+}
+.availability-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #166534;
+  background: color-mix(in srgb, #22c55e 16%, #fff);
+  border: 1px solid color-mix(in srgb, #22c55e 35%, transparent);
+}
+
+/* compare mode on homes listing */
+.compare-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  font-weight: 700;
+  cursor: pointer;
+}
+.compare-mode-btn.is-on {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
+}
+.compare-select-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.compare-select-btn.is-on {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.property-card.is-compare-selected {
+  outline: 3px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  outline-offset: 2px;
+}
+.compare-sticky-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  border-top: 1px solid var(--border-color);
+  backdrop-filter: blur(12px);
+}
+.compare-sticky-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.section-intro-actions {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* homepage week pick block */
+.week-pick {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  padding: 24px;
+  border-radius: 28px;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 8%, var(--bg-card)), var(--bg-card));
+}
+.week-pick-media img {
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  object-fit: cover;
+}
+.week-pick-story {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.week-pick-loc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: var(--text-muted);
+}
+.week-pick-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+/* homepage preset chips */
+.hub-presets-title {
+  margin: 8px 0 14px;
+}
+.presets-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.preset-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.preset-chip:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+}
+
+/* homepage guest reviews showcase */
+.reviews-showcase {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.review-quote-card {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+.review-quote-card blockquote {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.review-quote-card footer {
+  display: grid;
+  gap: 4px;
+  margin-top: 14px;
+  font-size: 13px;
+}
+.review-quote-card footer a {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* compare page table and cards */
+.compare-page {
+  padding: 32px 0 60px;
+}
+.compare-intro {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+.compare-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 28px;
+}
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.compare-table th,
+.compare-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+  vertical-align: top;
+}
+.compare-table thead th {
+  background: var(--bg-tertiary);
+}
+.compare-table tbody th[scope="row"] {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.compare-cards {
+  display: none;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.compare-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+.compare-card-media img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+.compare-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.compare-actions a {
+  font-weight: 700;
+  color: var(--primary);
+}
+.compare-tags {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* booking admin help box */
+.booking-admin-help {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, #25d366 35%, var(--border-color));
+  background: color-mix(in srgb, #25d366 8%, var(--bg-card));
+}
+.booking-admin-help p {
+  margin: 0 0 10px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.booking-admin-help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  font-weight: 800;
+}
+
+/* restaurant menu popular badge */
+.rmenu-popular-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  font-style: normal;
+  color: #92400e;
+  background: color-mix(in srgb, #f59e0b 18%, #fff);
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, transparent);
+}
+
+/* places campaigns */
+.places-campaigns {
+  padding: 8px 0 32px;
+}
+.places-campaigns h2 {
+  margin: 6px 0 8px;
+}
+.places-campaigns > .container > p {
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  max-width: 640px;
+}
+.places-campaigns-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 320px);
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+}
+.places-campaign-card {
+  scroll-snap-align: start;
+  border-radius: 18px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.places-campaign-media {
+  position: relative;
+  height: 160px;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+.places-campaign-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.places-campaign-body {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+.places-campaign-body strong {
+  font-size: 17px;
+  line-height: 1.25;
+}
+.places-campaign-body p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.places-campaign-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.places-campaign-cta {
+  justify-self: start;
+  margin-top: 4px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+.place-campaign-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.place-campaign-badge--inline {
+  position: static;
+}
+.place-campaign-banner {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 18px 0 8px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, #0f766e 35%, transparent);
+  background: color-mix(in srgb, #0f766e 10%, var(--bg-card));
+}
+.place-campaign-banner > div {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+}
+.place-campaign-banner strong {
+  font-size: 17px;
+}
+.place-campaign-banner span {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
+}
+@media (max-width: 720px) {
+  .place-campaign-banner {
+    flex-wrap: wrap;
+  }
+  .place-campaign-banner .auth-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* places one-day route */
+.places-day-route {
+  padding: 0 0 28px;
+}
+.day-route-list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.day-route-list li {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+.day-route-step {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: var(--primary);
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 14px;
+}
+.day-route-card {
+  flex: 1;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+.day-route-media {
+  width: 120px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+}
+.day-route-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.day-route-tip {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--bg-tertiary);
+}
+.day-route-tip a {
+  font-weight: 800;
+  color: var(--primary);
+}
+
+/* explore SEO landing pages */
+.explore-landing {
+  padding: 28px 0 0;
+}
+.explore-intro {
+  max-width: 760px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.explore-all-link {
+  display: inline-flex;
+  margin: 16px 0 8px;
+}
+
+@media (max-width: 900px) {
+  .week-pick {
+    grid-template-columns: 1fr;
+  }
+  .reviews-showcase {
+    grid-template-columns: 1fr;
+  }
+  .compare-table-wrap {
+    display: none;
+  }
+  .compare-cards {
+    display: grid;
+  }
+  .section-intro-actions {
+    width: 100%;
+  }
+}
+
+/* Delivery order + my booking */
+.delivery-my-booking {
+  padding: 0 0 24px;
+}
+.delivery-my-booking-card {
+  padding: 24px;
+  border-radius: 20px;
+}
+.delivery-my-booking-head h2 {
+  margin: 8px 0;
+}
+.delivery-my-booking-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.delivery-my-booking-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color, rgba(15, 23, 42, 0.08));
+  border-radius: 14px;
+}
+.delivery-my-booking-dates {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.delivery-order-shell {
+  padding: 0 0 48px;
+}
+.delivery-order-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+.delivery-back-link {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+.delivery-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.delivery-product-card {
+  border: 1px solid var(--border-color, rgba(15, 23, 42, 0.08));
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--card-bg, #fff);
+}
+.delivery-product-image {
+  min-height: 90px;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.04);
+}
+.delivery-product-body {
+  padding: 14px;
+}
+.delivery-product-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.delivery-add-btn,
+.delivery-checkout-btn,
+.delivery-order-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  background: #166534;
+  color: #fff;
+}
+.delivery-cart-panel {
+  position: sticky;
+  top: 92px;
+  padding: 18px;
+  border-radius: 18px;
+}
+.delivery-progress-block {
+  margin: 12px 0;
+}
+.delivery-progress-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.delivery-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+.delivery-progress-bar span {
+  display: block;
+  height: 100%;
+  background: #166534;
+}
+.delivery-progress-bar--free span {
+  background: #2563eb;
+}
+.delivery-cart-lines {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 10px;
+}
+.delivery-cart-lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+.delivery-qty-controls {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.delivery-cart-totals {
+  margin: 12px 0 16px;
+  display: grid;
+  gap: 8px;
+}
+.delivery-cart-totals div {
+  display: flex;
+  justify-content: space-between;
+}
+.delivery-cart-total-row {
+  font-weight: 800;
+}
+.delivery-checkout-form label,
+.delivery-payment-fieldset label {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.delivery-checkout-form input,
+.delivery-checkout-form textarea,
+.delivery-checkout-form select {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, rgba(15, 23, 42, 0.12));
+  padding: 8px 12px;
+}
+.delivery-track-shell {
+  padding: 24px 0 48px;
+}
+.delivery-track-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.delivery-track-progress {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+  padding: 16px;
+}
+.delivery-track-step {
+  text-align: center;
+  opacity: 0.45;
+}
+.delivery-track-step.is-done,
+.delivery-track-step.is-current {
+  opacity: 1;
+}
+.delivery-track-step span {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(22, 101, 52, 0.12);
+  font-weight: 700;
+}
+.delivery-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.delivery-category-tabs button {
+  border-radius: 999px;
+  padding: 8px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+.delivery-category-tabs button.is-active {
+  background: #166534;
+  color: #fff;
+  border-color: #166534;
+}
+
+/* Property owner stats + nearby map */
+.property-owner-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.property-owner-stat {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.05);
+  font-size: 11px;
+}
+.property-nearby-map-wrap {
+  position: relative;
+}
+.property-nearby-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.property-nearby-links a {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  font-size: 13px;
+  font-weight: 700;
+}
+.property-nearby-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+}
+.property-nearby-pill--restaurant {
+  background: #ea580c;
+}
+.property-nearby-pill--place {
+  background: #2563eb;
+}
+.owner-profile-stats--extra {
+  margin-top: 12px;
+}
+
+/* Admin delivery products + dashboard notifications */
+.admin-delivery-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.admin-delivery-tabs button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  font-weight: 700;
+}
+.admin-delivery-tabs button.is-active {
+  background: #166534;
+  color: #fff;
+  border-color: #166534;
+}
+.admin-delivery-product-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.admin-delivery-stock-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.admin-delivery-stock-row input {
+  width: 88px;
+  min-height: 38px;
+}
+.admin-dashboard-split {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+.admin-notification-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.admin-notification-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+.admin-notification-type {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.admin-notification-type--booking {
+  color: #166534;
+}
+.admin-notification-type--delivery_order {
+  color: #2563eb;
+}
+.admin-muted {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .delivery-order-grid,
+  .delivery-track-grid,
+  .admin-dashboard-split,
+  .admin-delivery-product-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .delivery-cart-panel {
+    position: static;
+  }
+  .delivery-track-progress {
+    grid-template-columns: 1fr;
   }
 }

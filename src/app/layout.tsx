@@ -24,8 +24,15 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   ...siteMetadata,
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: "/assets/evva-favicon.png",
+    apple: "/assets/evva-favicon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "EVVA.AZ",
+    statusBarStyle: "default",
   },
 };
 

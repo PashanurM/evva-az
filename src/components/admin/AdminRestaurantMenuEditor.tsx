@@ -25,6 +25,7 @@ type ItemDraft = {
   title: string;
   ingredients: string;
   price: string;
+  is_featured: boolean;
 };
 
 const EMPTY_ITEM: ItemDraft = {
@@ -32,6 +33,7 @@ const EMPTY_ITEM: ItemDraft = {
   title: "",
   ingredients: "",
   price: "",
+  is_featured: false,
 };
 
 export function AdminRestaurantMenuEditor({ restaurantId }: { restaurantId: number }) {
@@ -118,6 +120,7 @@ export function AdminRestaurantMenuEditor({ restaurantId }: { restaurantId: numb
       title: item.title,
       ingredients: item.ingredients || item.description || "",
       price: item.price ? String(item.price) : "",
+      is_featured: Boolean(item.is_featured),
     });
   }
 
@@ -139,6 +142,19 @@ export function AdminRestaurantMenuEditor({ restaurantId }: { restaurantId: numb
       toast.warning("Qiymət əlavə edin (₼)");
       return;
     }
+    const isCreate = !itemDraft.id;
+    if (isCreate) {
+      toast.warning("Əvvəlcə məhsulu saxlayın, sonra mütləq şəkil yükləyin. Şəkilsiz menyu göstərilməyəcək.");
+    }
+    const existingHasImage = Boolean(
+      itemDraft.id && menu?.categories
+        ?.flatMap((c) => c.items)
+        .find((i) => i.id === itemDraft.id && (i.image_url || i.image_path)),
+    );
+    if (!isCreate && itemDraft.is_featured && !existingHasImage) {
+      toast.error("Məşhur məhsul üçün şəkil mütləqdir. Əvvəlcə şəkil yükləyin.");
+      return;
+    }
     setBusy(true);
     const res = await adminApi.saveRestaurantMenuItem(
       restaurantId,
@@ -148,6 +164,7 @@ export function AdminRestaurantMenuEditor({ restaurantId }: { restaurantId: numb
         ingredients: itemDraft.ingredients.trim(),
         description: itemDraft.ingredients.trim().slice(0, 255),
         price,
+        is_featured: itemDraft.is_featured,
       },
       itemDraft.id,
     );
@@ -157,8 +174,22 @@ export function AdminRestaurantMenuEditor({ restaurantId }: { restaurantId: numb
       return;
     }
     setMenu(res.data.menu);
+    const savedItem = res.data.item;
+    if (isCreate) {
+      // Keep draft open on created item so admin can upload the required image.
+      setItemDraft({
+        id: savedItem.id,
+        category_id: savedItem.category_id,
+        title: savedItem.title,
+        ingredients: savedItem.ingredients || "",
+        price: String(savedItem.price ?? ""),
+        is_featured: Boolean(savedItem.is_featured),
+      });
+      toast.success("Məhsul əlavə olundu — indi şəkil yükləyin (mütləq).");
+      return;
+    }
     setItemDraft({ ...EMPTY_ITEM, category_id: itemDraft.category_id });
-    toast.success(itemDraft.id ? "Məhsul yeniləndi" : "Məhsul əlavə olundu");
+    toast.success("Məhsul yeniləndi");
   }
 
   async function removeItem(item: RestaurantMenuItem) {
@@ -288,6 +319,16 @@ export function AdminRestaurantMenuEditor({ restaurantId }: { restaurantId: numb
               onChange={(e) => setItemDraft((current) => ({ ...current, ingredients: e.target.value }))}
               placeholder="Məs: toyuq, düyü, göyərti…"
             />
+          </label>
+          <label className="admin-setting-switch">
+            <input
+              type="checkbox"
+              checked={itemDraft.is_featured}
+              onChange={(e) =>
+                setItemDraft((current) => ({ ...current, is_featured: e.target.checked }))
+              }
+            />
+            Məşhur / featured
           </label>
         </div>
         <div className="admin-property-form-actions" style={{ marginTop: 10 }}>

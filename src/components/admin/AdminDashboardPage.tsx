@@ -3,15 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  Bell,
   Building2,
   CalendarCheck,
   Eye,
   Heart,
   MapPin,
+  Package,
   Users,
   UtensilsCrossed,
 } from "lucide-react";
-import { adminApi, type AdminDashboard } from "@/lib/admin-api";
+import { adminApi, type AdminDashboard, type AdminDashboardNotification } from "@/lib/admin-api";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { useAdmin } from "@/providers/AdminProvider";
 
@@ -42,6 +44,18 @@ function StatCard({
   );
 }
 
+function notificationHref(item: AdminDashboardNotification): string {
+  if (item.type === "booking") return `/admin/reservations/${item.id}`;
+  if (item.type === "delivery_order") return "/admin/delivery";
+  return "/admin";
+}
+
+function notificationLabel(item: AdminDashboardNotification): string {
+  if (item.type === "booking") return "Yeni rezerv";
+  if (item.type === "delivery_order") return "Yeni delivery";
+  return "Bildiriş";
+}
+
 export function AdminDashboardPage() {
   const { admin, loading } = useAdmin();
   const [stats, setStats] = useState<AdminDashboard | null>(null);
@@ -62,6 +76,8 @@ export function AdminDashboardPage() {
   if (!admin) {
     return null;
   }
+
+  const notifications = stats?.notifications || [];
 
   return (
     <AdminShell>
@@ -95,9 +111,16 @@ export function AdminDashboardPage() {
               <StatCard
                 label="Rezervasiyalar"
                 value={stats.bookings}
-                hint={`${stats.pending_bookings} gözləyən`}
+                hint={`Bu gün: ${stats.bookings_today ?? 0} · ${stats.pending_bookings} gözləyən`}
                 icon={CalendarCheck}
                 href="/admin/reservations"
+              />
+              <StatCard
+                label="Delivery bu gün"
+                value={stats.delivery_orders_today ?? 0}
+                hint="Bugünkü sifarişlər"
+                icon={Package}
+                href="/admin/delivery"
               />
               <StatCard label="Sevimlilər" value={stats.favorites} icon={Heart} href="/admin/properties" />
               <StatCard
@@ -118,19 +141,44 @@ export function AdminDashboardPage() {
               <StatCard label="Görməli yerlər" value={stats.places} icon={MapPin} href="/admin/places" />
             </div>
 
-            <section className="admin-panel-card">
-              <h2>Modul statusu</h2>
-              <div className="admin-module-list">
-                {Object.entries(stats.modules).map(([key, active]) => (
-                  <div key={key} className="admin-module-item">
-                    <span>{key}</span>
-                    <span className={active ? "admin-badge admin-badge--ok" : "admin-badge"}>
-                      {active ? "Aktiv" : "Deaktiv"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <div className="admin-dashboard-split">
+              <section className="admin-panel-card">
+                <h2>
+                  <Bell size={18} aria-hidden /> Son bildirişlər
+                </h2>
+                {notifications.length === 0 ? (
+                  <p className="admin-muted">Yeni bildiriş yoxdur.</p>
+                ) : (
+                  <ul className="admin-notification-list">
+                    {notifications.map((item) => (
+                      <li key={`${item.type}-${item.id}`}>
+                        <Link href={notificationHref(item)} className="admin-notification-item">
+                          <span className={`admin-notification-type admin-notification-type--${item.type}`}>
+                            {notificationLabel(item)}
+                          </span>
+                          <strong>{item.title}</strong>
+                          <time>{item.created_at}</time>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section className="admin-panel-card">
+                <h2>Modul statusu</h2>
+                <div className="admin-module-list">
+                  {Object.entries(stats.modules).map(([key, active]) => (
+                    <div key={key} className="admin-module-item">
+                      <span>{key}</span>
+                      <span className={active ? "admin-badge admin-badge--ok" : "admin-badge"}>
+                        {active ? "Aktiv" : "Deaktiv"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
           </>
         ) : (
           <div className="alert alert-error">Statistika yüklənmədi.</div>

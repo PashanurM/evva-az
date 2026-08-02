@@ -4,6 +4,7 @@ import type {
   DeliveryHouseListResult,
   DeliveryOrderResult,
   DeliveryTrackedOrder,
+  MyDeliveryHouse,
   Place,
   PlaceListResult,
   Property,
@@ -327,6 +328,13 @@ export const api = {
 
   getDeliveryHouse: (id: number) =>
     apiFetch<DeliveryHouse>(`/delivery/houses/${id}`),
+
+  getMyDeliveryHouses: () =>
+    apiFetch<{ items: MyDeliveryHouse[]; total: number }>(
+      "/delivery/my-houses",
+      {},
+      false,
+    ),
 
   createDeliveryOrder: (payload: {
     house_id: number;
@@ -691,6 +699,7 @@ export const api = {
     note?: string;
     guest_name?: string;
     guest_phone?: string;
+    referral_code?: string;
   }) =>
     apiFetch<{
       message: string;

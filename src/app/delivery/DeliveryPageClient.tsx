@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Bike, MapPin, Package, QrCode, Radio, ShoppingBag } from "lucide-react";
 import type { DeliveryHouse } from "@/lib/types";
 import { useLocale } from "@/providers/LocaleProvider";
+import { DeliveryMyBookingSection } from "./DeliveryMyBookingSection";
 
 interface DeliveryPageClientProps {
   items: DeliveryHouse[];
@@ -58,6 +59,8 @@ export function DeliveryPageClient({ items, total, q }: DeliveryPageClientProps)
           </div>
         </div>
       </section>
+
+      <DeliveryMyBookingSection />
 
       <section style={{ padding: "8px 0 24px" }}>
         <div className="container">

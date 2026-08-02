@@ -8,6 +8,7 @@ import { getPublicOwner } from "@/lib/server-api";
 import { createDynamicMetadata, KEYWORDS } from "@/lib/site-metadata";
 import { PropertyCard } from "@/components/home/PropertyCard";
 import { OwnerProfileMap } from "./OwnerProfileMap";
+import { OwnerPublicStats } from "./OwnerPublicStats";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -99,6 +100,7 @@ export default async function OwnerProfilePage({ params }: PageProps) {
               <span>Təsdiqli rezerv</span>
             </div>
           </div>
+          <OwnerPublicStats stats={stats} />
         </div>
 
         <div className="owner-profile-list-head">

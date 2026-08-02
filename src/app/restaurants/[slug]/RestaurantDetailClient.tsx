@@ -96,10 +96,12 @@ function MenuCategoryBlock({
   category,
   setStyle = false,
   formatItemPrice,
+  popularLabel,
 }: {
   category: RestaurantMenuCategoryPublic;
   setStyle?: boolean;
   formatItemPrice: (price: number) => string;
+  popularLabel: string;
 }) {
   if (!category.items?.length) return null;
   return (
@@ -139,6 +141,9 @@ function MenuCategoryBlock({
               <div className="rmenu-dish-body">
                 <div className="rmenu-dish-topline">
                   <strong>{item.title}</strong>
+                  {item.is_featured ? (
+                    <span className="rmenu-popular-badge">{popularLabel}</span>
+                  ) : null}
                   <span className="rmenu-dish-dots" aria-hidden />
                   <em>{formatItemPrice(price)}</em>
                 </div>
@@ -198,6 +203,7 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
 
   const showLegacy = structuredMenu.length === 0 && mealSets.length === 0 && legacySections.length > 0;
   const priceLabel = (price: number) => formatPrice(price, t);
+  const popularLabel = t("restaurants.menuPopular");
   const avgHint =
     restaurant.average_price && restaurant.average_price > 0
       ? t("restaurants.menuAvgHint", { price: restaurant.average_price })
@@ -237,131 +243,6 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
 
         {gallery.length > 0 ? (
           <PlaceGallery images={gallery} title={restaurant.name} />
-        ) : null}
-
-        {navCategories.length > 0 ? (
-          <section className="rmenu">
-            <div className="rmenu-head">
-              <div>
-                <span className="section-kicker">{t("restaurants.menuTitle")}</span>
-                <h2>{t("restaurants.menuTitle")}</h2>
-                {avgHint ? <p className="rmenu-avg-hint">{avgHint}</p> : null}
-              </div>
-            </div>
-
-            {navCategories.length > 1 ? (
-              <div className="rmenu-nav" role="tablist">
-                {navCategories.map((category) => (
-                  <a
-                    key={category.id}
-                    href={`#menu-cat-${category.id}`}
-                    className={`rmenu-nav-chip${activeCat === category.id ? " is-active" : ""}`}
-                    onClick={() => setActiveCat(category.id)}
-                  >
-                    {category.title}
-                  </a>
-                ))}
-              </div>
-            ) : null}
-
-            {structuredMenu.length > 0 ? (
-              <div className="rmenu-block">
-                {structuredMenu.map((category) => (
-                  <MenuCategoryBlock
-                    key={category.id}
-                    category={category}
-                    formatItemPrice={priceLabel}
-                  />
-                ))}
-              </div>
-            ) : null}
-
-            {mealSets.length > 0 ? (
-              <div className="rmenu-block rmenu-block--sets">
-                <div className="rmenu-sets-label">
-                  <Package size={18} aria-hidden />
-                  <h2>{t("restaurants.mealSetsTitle")}</h2>
-                </div>
-                {mealSets.map((category) => (
-                  <MenuCategoryBlock
-                    key={category.id}
-                    category={category}
-                    setStyle
-                    formatItemPrice={priceLabel}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </section>
-        ) : null}
-
-        {showLegacy ? (
-          <section className="rmenu rmenu--legacy">
-            <div className="rmenu-head">
-              <div>
-                <span className="section-kicker">{t("restaurants.menuTitle")}</span>
-                <h2>{t("restaurants.menuTitle")}</h2>
-                {avgHint ? <p className="rmenu-avg-hint">{avgHint}</p> : null}
-              </div>
-            </div>
-
-            <div className="rmenu-legacy-nav">
-              {legacySections.map((section) => (
-                <a
-                  key={section.key}
-                  href={`#legacy-${section.key}`}
-                  className="rmenu-nav-chip"
-                >
-                  {section.title}
-                </a>
-              ))}
-            </div>
-
-            <div className="rmenu-legacy-grid">
-              {legacySections.map((section) => {
-                const meta = LEGACY_META[section.key] || LEGACY_META.local_foods;
-                const Icon = meta.icon;
-                return (
-                  <section
-                    key={section.key}
-                    id={`legacy-${section.key}`}
-                    className={`rmenu-legacy-card rmenu-legacy-card--${meta.accent}`}
-                  >
-                    <header className="rmenu-legacy-card-head">
-                      <span className="rmenu-category-icon">
-                        <Icon size={18} aria-hidden />
-                      </span>
-                      <h3>{section.title}</h3>
-                      <em>{section.items.length}</em>
-                    </header>
-                    <div className="rmenu-board">
-                      {section.items.map((dish, index) => (
-                        <article
-                          key={`${section.key}-${dish.title}-${index}`}
-                          className="rmenu-dish"
-                        >
-                          <span className="rmenu-dish-mark" aria-hidden>
-                            <Icon size={16} />
-                          </span>
-                          <div className="rmenu-dish-body">
-                            <div className="rmenu-dish-topline">
-                              <strong>{dish.title}</strong>
-                              <span className="rmenu-dish-dots" aria-hidden />
-                              <em>
-                                {dish.price != null
-                                  ? priceLabel(dish.price)
-                                  : t("restaurants.menuEmptyPrice")}
-                              </em>
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
-          </section>
         ) : null}
 
         <section className="place-info-grid">
@@ -441,6 +322,134 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
             ) : null}
           </aside>
         </section>
+
+        {navCategories.length > 0 ? (
+          <section className="rmenu">
+            <div className="rmenu-head">
+              <div>
+                <span className="section-kicker">{t("restaurants.menuTitle")}</span>
+                <h2>{t("restaurants.menuTitle")}</h2>
+                {avgHint ? <p className="rmenu-avg-hint">{avgHint}</p> : null}
+              </div>
+            </div>
+
+            {navCategories.length > 1 ? (
+              <div className="rmenu-nav" role="tablist">
+                {navCategories.map((category) => (
+                  <a
+                    key={category.id}
+                    href={`#menu-cat-${category.id}`}
+                    className={`rmenu-nav-chip${activeCat === category.id ? " is-active" : ""}`}
+                    onClick={() => setActiveCat(category.id)}
+                  >
+                    {category.title}
+                  </a>
+                ))}
+              </div>
+            ) : null}
+
+            {structuredMenu.length > 0 ? (
+              <div className="rmenu-block">
+                {structuredMenu.map((category) => (
+                  <MenuCategoryBlock
+                    key={category.id}
+                    category={category}
+                    formatItemPrice={priceLabel}
+                    popularLabel={popularLabel}
+                  />
+                ))}
+              </div>
+            ) : null}
+
+            {mealSets.length > 0 ? (
+              <div className="rmenu-block rmenu-block--sets">
+                <div className="rmenu-sets-label">
+                  <Package size={18} aria-hidden />
+                  <h2>{t("restaurants.mealSetsTitle")}</h2>
+                </div>
+                {mealSets.map((category) => (
+                  <MenuCategoryBlock
+                    key={category.id}
+                    category={category}
+                    setStyle
+                    formatItemPrice={priceLabel}
+                    popularLabel={popularLabel}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {showLegacy ? (
+          <section className="rmenu rmenu--legacy">
+            <div className="rmenu-head">
+              <div>
+                <span className="section-kicker">{t("restaurants.menuTitle")}</span>
+                <h2>{t("restaurants.menuTitle")}</h2>
+                {avgHint ? <p className="rmenu-avg-hint">{avgHint}</p> : null}
+              </div>
+            </div>
+
+            <div className="rmenu-legacy-nav">
+              {legacySections.map((section) => (
+                <a
+                  key={section.key}
+                  href={`#legacy-${section.key}`}
+                  className="rmenu-nav-chip"
+                >
+                  {section.title}
+                </a>
+              ))}
+            </div>
+
+            <div className="rmenu-legacy-grid">
+              {legacySections.map((section) => {
+                const meta = LEGACY_META[section.key] || LEGACY_META.local_foods;
+                const Icon = meta.icon;
+                return (
+                  <section
+                    key={section.key}
+                    id={`legacy-${section.key}`}
+                    className={`rmenu-legacy-card rmenu-legacy-card--${meta.accent}`}
+                  >
+                    <header className="rmenu-legacy-card-head">
+                      <span className="rmenu-category-icon">
+                        <Icon size={18} aria-hidden />
+                      </span>
+                      <h3>{section.title}</h3>
+                      <em>{section.items.length}</em>
+                    </header>
+                    <div className="rmenu-board">
+                      {section.items.map((dish, index) => (
+                        <article
+                          key={`${section.key}-${dish.title}-${index}`}
+                          className="rmenu-dish"
+                        >
+                          <span className="rmenu-dish-mark" aria-hidden>
+                            <Icon size={16} />
+                          </span>
+                          <div className="rmenu-dish-body">
+                            <div className="rmenu-dish-topline">
+                              <strong>{dish.title}</strong>
+                              <span className="rmenu-dish-dots" aria-hidden />
+                              <em>
+                                {dish.price != null
+                                  ? priceLabel(dish.price)
+                                  : t("restaurants.menuEmptyPrice")}
+                              </em>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
       </div>
     </section>
   );
