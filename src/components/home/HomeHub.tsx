@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { FormEvent, useState } from "react";
 import {
+  ArrowDown,
   ArrowRight,
   Bike,
-  Home,
   MapPin,
+  Search,
   Star,
   UtensilsCrossed,
 } from "lucide-react";
@@ -66,6 +69,17 @@ function RatingBadge({ rating, count }: { rating: number; count: number }) {
 
 export function HomeHub({ homes, restaurants, places, modules }: HomeHubProps) {
   const { t } = useLocale();
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  function handleQuickSearch(e: FormEvent) {
+    e.preventDefault();
+    const q = query.trim();
+    const params = new URLSearchParams();
+    if (q) params.set("search", q);
+    const qs = params.toString();
+    router.push(qs ? `/homes?${qs}#properties` : "/homes#properties");
+  }
 
   return (
     <>
@@ -75,34 +89,31 @@ export function HomeHub({ homes, restaurants, places, modules }: HomeHubProps) {
           <p className="hub-brand">EVVA.AZ</p>
           <h1>{t("home.hubTitle")}</h1>
           <p className="hub-hero-text">{t("home.hubSubtitle")}</p>
-          <div className="hub-hero-actions">
-            <Link href="/homes" className="hub-cta hub-cta--primary">
-              <Home size={18} aria-hidden />
-              {t("nav.homes")}
-            </Link>
-            {modules.restaurants ? (
-              <Link href="/restaurants" className="hub-cta">
-                <UtensilsCrossed size={18} aria-hidden />
-                {t("nav.restaurants")}
-              </Link>
-            ) : null}
-            {modules.places ? (
-              <Link href="/places" className="hub-cta">
-                <MapPin size={18} aria-hidden />
-                {t("nav.places")}
-              </Link>
-            ) : null}
-            {modules.delivery ? (
-              <Link href="/delivery" className="hub-cta">
-                <Bike size={18} aria-hidden />
-                {t("nav.delivery")}
-              </Link>
-            ) : null}
-          </div>
+
+          <form className="hub-quick-search" onSubmit={handleQuickSearch}>
+            <label className="hub-quick-search-field">
+              <Search size={18} aria-hidden />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("home.hubSearchPlaceholder")}
+                aria-label={t("home.hubSearchPlaceholder")}
+              />
+            </label>
+            <button type="submit" className="hub-cta hub-cta--primary">
+              {t("home.hubSearchButton")}
+            </button>
+          </form>
+
+          <a href="#hub-homes" className="hub-scroll-hint">
+            <ArrowDown size={16} aria-hidden />
+            {t("home.hubScrollHint")}
+          </a>
         </div>
       </section>
 
-      <section className="hub-section">
+      <section className="hub-section" id="hub-homes">
         <div className="container">
           <div className="hub-section-head">
             <div>
@@ -147,7 +158,7 @@ export function HomeHub({ homes, restaurants, places, modules }: HomeHubProps) {
       </section>
 
       {modules.places ? (
-        <section className="hub-section hub-section--alt">
+        <section className="hub-section hub-section--alt" id="hub-places">
           <div className="container">
             <div className="hub-section-head">
               <div>
@@ -196,7 +207,7 @@ export function HomeHub({ homes, restaurants, places, modules }: HomeHubProps) {
       ) : null}
 
       {modules.restaurants ? (
-        <section className="hub-section">
+        <section className="hub-section" id="hub-restaurants">
           <div className="container">
             <div className="hub-section-head">
               <div>

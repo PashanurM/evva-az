@@ -91,6 +91,9 @@ export const az = {
     hubTitle: "Qəbələni bir yerdə kəşf et",
     hubSubtitle:
       "Ev elanları, restoranlar, gəzməli yerlər və çatdırılma — hamısı EVVA.AZ-də.",
+    hubSearchPlaceholder: "Məkan, villa, A-frame və ya kənd adı...",
+    hubSearchButton: "Evlərdə axtar",
+    hubScrollHint: "Aşağıda top seçimlərə bax",
     topHomesKicker: "Seçilmiş",
     topHomesTitle: "Ən yüksək reytinqli evlər",
     topHomesText: "Qonaqların ən çox bəyəndiyi 3 ev.",
@@ -279,6 +282,11 @@ export const az = {
     menuPrice: "{price} ₼",
     menuEmptyPrice: "Qiymət soruşun",
     menuIngredients: "Tərkib",
+    menuAvgHint: "Orta hesab: {price} ₼",
+    legacyLocal: "Yerli yeməklər",
+    legacyForeign: "Xarici yeməklər",
+    legacyDesserts: "Desertlər",
+    legacyDrinks: "İçkilər",
   },
   places: {
     metaTitle: "Gəzməli yerlər | EVVA.AZ",

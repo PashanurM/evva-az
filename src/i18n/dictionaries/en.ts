@@ -91,6 +91,9 @@ export const en = {
     hubTitle: "Discover Gabala in one place",
     hubSubtitle:
       "Homes, restaurants, places to visit, and delivery — all on EVVA.AZ.",
+    hubSearchPlaceholder: "Location, villa, A-frame, or village name...",
+    hubSearchButton: "Search homes",
+    hubScrollHint: "See top picks below",
     topHomesKicker: "Featured",
     topHomesTitle: "Top rated homes",
     topHomesText: "The 3 homes guests love most.",
@@ -278,6 +281,11 @@ export const en = {
     menuPrice: "{price} ₼",
     menuEmptyPrice: "Ask for price",
     menuIngredients: "Ingredients",
+    menuAvgHint: "Average check: {price} ₼",
+    legacyLocal: "Local dishes",
+    legacyForeign: "International dishes",
+    legacyDesserts: "Desserts",
+    legacyDrinks: "Drinks",
   },
   places: {
     metaTitle: "Places to visit | EVVA.AZ",

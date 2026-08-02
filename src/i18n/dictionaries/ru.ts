@@ -91,6 +91,9 @@ export const ru = {
     hubTitle: "Открой Габалу в одном месте",
     hubSubtitle:
       "Дома, рестораны, места для прогулок и доставка — всё на EVVA.AZ.",
+    hubSearchPlaceholder: "Локация, вилла, A-frame или название села...",
+    hubSearchButton: "Искать дома",
+    hubScrollHint: "Смотреть топ ниже",
     topHomesKicker: "Избранное",
     topHomesTitle: "Топ домов по рейтингу",
     topHomesText: "3 дома, которые гости любят больше всего.",
@@ -279,6 +282,11 @@ export const ru = {
     menuPrice: "{price} ₼",
     menuEmptyPrice: "Уточните цену",
     menuIngredients: "Состав",
+    menuAvgHint: "Средний чек: {price} ₼",
+    legacyLocal: "Местные блюда",
+    legacyForeign: "Зарубежные блюда",
+    legacyDesserts: "Десерты",
+    legacyDrinks: "Напитки",
   },
   places: {
     metaTitle: "Достопримечательности | EVVA.AZ",

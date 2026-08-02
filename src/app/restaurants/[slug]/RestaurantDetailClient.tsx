@@ -6,6 +6,8 @@ import { useMemo, useState } from "react";
 import {
   ChevronRight,
   Clock,
+  Coffee,
+  IceCream2,
   MapPin,
   Package,
   Phone,
@@ -48,18 +50,47 @@ interface RestaurantDetailClientProps {
   restaurant: RestaurantDetailData;
 }
 
+type LegacyDish = { title: string; price: number | null };
+
 function splitMenuItems(text?: string): string[] {
   if (!text?.trim()) return [];
   return text
-    .split(/[\n,]+/)
+    .split(/[\n,;]+/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
-function formatPrice(price: number, t: (key: string, vars?: Record<string, string | number>) => string) {
+function parseLegacyDish(raw: string): LegacyDish {
+  const match = raw.match(
+    /^(.*?)(?:\s*[-–—:|]\s*|\s+)(\d+(?:[.,]\d+)?)\s*(?:₼|azn|manat)?\s*$/i,
+  );
+  if (match) {
+    const title = match[1].replace(/[:\-–—|]\s*$/, "").trim();
+    const price = Number(match[2].replace(",", "."));
+    if (title && Number.isFinite(price)) {
+      return { title, price };
+    }
+  }
+  return { title: raw, price: null };
+}
+
+function formatPrice(
+  price: number,
+  t: (key: string, vars?: Record<string, string | number>) => string,
+) {
   if (!Number.isFinite(price) || price <= 0) return t("restaurants.menuEmptyPrice");
   return t("restaurants.menuPrice", { price: price.toFixed(2) });
 }
+
+const LEGACY_META: Record<
+  string,
+  { icon: typeof UtensilsCrossed; accent: string }
+> = {
+  local_foods: { icon: UtensilsCrossed, accent: "local" },
+  foreign_foods: { icon: UtensilsCrossed, accent: "foreign" },
+  desserts: { icon: IceCream2, accent: "dessert" },
+  drinks: { icon: Coffee, accent: "drink" },
+};
 
 function MenuCategoryBlock({
   category,
@@ -83,31 +114,34 @@ function MenuCategoryBlock({
         <h3>{category.title}</h3>
         <em>{category.items.length}</em>
       </div>
-      <div className="rmenu-items">
+      <div className="rmenu-board">
         {category.items.map((item) => {
           const image = item.image_url ? assetUrl(item.image_url) : "";
           const ingredients = (item.ingredients || item.description || "").trim();
           const price = Number(item.price || 0);
           return (
-            <article key={item.id} className="rmenu-item">
-              <div className="rmenu-item-media">
-                {image ? (
+            <article key={item.id} className={`rmenu-dish${image ? " has-media" : ""}`}>
+              {image ? (
+                <div className="rmenu-dish-media">
                   <Image
                     src={image}
                     alt={item.title}
-                    width={360}
-                    height={240}
+                    width={120}
+                    height={120}
                     unoptimized
                   />
-                ) : (
-                  <span className="rmenu-item-fallback">
-                    {setStyle ? <Package size={30} /> : <UtensilsCrossed size={30} />}
-                  </span>
-                )}
-                <span className="rmenu-price-badge">{formatItemPrice(price)}</span>
-              </div>
-              <div className="rmenu-item-copy">
-                <strong>{item.title}</strong>
+                </div>
+              ) : (
+                <span className="rmenu-dish-mark" aria-hidden>
+                  {setStyle ? <Package size={18} /> : <UtensilsCrossed size={18} />}
+                </span>
+              )}
+              <div className="rmenu-dish-body">
+                <div className="rmenu-dish-topline">
+                  <strong>{item.title}</strong>
+                  <span className="rmenu-dish-dots" aria-hidden />
+                  <em>{formatItemPrice(price)}</em>
+                </div>
                 {ingredients ? <p>{ingredients}</p> : null}
               </div>
             </article>
@@ -135,15 +169,39 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
   );
   const [activeCat, setActiveCat] = useState<number | null>(navCategories[0]?.id ?? null);
 
-  const legacySections = [
-    { key: "local_foods", title: "Yerli yeməklər", items: splitMenuItems(restaurant.local_foods) },
-    { key: "foreign_foods", title: "Xarici yeməklər", items: splitMenuItems(restaurant.foreign_foods) },
-    { key: "desserts", title: "Desertlər", items: splitMenuItems(restaurant.desserts) },
-    { key: "drinks", title: "İçkilər", items: splitMenuItems(restaurant.drinks) },
-  ].filter((section) => section.items.length > 0);
+  const legacySections = useMemo(
+    () =>
+      [
+        {
+          key: "local_foods",
+          title: t("restaurants.legacyLocal"),
+          items: splitMenuItems(restaurant.local_foods).map(parseLegacyDish),
+        },
+        {
+          key: "foreign_foods",
+          title: t("restaurants.legacyForeign"),
+          items: splitMenuItems(restaurant.foreign_foods).map(parseLegacyDish),
+        },
+        {
+          key: "desserts",
+          title: t("restaurants.legacyDesserts"),
+          items: splitMenuItems(restaurant.desserts).map(parseLegacyDish),
+        },
+        {
+          key: "drinks",
+          title: t("restaurants.legacyDrinks"),
+          items: splitMenuItems(restaurant.drinks).map(parseLegacyDish),
+        },
+      ].filter((section) => section.items.length > 0),
+    [restaurant, t],
+  );
 
   const showLegacy = structuredMenu.length === 0 && mealSets.length === 0 && legacySections.length > 0;
   const priceLabel = (price: number) => formatPrice(price, t);
+  const avgHint =
+    restaurant.average_price && restaurant.average_price > 0
+      ? t("restaurants.menuAvgHint", { price: restaurant.average_price })
+      : "";
 
   return (
     <section className="place-detail">
@@ -187,6 +245,7 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
               <div>
                 <span className="section-kicker">{t("restaurants.menuTitle")}</span>
                 <h2>{t("restaurants.menuTitle")}</h2>
+                {avgHint ? <p className="rmenu-avg-hint">{avgHint}</p> : null}
               </div>
             </div>
 
@@ -237,19 +296,71 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
         ) : null}
 
         {showLegacy ? (
-          <section className="restaurant-menu-grid">
-            {legacySections.map((section) => (
-              <div key={section.key} className="place-info-box restaurant-menu-box">
-                <h3>{section.title}</h3>
-                <div className="restaurant-menu-tags">
-                  {section.items.map((item) => (
-                    <span key={`${section.key}-${item}`} className="tag">
-                      {item}
-                    </span>
-                  ))}
-                </div>
+          <section className="rmenu rmenu--legacy">
+            <div className="rmenu-head">
+              <div>
+                <span className="section-kicker">{t("restaurants.menuTitle")}</span>
+                <h2>{t("restaurants.menuTitle")}</h2>
+                {avgHint ? <p className="rmenu-avg-hint">{avgHint}</p> : null}
               </div>
-            ))}
+            </div>
+
+            <div className="rmenu-legacy-nav">
+              {legacySections.map((section) => (
+                <a
+                  key={section.key}
+                  href={`#legacy-${section.key}`}
+                  className="rmenu-nav-chip"
+                >
+                  {section.title}
+                </a>
+              ))}
+            </div>
+
+            <div className="rmenu-legacy-grid">
+              {legacySections.map((section) => {
+                const meta = LEGACY_META[section.key] || LEGACY_META.local_foods;
+                const Icon = meta.icon;
+                return (
+                  <section
+                    key={section.key}
+                    id={`legacy-${section.key}`}
+                    className={`rmenu-legacy-card rmenu-legacy-card--${meta.accent}`}
+                  >
+                    <header className="rmenu-legacy-card-head">
+                      <span className="rmenu-category-icon">
+                        <Icon size={18} aria-hidden />
+                      </span>
+                      <h3>{section.title}</h3>
+                      <em>{section.items.length}</em>
+                    </header>
+                    <div className="rmenu-board">
+                      {section.items.map((dish, index) => (
+                        <article
+                          key={`${section.key}-${dish.title}-${index}`}
+                          className="rmenu-dish"
+                        >
+                          <span className="rmenu-dish-mark" aria-hidden>
+                            <Icon size={16} />
+                          </span>
+                          <div className="rmenu-dish-body">
+                            <div className="rmenu-dish-topline">
+                              <strong>{dish.title}</strong>
+                              <span className="rmenu-dish-dots" aria-hidden />
+                              <em>
+                                {dish.price != null
+                                  ? priceLabel(dish.price)
+                                  : t("restaurants.menuEmptyPrice")}
+                              </em>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
           </section>
         ) : null}
 

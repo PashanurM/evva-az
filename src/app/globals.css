@@ -6997,29 +6997,73 @@ a.property-owner-card:hover .property-owner-copy strong {
   line-height: 1.25;
 }
 .hub-hero-text {
-  margin: 0 0 24px;
+  margin: 0 0 22px;
   color: var(--text-secondary);
   font-size: clamp(15px, 1.8vw, 18px);
   line-height: 1.6;
   max-width: 560px;
 }
-.hub-hero-actions {
+.hub-quick-search {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  align-items: stretch;
+  max-width: 560px;
+}
+.hub-quick-search-field {
+  flex: 1 1 240px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-muted);
+}
+.hub-quick-search-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 15px;
+}
+.hub-quick-search-field input::placeholder {
+  color: var(--text-muted);
+}
+.hub-scroll-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.hub-scroll-hint:hover {
+  color: var(--primary-dark);
 }
 .hub-cta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  min-height: 46px;
-  padding: 0 16px;
+  min-height: 50px;
+  padding: 0 18px;
   border-radius: 14px;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-primary);
+  font: inherit;
   font-weight: 700;
   text-decoration: none;
+  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .hub-cta:hover {
@@ -7033,6 +7077,7 @@ a.property-owner-card:hover .property-owner-copy strong {
 }
 .hub-section {
   padding: 28px 0 40px;
+  scroll-margin-top: calc(var(--header-height, 72px) + 12px);
 }
 .hub-section--alt {
   background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
