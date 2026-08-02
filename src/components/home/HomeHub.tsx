@@ -8,6 +8,7 @@ import {
   ArrowDown,
   ArrowRight,
   Bike,
+  Home,
   MapPin,
   Search,
   Star,
@@ -106,10 +107,36 @@ export function HomeHub({ homes, restaurants, places, modules }: HomeHubProps) {
             </button>
           </form>
 
-          <a href="#hub-homes" className="hub-scroll-hint">
-            <ArrowDown size={16} aria-hidden />
-            {t("home.hubScrollHint")}
-          </a>
+          <div className="hub-explore">
+            <a href="#hub-homes" className="hub-explore-main">
+              <span className="hub-explore-icon" aria-hidden>
+                <ArrowDown size={18} />
+              </span>
+              <span className="hub-explore-copy">
+                <strong>{t("home.hubScrollHint")}</strong>
+                <small>{t("home.hubScrollSub")}</small>
+              </span>
+              <ArrowRight className="hub-explore-arrow" size={18} aria-hidden />
+            </a>
+            <div className="hub-explore-jumps">
+              <a href="#hub-homes" className="hub-explore-jump">
+                <Home size={14} aria-hidden />
+                {t("home.topHomesKicker")}
+              </a>
+              {modules.places ? (
+                <a href="#hub-places" className="hub-explore-jump">
+                  <MapPin size={14} aria-hidden />
+                  {t("nav.places")}
+                </a>
+              ) : null}
+              {modules.restaurants ? (
+                <a href="#hub-restaurants" className="hub-explore-jump">
+                  <UtensilsCrossed size={14} aria-hidden />
+                  {t("nav.restaurants")}
+                </a>
+              ) : null}
+            </div>
+          </div>
         </div>
       </section>
 
