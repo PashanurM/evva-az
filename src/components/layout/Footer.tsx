@@ -16,9 +16,10 @@ export function Footer() {
   const { t } = useLocale();
 
   const exploreLinks = [
-    { href: "/?tags=Hovuzlu", label: t("footer.poolHomes"), icon: Home },
-    { href: "/?search=A-frame", label: t("footer.aframeHomes"), icon: Home },
-    { href: "/?location=Vəndam", label: t("footer.vendamHomes"), icon: MapPin },
+    { href: "/homes", label: t("nav.homes"), icon: Home },
+    { href: "/homes?tags=Hovuzlu", label: t("footer.poolHomes"), icon: Home },
+    { href: "/homes?search=A-frame", label: t("footer.aframeHomes"), icon: Home },
+    { href: "/homes?location=Vəndam", label: t("footer.vendamHomes"), icon: MapPin },
     { href: "/places", label: t("nav.places"), icon: MapPin },
     { href: "/restaurants", label: t("nav.restaurants"), icon: UtensilsCrossed },
     { href: "/delivery", label: t("nav.delivery"), icon: Bike },

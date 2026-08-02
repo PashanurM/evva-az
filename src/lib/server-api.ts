@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type {
   ApiResponse,
+  DeliveryHouse,
   DeliveryHouseListResult,
   Place,
   PlaceListResult,
@@ -252,3 +253,8 @@ export async function getDeliveryHouses(
     }
   );
 }
+
+export const getDeliveryHouse = cache(async (id: number): Promise<DeliveryHouse | null> => {
+  if (!Number.isFinite(id) || id <= 0) return null;
+  return serverFetch<DeliveryHouse>(`/delivery/houses/${id}`);
+});

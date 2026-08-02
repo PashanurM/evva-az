@@ -38,7 +38,7 @@ export function SearchForm({ config, total, initialFilters }: SearchFormProps) {
     if (sort && sort !== "newest") params.set("sort", sort);
     tags.forEach((tag) => params.append("tags", tag));
     params.set("scroll", "properties");
-    router.push(`/?${params.toString()}`);
+    router.push(`/homes?${params.toString()}`);
   };
 
   const toggleTag = (tag: string) => {

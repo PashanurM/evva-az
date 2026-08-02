@@ -15,7 +15,7 @@ export function BottomCta() {
           <h2>{t("home.ctaTitle")}</h2>
           <p>{t("home.ctaText")}</p>
         </div>
-        <Link href="#properties" className="bottom-whatsapp-btn">
+        <Link href="/homes#properties" className="bottom-whatsapp-btn">
           <Search size={18} /> {t("common.browseHomes")}
         </Link>
       </div>

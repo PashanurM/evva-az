@@ -73,14 +73,14 @@ export function SearchBox({
     });
 
     startTransition(() => {
-      router.push(`/?${params.toString()}#properties`);
+      router.push(`/homes?${params.toString()}#properties`);
     });
   }
 
   function handleReset() {
     setShowExtra(false);
     startTransition(() => {
-      router.replace("/#properties");
+      router.replace("/homes#properties");
       router.refresh();
     });
   }

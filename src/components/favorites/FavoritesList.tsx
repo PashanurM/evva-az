@@ -77,7 +77,7 @@ export function FavoritesList() {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px" }}>
         <p>{t("favorites.empty")}</p>
-        <Link href="/" className="auth-btn primary" style={{ marginTop: 16, display: "inline-flex" }}>
+        <Link href="/homes" className="auth-btn primary" style={{ marginTop: 16, display: "inline-flex" }}>
           {t("common.browseListings")}
         </Link>
       </div>

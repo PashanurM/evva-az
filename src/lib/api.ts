@@ -1,6 +1,9 @@
 import type {
   ApiResponse,
+  DeliveryHouse,
   DeliveryHouseListResult,
+  DeliveryOrderResult,
+  DeliveryTrackedOrder,
   Place,
   PlaceListResult,
   Property,
@@ -321,6 +324,28 @@ export const api = {
 
   getDeliveryHouses: (filters: Record<string, string | undefined> = {}) =>
     apiFetch<DeliveryHouseListResult>(`/delivery/houses${toQuery(filters, "")}`),
+
+  getDeliveryHouse: (id: number) =>
+    apiFetch<DeliveryHouse>(`/delivery/houses/${id}`),
+
+  createDeliveryOrder: (payload: {
+    house_id: number;
+    guest_name: string;
+    guest_phone: string;
+    note?: string;
+    payment_method?: "cash" | "card_on_delivery";
+    items: Array<{ product_id: number; quantity: number }>;
+  }) =>
+    apiFetch<DeliveryOrderResult>(
+      "/delivery/orders",
+      { method: "POST", body: JSON.stringify(payload) },
+      true,
+    ),
+
+  trackDeliveryOrder: (token: string) =>
+    apiFetch<DeliveryTrackedOrder>(
+      `/delivery/orders/track/${encodeURIComponent(token)}`,
+    ),
 
   getOwnerProperties: () =>
     apiFetch<{

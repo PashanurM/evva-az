@@ -1,76 +1,68 @@
-import { Suspense } from "react";
-import { SearchBox } from "@/components/home/SearchBox";
-import { PropertyGrid } from "@/components/home/PropertyGrid";
-import { DiscoverHub } from "@/components/home/DiscoverHub";
-import { MapSection } from "@/components/home/MapSection";
-import { GuideSection } from "@/components/home/GuideSection";
-import { BottomCta } from "@/components/home/BottomCta";
 import { SiteVisitTracker } from "@/components/home/SiteVisitTracker";
+import { HomeHub } from "@/components/home/HomeHub";
+import { BottomCta } from "@/components/home/BottomCta";
+import { assetUrl } from "@/lib/assets";
 import { mapApiProperty } from "@/lib/mappers";
-import { getProperties, getSiteConfig } from "@/lib/server-api";
+import { getPlaces, getProperties, getRestaurants, getSiteConfig } from "@/lib/server-api";
 import { pageMetadata } from "@/lib/site-metadata";
 
 export const metadata = pageMetadata.home;
 
-interface HomeProps {
-  searchParams: Promise<{
-    search?: string;
-    location?: string;
-    min_price?: string;
-    max_price?: string;
-    min_rooms?: string;
-    min_bathrooms?: string;
-    check_in?: string;
-    check_out?: string;
-    tags?: string | string[];
-    sort?: string;
-  }>;
-}
-
-export default async function Home({ searchParams }: HomeProps) {
-  const params = await searchParams;
-  const tags = params.tags
-    ? Array.isArray(params.tags)
-      ? params.tags
-      : [params.tags]
-    : undefined;
-
-  const [config, listing] = await Promise.all([
+export default async function Home() {
+  const [config, homesListing, restaurantsListing, placesListing] = await Promise.all([
     getSiteConfig(),
-    getProperties({
-      search: params.search,
-      location: params.location,
-      min_price: params.min_price,
-      max_price: params.max_price,
-      min_rooms: params.min_rooms,
-      min_bathrooms: params.min_bathrooms,
-      check_in: params.check_in,
-      check_out: params.check_out,
-      tags,
-      sort: params.sort || "newest",
-    }),
+    getProperties({ sort: "rating_desc" }),
+    getRestaurants({ sort: "rating" }),
+    getPlaces({ sort: "rating" }),
   ]);
 
-  const properties = listing.items.map(mapApiProperty);
-  const locations = config.locations;
-  const filterTags = Object.keys(config.tag_options);
+  const topHomesSource =
+    homesListing.top_rated?.length > 0
+      ? homesListing.top_rated.slice(0, 3)
+      : homesListing.items.slice(0, 3);
+
+  const homes = topHomesSource.map((item) => {
+    const mapped = mapApiProperty(item);
+    return {
+      id: mapped.id,
+      title: mapped.title,
+      location: mapped.location,
+      price: mapped.price,
+      rating: mapped.rating || 0,
+      ratingCount: mapped.ratingCount || 0,
+      image: mapped.image,
+    };
+  });
+
+  const restaurants = restaurantsListing.items.slice(0, 3).map((item) => ({
+    id: item.id,
+    name: item.name,
+    slug: item.slug,
+    location: item.location,
+    avg_rating: Number(item.avg_rating || 0),
+    rating_count: Number(item.rating_count || 0),
+    cover_url: assetUrl(item.cover_url || item.cover_path || ""),
+  }));
+
+  const places = placesListing.items.slice(0, 3).map((item) => ({
+    id: item.id,
+    title: item.title,
+    slug: item.slug,
+    location: item.location,
+    avg_rating: Number(item.avg_rating || 0),
+    rating_count: Number(item.rating_count || 0),
+    cover_url: assetUrl(item.cover_url || item.cover_path || ""),
+  }));
 
   return (
     <>
       <SiteVisitTracker />
-      <Suspense fallback={<div className="hero" />}>
-        <SearchBox
-          totalCount={listing.total}
-          locations={locations}
-          filterTags={filterTags}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <PropertyGrid properties={properties} />
-      </Suspense>
-      <DiscoverHub />
-      <MapSection properties={properties} />
-      <GuideSection />
+      <HomeHub
+        homes={homes}
+        restaurants={restaurants}
+        places={places}
+        modules={config.modules}
+      />
       <BottomCta />
     </>
   );

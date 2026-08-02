@@ -231,6 +231,10 @@ export function Header() {
 
   const discoverLinks = (
     <>
+      <Link href="/homes" className="discover-pill" onClick={() => setMenuOpen(false)}>
+        <Home size={16} aria-hidden />
+        <span className="discover-pill-label">{t("nav.homes")}</span>
+      </Link>
       {modules.restaurants && (
         <Link href="/restaurants" className="discover-pill" onClick={() => setMenuOpen(false)}>
           <UtensilsCrossed size={16} aria-hidden />

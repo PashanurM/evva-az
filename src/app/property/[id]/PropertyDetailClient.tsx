@@ -238,14 +238,6 @@ export function PropertyDetailClient({
             </div>
             <div className="cta-grid cta-grid--actions">
               <Link
-                href={`/chat?property_id=${property.id}`}
-                className="contact-btn"
-                aria-label={t("common.message")}
-              >
-                <MessageCircle size={18} aria-hidden />
-                <span className="btn-label">{t("common.message")}</span>
-              </Link>
-              <Link
                 href={`/booking?property_id=${property.id}`}
                 className="reserve-btn"
                 aria-label={t("common.reserve")}
@@ -253,16 +245,14 @@ export function PropertyDetailClient({
                 <CalendarCheck size={18} aria-hidden />
                 <span className="btn-label">{t("common.reserve")}</span>
               </Link>
-              <a
-                href={adminHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="admin-write-btn"
-                aria-label={t("property.writeAdmin")}
+              <Link
+                href={`/chat?property_id=${property.id}`}
+                className="contact-btn"
+                aria-label={t("common.message")}
               >
-                <ShieldCheck size={18} aria-hidden />
-                <span className="btn-label">{t("property.writeAdmin")}</span>
-              </a>
+                <MessageCircle size={18} aria-hidden />
+                <span className="btn-label">{t("common.message")}</span>
+              </Link>
               <a
                 href={mapsUrl}
                 target="_blank"
@@ -272,6 +262,18 @@ export function PropertyDetailClient({
               >
                 <MapPin size={18} aria-hidden />
                 <span className="btn-label">{t("common.viewOnMap")}</span>
+              </a>
+            </div>
+            <div className="reserve-help">
+              <p>{t("property.reserveHelp")}</p>
+              <a
+                href={adminHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="admin-write-btn"
+              >
+                <ShieldCheck size={16} aria-hidden />
+                {t("property.writeAdminHelp")}
               </a>
             </div>
           </div>

@@ -266,9 +266,80 @@ export interface DeliveryHouse {
   address: string;
   delivery_fee: number;
   property_id: number;
+  guest_area_note?: string;
+  categories?: DeliveryCategory[];
+  products?: DeliveryProduct[];
+  settings?: {
+    min_order_amount: number;
+    free_delivery_threshold: number;
+    service_area_text?: string;
+  };
+}
+
+export interface DeliveryCategory {
+  id: number;
+  name: string;
+  sort_order: number;
+}
+
+export interface DeliveryProduct {
+  id: number;
+  category_id: number;
+  name: string;
+  description: string;
+  image: string;
+  image_url: string;
+  price: number;
+  unit: string;
+  available: number;
 }
 
 export interface DeliveryHouseListResult {
   items: DeliveryHouse[];
   total: number;
+}
+
+export interface DeliveryOrderResult {
+  id: number;
+  order_code: string;
+  tracking_token: string;
+  status: string;
+  payment_status: string;
+  payment_method: string;
+  total_amount: number;
+  delivery_fee: number;
+  grand_total: number;
+  confirmation_code: string;
+  house: { id: number; title: string };
+}
+
+export interface DeliveryTrackedOrder {
+  id: number;
+  order_code: string;
+  tracking_token: string;
+  status: string;
+  payment_status: string;
+  payment_method: string;
+  guest_name: string;
+  guest_phone: string;
+  note: string;
+  total_amount: number;
+  delivery_fee: number;
+  grand_total: number;
+  confirmation_code: string;
+  created_at: string;
+  house: { id: number; title: string; address: string };
+  items: Array<{
+    product_id: number;
+    product_name: string;
+    unit_price: number;
+    quantity: number;
+    subtotal: number;
+  }>;
+  history: Array<{
+    old_status: string | null;
+    new_status: string;
+    note: string;
+    created_at: string;
+  }>;
 }

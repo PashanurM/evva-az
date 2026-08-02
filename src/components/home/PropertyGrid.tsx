@@ -50,7 +50,7 @@ export function PropertyGrid({ properties }: { properties: Property[] }) {
   function handleSort(e: React.ChangeEvent<HTMLSelectElement>) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("sort", e.target.value);
-    router.push(`/?${params.toString()}#properties`);
+    router.push(`/homes?${params.toString()}#properties`);
   }
 
   return (

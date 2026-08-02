@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getDeliveryHouses, getSiteConfig } from "@/lib/server-api";
+import { getDeliveryHouse, getSiteConfig } from "@/lib/server-api";
 import { createDynamicMetadata, KEYWORDS, pageMetadata } from "@/lib/site-metadata";
 import { DeliveryDetailClient } from "./DeliveryDetailClient";
 import "../delivery.css";
@@ -16,8 +16,7 @@ export async function generateMetadata({ params }: DeliveryHousePageProps) {
   const houseId = Number(id);
   if (!Number.isFinite(houseId) || houseId <= 0) return pageMetadata.deliveryNotFound;
 
-  const listing = await getDeliveryHouses({});
-  const house = listing.items.find((item) => item.id === houseId);
+  const house = await getDeliveryHouse(houseId);
   if (!house) return pageMetadata.deliveryNotFound;
 
   return createDynamicMetadata({
@@ -35,8 +34,7 @@ export default async function DeliveryHousePage({ params }: DeliveryHousePagePro
   const houseId = Number(id);
   if (!Number.isFinite(houseId) || houseId <= 0) notFound();
 
-  const listing = await getDeliveryHouses({});
-  const house = listing.items.find((item) => item.id === houseId);
+  const house = await getDeliveryHouse(houseId);
   if (!house) notFound();
 
   return <DeliveryDetailClient house={house} />;

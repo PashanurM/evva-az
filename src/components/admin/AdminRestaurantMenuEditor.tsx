@@ -130,6 +130,15 @@ export function AdminRestaurantMenuEditor({ restaurantId }: { restaurantId: numb
       toast.warning("Kateqoriya seçin");
       return;
     }
+    const price = Number(itemDraft.price);
+    if (!Number.isFinite(price) || price < 0) {
+      toast.warning("Qiymət düzgün deyil");
+      return;
+    }
+    if (price <= 0) {
+      toast.warning("Qiymət əlavə edin (₼)");
+      return;
+    }
     setBusy(true);
     const res = await adminApi.saveRestaurantMenuItem(
       restaurantId,
@@ -138,7 +147,7 @@ export function AdminRestaurantMenuEditor({ restaurantId }: { restaurantId: numb
         title: itemDraft.title.trim(),
         ingredients: itemDraft.ingredients.trim(),
         description: itemDraft.ingredients.trim().slice(0, 255),
-        price: Number(itemDraft.price || 0),
+        price,
       },
       itemDraft.id,
     );
@@ -260,13 +269,15 @@ export function AdminRestaurantMenuEditor({ restaurantId }: { restaurantId: numb
             />
           </label>
           <label>
-            Qiymət (₼)
+            Qiymət (₼) *
             <input
               type="number"
-              min={0}
+              min={0.01}
               step="0.01"
+              required
               value={itemDraft.price}
               onChange={(e) => setItemDraft((current) => ({ ...current, price: e.target.value }))}
+              placeholder="Məs: 12.50"
             />
           </label>
           <label className="admin-form-field-wide">

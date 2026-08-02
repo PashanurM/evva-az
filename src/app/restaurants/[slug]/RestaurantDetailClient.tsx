@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, Clock, MapPin, Package, Phone, Star, UtensilsCrossed } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  ChevronRight,
+  Clock,
+  MapPin,
+  Package,
+  Phone,
+  Star,
+  UtensilsCrossed,
+} from "lucide-react";
 import { PlaceGallery } from "@/components/places/PlaceGallery";
 import { assetUrl } from "@/lib/assets";
 import type { RestaurantMenuCategoryPublic } from "@/lib/types";
@@ -47,44 +56,58 @@ function splitMenuItems(text?: string): string[] {
     .filter(Boolean);
 }
 
+function formatPrice(price: number, t: (key: string, vars?: Record<string, string | number>) => string) {
+  if (!Number.isFinite(price) || price <= 0) return t("restaurants.menuEmptyPrice");
+  return t("restaurants.menuPrice", { price: price.toFixed(2) });
+}
+
 function MenuCategoryBlock({
   category,
   setStyle = false,
+  formatItemPrice,
 }: {
   category: RestaurantMenuCategoryPublic;
   setStyle?: boolean;
+  formatItemPrice: (price: number) => string;
 }) {
   if (!category.items?.length) return null;
   return (
-    <section className={`restaurant-menu-category${setStyle ? " is-set" : ""}`}>
-      <div className="restaurant-menu-category-head">
-        {setStyle ? <Package size={18} aria-hidden /> : <UtensilsCrossed size={18} aria-hidden />}
+    <section
+      id={`menu-cat-${category.id}`}
+      className={`rmenu-category${setStyle ? " is-set" : ""}`}
+    >
+      <div className="rmenu-category-head">
+        <span className="rmenu-category-icon">
+          {setStyle ? <Package size={18} aria-hidden /> : <UtensilsCrossed size={18} aria-hidden />}
+        </span>
         <h3>{category.title}</h3>
+        <em>{category.items.length}</em>
       </div>
-      <div className="restaurant-menu-items">
+      <div className="rmenu-items">
         {category.items.map((item) => {
           const image = item.image_url ? assetUrl(item.image_url) : "";
           const ingredients = (item.ingredients || item.description || "").trim();
+          const price = Number(item.price || 0);
           return (
-            <article key={item.id} className="restaurant-menu-item">
-              <div className="restaurant-menu-item-media">
+            <article key={item.id} className="rmenu-item">
+              <div className="rmenu-item-media">
                 {image ? (
                   <Image
                     src={image}
                     alt={item.title}
-                    width={320}
-                    height={220}
+                    width={360}
+                    height={240}
                     unoptimized
                   />
                 ) : (
-                  <span>{setStyle ? <Package size={28} /> : <UtensilsCrossed size={28} />}</span>
+                  <span className="rmenu-item-fallback">
+                    {setStyle ? <Package size={30} /> : <UtensilsCrossed size={30} />}
+                  </span>
                 )}
+                <span className="rmenu-price-badge">{formatItemPrice(price)}</span>
               </div>
-              <div className="restaurant-menu-item-copy">
-                <div className="restaurant-menu-item-topline">
-                  <strong>{item.title}</strong>
-                  <em>{Number(item.price || 0).toFixed(2)} ₼</em>
-                </div>
+              <div className="rmenu-item-copy">
+                <strong>{item.title}</strong>
                 {ingredients ? <p>{ingredients}</p> : null}
               </div>
             </article>
@@ -106,6 +129,11 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
 
   const structuredMenu = (restaurant.menu || []).filter((c) => (c.items || []).length > 0);
   const mealSets = (restaurant.meal_sets || []).filter((c) => (c.items || []).length > 0);
+  const navCategories = useMemo(
+    () => [...structuredMenu, ...mealSets],
+    [structuredMenu, mealSets],
+  );
+  const [activeCat, setActiveCat] = useState<number | null>(navCategories[0]?.id ?? null);
 
   const legacySections = [
     { key: "local_foods", title: "Yerli yeməklər", items: splitMenuItems(restaurant.local_foods) },
@@ -115,6 +143,7 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
   ].filter((section) => section.items.length > 0);
 
   const showLegacy = structuredMenu.length === 0 && mealSets.length === 0 && legacySections.length > 0;
+  const priceLabel = (price: number) => formatPrice(price, t);
 
   return (
     <section className="place-detail">
@@ -152,25 +181,58 @@ export function RestaurantDetailClient({ restaurant }: RestaurantDetailClientPro
           <PlaceGallery images={gallery} title={restaurant.name} />
         ) : null}
 
-        {structuredMenu.length > 0 ? (
-          <section className="restaurant-structured-menu">
-            <div className="section-title">
-              <h2>Menyu</h2>
+        {navCategories.length > 0 ? (
+          <section className="rmenu">
+            <div className="rmenu-head">
+              <div>
+                <span className="section-kicker">{t("restaurants.menuTitle")}</span>
+                <h2>{t("restaurants.menuTitle")}</h2>
+              </div>
             </div>
-            {structuredMenu.map((category) => (
-              <MenuCategoryBlock key={category.id} category={category} />
-            ))}
-          </section>
-        ) : null}
 
-        {mealSets.length > 0 ? (
-          <section className="restaurant-structured-menu restaurant-meal-sets">
-            <div className="section-title">
-              <h2>Hazır yemək setləri</h2>
-            </div>
-            {mealSets.map((category) => (
-              <MenuCategoryBlock key={category.id} category={category} setStyle />
-            ))}
+            {navCategories.length > 1 ? (
+              <div className="rmenu-nav" role="tablist">
+                {navCategories.map((category) => (
+                  <a
+                    key={category.id}
+                    href={`#menu-cat-${category.id}`}
+                    className={`rmenu-nav-chip${activeCat === category.id ? " is-active" : ""}`}
+                    onClick={() => setActiveCat(category.id)}
+                  >
+                    {category.title}
+                  </a>
+                ))}
+              </div>
+            ) : null}
+
+            {structuredMenu.length > 0 ? (
+              <div className="rmenu-block">
+                {structuredMenu.map((category) => (
+                  <MenuCategoryBlock
+                    key={category.id}
+                    category={category}
+                    formatItemPrice={priceLabel}
+                  />
+                ))}
+              </div>
+            ) : null}
+
+            {mealSets.length > 0 ? (
+              <div className="rmenu-block rmenu-block--sets">
+                <div className="rmenu-sets-label">
+                  <Package size={18} aria-hidden />
+                  <h2>{t("restaurants.mealSetsTitle")}</h2>
+                </div>
+                {mealSets.map((category) => (
+                  <MenuCategoryBlock
+                    key={category.id}
+                    category={category}
+                    setStyle
+                    formatItemPrice={priceLabel}
+                  />
+                ))}
+              </div>
+            ) : null}
           </section>
         ) : null}
 
