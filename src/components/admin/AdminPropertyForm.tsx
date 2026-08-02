@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BedDouble,
+  Bike,
   CalendarRange,
   ChevronLeft,
   ChevronRight,
@@ -219,6 +220,8 @@ export function AdminPropertyForm({
     Array<{ check_in: string; check_out: string; source?: string }>
   >([]);
   const [savingBlocked, setSavingBlocked] = useState(false);
+  const [deliveryActive, setDeliveryActive] = useState(false);
+  const [deliveryBusy, setDeliveryBusy] = useState(false);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const pendingCoverRef = useRef<PendingImage | null>(null);
   const pendingImagesRef = useRef<PendingImage[]>([]);
@@ -266,9 +269,10 @@ export function AdminPropertyForm({
       setMeta(metaRes.data);
 
       if (propertyId) {
-        const [propRes, blockedRes] = await Promise.all([
+        const [propRes, blockedRes, deliveryRes] = await Promise.all([
           adminApi.getProperty(propertyId),
           adminApi.getPropertyBlockedDates(propertyId),
+          adminApi.getPropertyDelivery(propertyId),
         ]);
         if (propRes.success && propRes.data) {
           setForm(detailToForm(propRes.data.property));
@@ -288,12 +292,14 @@ export function AdminPropertyForm({
           setBlockedDates([]);
           setBookedRanges([]);
         }
+        setDeliveryActive(Boolean(deliveryRes.success && deliveryRes.data?.delivery_active));
       } else {
         setForm(emptyForm());
         setExistingCover(null);
         setExistingImages([]);
         setBlockedDates([]);
         setBookedRanges([]);
+        setDeliveryActive(false);
       }
       setLoading(false);
     })();
@@ -306,6 +312,21 @@ export function AdminPropertyForm({
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function toggleDelivery(value: boolean) {
+    if (!activeId) return;
+    setDeliveryBusy(true);
+    setDeliveryActive(value);
+    const res = await adminApi.setPropertyDelivery(activeId, { is_active: value });
+    if (res.success) {
+      toast.success(value ? "Delivery aktiv edildi" : "Delivery deaktiv edildi");
+      setDeliveryActive(Boolean(res.data?.delivery_active));
+    } else {
+      setDeliveryActive(!value);
+      toast.error(res.error || "Delivery status yenilənmədi");
+    }
+    setDeliveryBusy(false);
   }
 
   const filteredOwners = useMemo(() => {
@@ -682,6 +703,21 @@ export function AdminPropertyForm({
               <span className="admin-setting-switch-control" />
               <span><strong>Premium</strong><small>Mülk önə çıxarılsın</small></span>
             </label>
+            {activeId ? (
+              <label className={`admin-setting-switch${deliveryActive ? " is-selected" : ""}`}>
+                <input
+                  type="checkbox"
+                  checked={deliveryActive}
+                  disabled={deliveryBusy}
+                  onChange={(e) => void toggleDelivery(e.target.checked)}
+                />
+                <span className="admin-setting-switch-control" />
+                <span>
+                  <strong><Bike size={14} style={{ display: "inline", marginRight: 4 }} /> Delivery aktiv</strong>
+                  <small>Bu ev `/delivery` siyahısında görünsün</small>
+                </span>
+              </label>
+            ) : null}
           </div>
         </div>
 

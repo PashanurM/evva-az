@@ -21,6 +21,7 @@ import {
   UtensilsCrossed,
   X,
 } from "lucide-react";
+import { UnreadDot } from "@/components/chat/UnreadDot";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { api } from "@/lib/api";
@@ -31,6 +32,7 @@ import {
 } from "@/lib/auth-redirect";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
+import { useUnreadMessages } from "@/providers/UnreadMessagesProvider";
 import type { SiteConfig } from "@/lib/types";
 
 const SCROLL_THRESHOLD = 56;
@@ -50,6 +52,7 @@ export function Header() {
   const router = useRouter();
   const { user, loading, logout, refresh, applyUser } = useAuth();
   const { t } = useLocale();
+  const { hasUnread } = useUnreadMessages();
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -296,6 +299,7 @@ export function Header() {
       ) : null}
       <Link href="/messages" className="auth-btn" onClick={() => setMenuOpen(false)}>
         {t("nav.messages")}
+        <UnreadDot show={hasUnread} className="evva-unread-dot--inline" />
       </Link>
       <Link href="/profile" className="auth-btn auth-btn--user" onClick={() => setMenuOpen(false)}>
         {user.full_name || user.username}
@@ -333,6 +337,7 @@ export function Header() {
       >
         <CircleUserRound size={21} aria-hidden />
         <ChevronDown className="profile-menu-chevron" size={14} aria-hidden />
+        <UnreadDot show={hasUnread} className="evva-unread-dot--corner" />
       </button>
 
       <div className="profile-menu-dropdown" role="menu">
@@ -397,6 +402,7 @@ export function Header() {
         <Link href="/messages" className="profile-menu-item" role="menuitem">
           <MessageSquare size={18} aria-hidden />
           {t("nav.messages")}
+          <UnreadDot show={hasUnread} className="evva-unread-dot--menu" />
         </Link>
 
         <div className="profile-menu-divider" />

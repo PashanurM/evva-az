@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { AuthRequiredGate } from "@/components/auth/AuthRequiredGate";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
+import { notifyChatUnreadRefresh } from "@/providers/UnreadMessagesProvider";
 import "@/app/chat/chat-page.css";
 
 type ConversationItem = {
@@ -67,6 +68,7 @@ export function MessagesPageClient() {
         } else {
           setItems(res.data.items);
           setError("");
+          notifyChatUnreadRefresh();
         }
       } catch {
         if (!cancelled) {
@@ -143,7 +145,10 @@ export function MessagesPageClient() {
           <div className="chat-empty">
             <MessageCircle size={28} aria-hidden />
             <p>{t("messages.empty")}</p>
-            <Link href="/#properties" className="chat-btn chat-btn--primary" style={{ marginTop: 8 }}>
+            <Link href="/chat?to_admin=1" className="chat-btn chat-btn--primary" style={{ marginTop: 8 }}>
+              {t("footer.messageAdmin")}
+            </Link>
+            <Link href="/#properties" className="chat-btn" style={{ marginTop: 8 }}>
               Evlərə bax
             </Link>
           </div>

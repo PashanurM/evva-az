@@ -627,9 +627,15 @@ export const api = {
         owner_name: string;
         last_message: string;
         updated_at: string;
+        unread_count?: number;
+        peer_name?: string;
+        viewer_is_owner?: boolean;
       }>;
       total: number;
     }>("/chat/conversations"),
+
+  getChatUnread: () =>
+    apiFetch<{ unread_count: number }>("/chat/unread"),
 
   startChat: (propertyId: number) =>
     apiFetch<{
@@ -643,6 +649,13 @@ export const api = {
     }>(
       "/chat/start",
       { method: "POST", body: JSON.stringify({ property_id: propertyId }) },
+      true,
+    ),
+
+  startAdminChat: () =>
+    apiFetch<ConversationPayload>(
+      "/chat/start",
+      { method: "POST", body: JSON.stringify({ to_admin: true }) },
       true,
     ),
 

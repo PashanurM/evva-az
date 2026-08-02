@@ -114,7 +114,10 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <Link href="/messages">{t("footer.messageAdmin")}</Link>
+                <Link href="/chat?to_admin=1" className="site-footer-admin-cta">
+                  <MessageCircle size={15} aria-hidden />
+                  {t("footer.messageAdmin")}
+                </Link>
               </li>
             </ul>
             <p className="site-footer-note">{t("footer.note")}</p>

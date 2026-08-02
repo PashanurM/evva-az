@@ -236,6 +236,17 @@ export interface AdminDashboard {
   };
 }
 
+export interface AdminDeliveryHouse {
+  id: number;
+  title: string;
+  address: string;
+  delivery_fee: number;
+  property_id: number;
+  guest_area_note?: string;
+  qr_token?: string;
+  is_active: boolean;
+}
+
 export interface AdminProperty {
   id: number;
   title: string;
@@ -429,6 +440,7 @@ export interface AdminChatConversation {
   guest_phone: string | null;
   owner_name: string | null;
   last_message: string | null;
+  unread_count?: number;
 }
 
 export type AdminDetailResource =
@@ -772,8 +784,50 @@ export const adminApi = {
       true,
     ),
 
+  getDeliveryHousesAdmin: () =>
+    adminFetch<{
+      items: AdminDeliveryHouse[];
+      total: number;
+      active_count: number;
+      module_active: boolean;
+    }>("/admin/delivery/houses"),
+
+  patchDeliveryHouse: (
+    id: number,
+    body: { is_active?: boolean; delivery_fee?: number; guest_area_note?: string },
+  ) =>
+    adminFetch<{ message: string; house: AdminDeliveryHouse }>(
+      `/admin/delivery/houses/${id}`,
+      { method: "PATCH", body: JSON.stringify(body) },
+      true,
+    ),
+
+  getPropertyDelivery: (propertyId: number) =>
+    adminFetch<{ delivery_active: boolean; house: AdminDeliveryHouse | null }>(
+      `/admin/properties/${propertyId}/delivery`,
+    ),
+
+  setPropertyDelivery: (
+    propertyId: number,
+    body: { is_active: boolean; delivery_fee?: number; guest_area_note?: string },
+  ) =>
+    adminFetch<{
+      message: string;
+      delivery_active: boolean;
+      house: AdminDeliveryHouse;
+    }>(
+      `/admin/properties/${propertyId}/delivery`,
+      { method: "PATCH", body: JSON.stringify(body) },
+      true,
+    ),
+
   getChatConversations: () =>
-    adminFetch<{ items: AdminChatConversation[]; total: number }>("/admin/chat/conversations"),
+    adminFetch<{ items: AdminChatConversation[]; total: number; unread_count?: number }>(
+      "/admin/chat/conversations",
+    ),
+
+  getChatUnread: () =>
+    adminFetch<{ unread_count: number }>("/admin/chat/unread"),
 
   getEntityDetail: (resource: AdminDetailResource, id: number) =>
     adminFetch<{ entity: Record<string, unknown> }>(`/admin/details/${resource}/${id}`),

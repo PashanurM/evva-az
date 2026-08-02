@@ -12,6 +12,8 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+import { UnreadDot } from "@/components/chat/UnreadDot";
+import { useUnreadMessages } from "@/providers/UnreadMessagesProvider";
 
 const NAV = [
   { href: "/my-houses", label: "Evlərim", icon: Building2, exact: true },
@@ -23,6 +25,7 @@ const NAV = [
 export function OwnerShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { hasUnread } = useUnreadMessages();
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
@@ -56,6 +59,9 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
               >
                 <Icon size={17} aria-hidden />
                 <span>{item.label}</span>
+                {item.href === "/messages" ? (
+                  <UnreadDot show={hasUnread} className="evva-unread-dot--corner" />
+                ) : null}
               </Link>
             );
           })}

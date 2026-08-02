@@ -18,6 +18,7 @@ import { api } from "@/lib/api";
 import type { Property } from "@/types";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
+import { notifyChatUnreadRefresh } from "@/providers/UnreadMessagesProvider";
 import { AuthRequiredGate } from "@/components/auth/AuthRequiredGate";
 import "./chat-page.css";
 
@@ -137,9 +138,13 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
   const searchParams = useSearchParams();
   const conversationFromUrl = Number(searchParams.get("conversation_id") || 0);
   const propertyId = property?.id || Number(searchParams.get("property_id") || 0);
+  const toAdmin =
+    searchParams.get("to_admin") === "1" ||
+    searchParams.get("to_admin") === "true" ||
+    searchParams.get("target") === "admin";
 
   const [conversationId, setConversationId] = useState(conversationFromUrl > 0 ? conversationFromUrl : 0);
-  const [title, setTitle] = useState(property?.title || "");
+  const [title, setTitle] = useState(property?.title || (toAdmin ? "Sayt Admini" : ""));
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [booking, setBooking] = useState<ChatBooking | null>(null);
   const [contactUnlocked, setContactUnlocked] = useState(false);
@@ -158,10 +163,12 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
   const threadRef = useRef<HTMLDivElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const loginReturn = `/chat${propertyId > 0 ? `?property_id=${propertyId}` : ""}`;
+  const loginReturn = toAdmin
+    ? "/chat?to_admin=1"
+    : `/chat${propertyId > 0 ? `?property_id=${propertyId}` : conversationFromUrl > 0 ? `?conversation_id=${conversationFromUrl}` : ""}`;
   const loginHref = `/login?return=${encodeURIComponent(loginReturn)}`;
   const registerHref = `/register?return=${encodeURIComponent(loginReturn)}`;
-  const backHref = conversationFromUrl > 0 ? "/messages" : propertyId > 0 ? `/property/${propertyId}` : "/messages";
+  const backHref = conversationFromUrl > 0 || toAdmin ? "/messages" : propertyId > 0 ? `/property/${propertyId}` : "/messages";
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -179,6 +186,7 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
     setPeerPhone(data.peer_phone || "");
     setPhoneLockedMessage(data.phone_locked_message || "");
     setViewerIsOwner(Boolean(data.viewer_is_owner));
+    notifyChatUnreadRefresh();
   }, []);
 
   useEffect(() => {
@@ -198,6 +206,14 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
             setError(res.error || "Söhbət yüklənmədi");
           } else {
             applyConversation(res.data);
+          }
+        } else if (toAdmin) {
+          const res = await api.startAdminChat();
+          if (!res.success || !res.data) {
+            setError(res.error || "Chat başlatılmadı");
+          } else {
+            applyConversation(res.data);
+            router.replace(`/chat?conversation_id=${res.data.id}&to_admin=1`);
           }
         } else if (propertyId > 0) {
           const res = await api.startChat(propertyId);
@@ -220,7 +236,7 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
         setLoading(false);
       }
     })();
-  }, [authLoading, user, conversationFromUrl, propertyId, applyConversation, router]);
+  }, [authLoading, user, conversationFromUrl, propertyId, toAdmin, applyConversation, router]);
 
   // Auto-receive new messages without full page refresh.
   useEffect(() => {
@@ -404,7 +420,17 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
     setError("");
     try {
       let activeId = conversationId;
-      if (activeId <= 0 && propertyId > 0) {
+      if (activeId <= 0 && toAdmin) {
+        const started = await api.startAdminChat();
+        if (!started.success || !started.data) {
+          setError(started.error || "Chat başlatılmadı");
+          setBusy(false);
+          return;
+        }
+        activeId = started.data.id;
+        applyConversation(started.data);
+        router.replace(`/chat?conversation_id=${started.data.id}&to_admin=1`);
+      } else if (activeId <= 0 && propertyId > 0) {
         const started = await api.startChat(propertyId);
         if (!started.success || !started.data) {
           setError(started.error || "Chat başlatılmadı");
@@ -416,7 +442,7 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
         router.replace(`/chat?conversation_id=${started.data.id}&property_id=${propertyId}`);
       }
       if (activeId <= 0) {
-        setError(t("chat.selectPropertyFirst"));
+        setError(toAdmin ? t("chat.widgetLoadError") : t("chat.selectPropertyFirst"));
         setBusy(false);
         return;
       }
@@ -451,9 +477,9 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
     return (
       <AuthRequiredGate
         kicker={t("chat.kicker")}
-        title={t("chat.title")}
+        title={toAdmin ? t("chat.widgetTitle") : t("chat.title")}
         description={t("messages.loginRequired")}
-        propertyTitle={property?.title || title || undefined}
+        propertyTitle={toAdmin ? undefined : property?.title || title || undefined}
         loginHref={loginHref}
         registerHref={registerHref}
         backHref={backHref}
@@ -462,8 +488,9 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
     );
   }
 
-  const canCompose = conversationId > 0 || propertyId > 0;
+  const canCompose = conversationId > 0 || propertyId > 0 || toAdmin;
   const blockedByError = Boolean(error) && conversationId <= 0;
+  const isAdminChat = toAdmin || (!propertyId && title === "Sayt Admini");
 
   return (
     <section className="chat-page">
@@ -476,11 +503,13 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
           </Link>
           <div className="chat-room-meta">
             <p className="chat-kicker">{t("chat.kicker")}</p>
-            <h1>{title || t("chat.title")}</h1>
+            <h1>{title || (toAdmin ? t("chat.widgetTitle") : t("chat.title"))}</h1>
             <p>
-              {title
-                ? t("chat.propertyPrompt", { title })
-                : t("chat.selectPropertyFirst")}
+              {isAdminChat
+                ? t("chat.adminPrompt")
+                : title
+                  ? t("chat.propertyPrompt", { title })
+                  : t("chat.selectPropertyFirst")}
             </p>
           </div>
           <Link href="/messages" className="chat-icon-btn" aria-label={t("messages.title")}>
@@ -494,6 +523,7 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
           </div>
         ) : null}
 
+        {!isAdminChat ? (
         <div className="chat-booking-strip">
           <div className={`chat-phone-pill${contactUnlocked ? " is-open" : ""}`}>
             <Phone size={14} aria-hidden />
@@ -553,6 +583,7 @@ export function ChatPageClient({ property }: ChatPageClientProps) {
             </div>
           ) : null}
         </div>
+        ) : null}
 
         <div className="chat-thread" ref={threadRef}>
           {messages.length === 0 ? (

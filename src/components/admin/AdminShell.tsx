@@ -20,8 +20,10 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { UnreadDot } from "@/components/chat/UnreadDot";
 import { useAdmin } from "@/providers/AdminProvider";
 import { useAuth } from "@/providers/AuthProvider";
+import { adminApi } from "@/lib/admin-api";
 import { api } from "@/lib/api";
 import { markAdminOwnerMode } from "@/lib/auth-redirect";
 
@@ -49,6 +51,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   const [tipKey, setTipKey] = useState<string | null>(null);
   const tipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [hasUnread, setHasUnread] = useState(false);
 
   function showTip(key: string) {
     setTipKey(key);
@@ -61,6 +64,34 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       if (tipTimer.current) clearTimeout(tipTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!admin) {
+      setHasUnread(false);
+      return;
+    }
+
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await adminApi.getChatUnread();
+        if (cancelled) return;
+        setHasUnread(Boolean(res.success && (res.data?.unread_count || 0) > 0));
+      } catch {
+        if (!cancelled) setHasUnread(false);
+      }
+    };
+
+    void load();
+    const timer = window.setInterval(() => {
+      void load();
+    }, 10000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [admin, pathname]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setMenuOpen(false));
@@ -129,6 +160,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       >
         <Icon size={16} />
         <span>{label}</span>
+        {href === "/admin/messages" ? (
+          <UnreadDot show={hasUnread} className="evva-unread-dot--corner" />
+        ) : null}
       </Link>
     );
   });

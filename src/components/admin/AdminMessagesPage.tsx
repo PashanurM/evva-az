@@ -6,6 +6,7 @@ import { Info, Pencil } from "lucide-react";
 import { adminApi, type AdminChatConversation } from "@/lib/admin-api";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminTableActions } from "@/components/admin/AdminTableActions";
+import { UnreadDot } from "@/components/chat/UnreadDot";
 import { useAdmin } from "@/providers/AdminProvider";
 
 export function AdminMessagesPage() {
@@ -66,8 +67,15 @@ export function AdminMessagesPage() {
               </thead>
               <tbody>
                 {items.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.property_title || `#${c.property_id}`}</td>
+                  <tr key={c.id} className={(c.unread_count || 0) > 0 ? "is-unread-row" : undefined}>
+                    <td>
+                      {(c.unread_count || 0) > 0 ? (
+                        <UnreadDot show className="evva-unread-dot--inline" />
+                      ) : null}
+                      {c.property_id === 0
+                        ? c.property_title || "Sayt Admini"
+                        : c.property_title || `#${c.property_id}`}
+                    </td>
                     <td data-label="Qonaq">
                       {c.guest_name || "—"}
                       {c.guest_phone ? <div style={{ fontSize: 12 }}>{c.guest_phone}</div> : null}

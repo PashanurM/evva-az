@@ -1,0 +1,54 @@
+.evva-unread-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid var(--bg-card, #fff);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.25);
+  pointer-events: none;
+}
+
+.evva-unread-dot--nav {
+  top: 6px;
+  right: 8px;
+}
+
+.evva-unread-dot--menu {
+  position: relative;
+  top: auto;
+  right: auto;
+  margin-left: auto;
+  flex-shrink: 0;
+  border-color: var(--bg-card);
+}
+
+.evva-unread-dot--inline {
+  position: relative;
+  top: auto;
+  right: auto;
+  margin-left: 4px;
+  border-color: transparent;
+}
+
+.profile-menu-item,
+.owner-shell-link,
+.admin-nav-link,
+.profile-menu-trigger,
+.admin-chat-fab {
+  position: relative;
+}
+
+.owner-shell-link .evva-unread-dot--corner,
+.admin-nav-link .evva-unread-dot--corner {
+  top: 10px;
+  left: 28px;
+  right: auto;
+}
+
+.profile-menu-trigger .evva-unread-dot--corner {
+  top: 8px;
+  right: 8px;
+}
