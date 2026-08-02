@@ -139,7 +139,7 @@
   padding: 0 20px 12px;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   overflow: visible;
 }
 
@@ -192,15 +192,19 @@
   transform: none;
   border-color: var(--border-color);
   color: var(--primary-dark);
-  background: var(--bg-tertiary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
   box-shadow: none;
 }
 
 .admin-nav-link.active {
-  background: var(--primary-soft);
+  background: color-mix(in srgb, var(--primary) 16%, var(--bg-card));
   color: var(--primary-dark);
-  border-color: rgba(63, 111, 82, 0.2);
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
   box-shadow: none;
+}
+
+.admin-nav-link.active:hover {
+  background: color-mix(in srgb, var(--primary) 16%, var(--bg-card));
 }
 
 .admin-nav-link--ghost {
@@ -2512,7 +2516,7 @@ a.admin-stat-card:focus-visible {
 
   .admin-nav-panel-scroll {
     display: grid;
-    gap: 6px;
+    gap: 8px;
     max-height: inherit;
     max-height: calc(100dvh - 76px - env(safe-area-inset-bottom, 0px));
     overflow-x: hidden;
@@ -2540,6 +2544,10 @@ a.admin-stat-card:focus-visible {
     justify-content: flex-start;
     padding: 0 12px;
     font-size: 14px;
+  }
+
+  .admin-nav-panel .admin-nav-link.active {
+    box-shadow: inset 3px 0 0 var(--primary);
   }
 
   .admin-nav-panel .admin-nav-link span {
@@ -2942,7 +2950,7 @@ a.admin-stat-card:focus-visible {
   .admin-nav-panel-scroll {
     max-height: calc(100dvh - 68px - env(safe-area-inset-bottom, 0px));
     padding: 8px;
-    gap: 4px;
+    gap: 8px;
   }
 
   .admin-nav-panel .admin-nav-link {

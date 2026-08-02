@@ -28,6 +28,77 @@
   -webkit-backdrop-filter: blur(calc(var(--header-scroll-progress) * 16px));
 }
 
+/* Owner / user panel: solid fixed bar like admin (no scroll-shrink pill) */
+.top-bar.top-bar--static {
+  padding: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.dark .top-bar.top-bar--static {
+  background: var(--bg-secondary);
+  border-bottom-color: var(--border-color);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.top-bar.top-bar--static .top-bar-inner {
+  max-width: min(var(--container), 100%);
+  margin: 0 auto;
+  padding: 12px 20px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transform: none;
+}
+
+.dark .top-bar.top-bar--static .top-bar-inner {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.top-bar.top-bar--static .site-logo-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.top-bar.top-bar--static .logo-title {
+  font-size: 18px;
+  letter-spacing: 0.1em;
+}
+
+.top-bar.top-bar--static .discover-pill {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.top-bar.top-bar--static .auth-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.top-bar.top-bar--static .theme-toggle,
+.top-bar.top-bar--static .lang-nav-toggle {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+}
+
+html.is-panel-chrome .owner-shell-nav {
+  top: var(--header-height, 72px);
+  height: calc(100vh - var(--header-height, 72px));
+}
+
 body > main {
   padding-top: var(--header-height, 100px);
 }
@@ -189,8 +260,9 @@ html {
   padding: 8px;
   border: 1px solid var(--border-color);
   border-radius: 18px;
-  background: var(--bg-card);
-  box-shadow: var(--shadow-xl);
+  /* Solid surface — --bg-card is translucent and shows content underneath */
+  background: #fffdf8;
+  box-shadow: 0 18px 40px rgba(28, 45, 38, 0.18);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-7px) scale(0.98);
@@ -290,10 +362,15 @@ html {
   background: rgba(239, 68, 68, 0.09);
 }
 
-.dark .profile-menu-trigger,
-.dark .profile-menu-dropdown {
-  background: rgba(26, 40, 32, 0.98);
+.dark .profile-menu-trigger {
+  background: #1a2820;
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .profile-menu-dropdown {
+  background: #1a2820;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 
 .dark .profile-menu-trigger:hover,
@@ -583,7 +660,7 @@ html {
   z-index: 1180;
   border: 0;
   padding: 0;
-  background: rgba(15, 23, 42, 0.42);
+  background: rgba(15, 26, 20, 0.72);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -606,7 +683,7 @@ html {
   overflow-y: auto;
   padding: 14px;
   border-radius: 22px;
-  background: var(--bg-card);
+  background: #fffcf7;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-xl);
   opacity: 0;
@@ -620,7 +697,7 @@ html {
 }
 
 .dark .nav-mobile-drawer {
-  background: rgba(26, 40, 32, 0.98);
+  background: #1a2820;
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -681,8 +758,32 @@ html {
   white-space: normal;
 }
 
+/* Menu open: solid bar + opaque panel so page content does not bleed through. */
 .top-bar--menu-open {
   z-index: 1210;
+  background: #f5f1ea;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 0 rgba(42, 49, 44, 0.06);
+}
+
+.dark .top-bar--menu-open {
+  background: #141f18;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.top-bar--menu-open .top-bar-inner {
+  background: #fffcf7 !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: var(--border-color);
+  box-shadow: 0 4px 16px rgba(42, 49, 44, 0.08);
+}
+
+.dark .top-bar--menu-open .top-bar-inner {
+  background: #1a2820 !important;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .lang-switcher {

@@ -40,6 +40,22 @@ const SCROLL_RANGE = 180;
 const SCROLL_SMOOTHING = 0.14;
 const MOBILE_NAV_BREAKPOINT = 1100;
 
+/** Account / owner panel routes: solid static navbar (like admin), no scroll-shrink. */
+const PANEL_ROUTE_PREFIXES = [
+  "/my-houses",
+  "/messages",
+  "/profile",
+  "/my-bookings",
+  "/favorites",
+];
+
+function isPanelRoute(pathname: string | null | undefined) {
+  if (!pathname) return false;
+  return PANEL_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 function syncHeaderHeight(el: HTMLElement) {
   document.documentElement.style.setProperty(
     "--header-height",
@@ -72,6 +88,7 @@ export function Header() {
   const showOwnerPanelLink = user?.role === "owner";
   const showAdminEntry = canSwitchProfiles && !inOwnerMode;
   const onOwnerPanel = pathname.startsWith("/my-houses");
+  const staticNavbar = isPanelRoute(pathname);
   // Logo always opens the public site so owners can browse & book other homes.
   const logoHref = "/";
 
@@ -116,6 +133,18 @@ export function Header() {
   }, []);
 
   useEffect(() => {
+    if (staticNavbar) {
+      document.documentElement.style.setProperty("--header-scroll-progress", "0");
+      setScrolled(false);
+      document.documentElement.classList.add("is-panel-chrome");
+      return () => {
+        document.documentElement.classList.remove("is-panel-chrome");
+        document.documentElement.style.removeProperty("--header-scroll-progress");
+      };
+    }
+
+    document.documentElement.classList.remove("is-panel-chrome");
+
     let rafId = 0;
     let targetProgress = 0;
     let smoothProgress = 0;
@@ -159,7 +188,7 @@ export function Header() {
       if (rafId) window.cancelAnimationFrame(rafId);
       document.documentElement.style.removeProperty("--header-scroll-progress");
     };
-  }, []);
+  }, [staticNavbar]);
 
   useEffect(() => {
     const el = headerRef.current;
@@ -176,7 +205,7 @@ export function Header() {
       ro.disconnect();
       window.removeEventListener("resize", update);
     };
-  }, [scrolled, loading, user, menuOpen]);
+  }, [scrolled, loading, user, menuOpen, staticNavbar]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -434,7 +463,7 @@ export function Header() {
   return (
     <header
       ref={headerRef}
-      className={`top-bar${scrolled ? " top-bar--scrolled" : ""}${menuOpen ? " top-bar--menu-open" : ""}`}
+      className={`top-bar${staticNavbar ? " top-bar--static" : ""}${scrolled && !staticNavbar ? " top-bar--scrolled" : ""}${menuOpen ? " top-bar--menu-open" : ""}`}
     >
       <div className="top-bar-track">
         <div className="top-bar-inner">
