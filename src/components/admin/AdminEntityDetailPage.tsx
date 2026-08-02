@@ -261,7 +261,13 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 function asBoolean(value: unknown): boolean {
-  return value === true || value === 1 || value === "1";
+  if (value === true || value === 1 || value === "1") return true;
+  if (value === false || value === 0 || value === "0" || value == null) return false;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    return v === "true" || v === "yes" || v === "on";
+  }
+  return Boolean(value);
 }
 
 function displayValue(value: unknown): string {
@@ -1220,7 +1226,18 @@ export function AdminEntityDetailPage({
     setError("");
     const res = await adminApi.getEntityDetail(resource, id);
     if (res.success && res.data) {
-      const raw = res.data.entity;
+      const raw = { ...res.data.entity };
+      if (resource === "properties") {
+        // Prefer dedicated delivery endpoint so badge stays correct even if
+        // entity payload was cached / missing delivery_active.
+        const deliveryRes = await adminApi.getPropertyDelivery(id);
+        if (deliveryRes.success && deliveryRes.data) {
+          raw.delivery_active = Boolean(deliveryRes.data.delivery_active);
+          if (deliveryRes.data.house?.delivery_fee != null) {
+            raw.delivery_fee = deliveryRes.data.house.delivery_fee;
+          }
+        }
+      }
       const normalized = { ...raw };
       if (resource === "reservations") {
         const st = String(raw.status || "");

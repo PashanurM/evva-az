@@ -88,7 +88,9 @@ export function Header() {
   const showOwnerPanelLink = user?.role === "owner";
   const showAdminEntry = canSwitchProfiles && !inOwnerMode;
   const onOwnerPanel = pathname.startsWith("/my-houses");
-  const staticNavbar = isPanelRoute(pathname);
+  /** Hide public discover pills while acting as host (panel + messages). */
+  const hideDiscoverNav = onOwnerPanel || inOwnerMode;
+  const staticNavbar = isPanelRoute(pathname) || inOwnerMode;
   // Logo always opens the public site so owners can browse & book other homes.
   const logoHref = "/";
 
@@ -483,7 +485,7 @@ export function Header() {
             </Link>
 
             <div className="header-actions header-actions--desktop">
-              {!onOwnerPanel ? (
+              {!hideDiscoverNav ? (
                 <div className="discover-pills">{discoverLinks}</div>
               ) : null}
               <LanguageSwitcher variant="nav" />
@@ -522,7 +524,7 @@ export function Header() {
         className={`nav-mobile-drawer${menuOpen ? " open" : ""}`}
         aria-hidden={!menuOpen}
       >
-        {!onOwnerPanel ? (
+        {!hideDiscoverNav ? (
           <div className="nav-mobile-section nav-mobile-section--discover">
             <span className="nav-mobile-label">{t("nav.discover")}</span>
             <div className="nav-mobile-links">{discoverLinks}</div>

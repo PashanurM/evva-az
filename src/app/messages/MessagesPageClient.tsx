@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, Loader2, LogIn, MessageCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  Loader2,
+  LogIn,
+  MessageCircle,
+  Search,
+  Shield,
+} from "lucide-react";
 import { api } from "@/lib/api";
 import { AuthRequiredGate } from "@/components/auth/AuthRequiredGate";
+import { OwnerShell } from "@/components/owner/OwnerShell";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale } from "@/providers/LocaleProvider";
 import { notifyChatUnreadRefresh } from "@/providers/UnreadMessagesProvider";
@@ -52,6 +61,15 @@ function formatListTime(value: string): string {
   return raw;
 }
 
+function peerName(item: ConversationItem): string {
+  return (
+    item.peer_name ||
+    (item.viewer_is_owner
+      ? item.guest_name || "Qonaq"
+      : item.owner_name || "Ev sahibi")
+  );
+}
+
 export function MessagesPageClient() {
   const { t } = useLocale();
   const { user, loading: authLoading } = useAuth();
@@ -59,6 +77,9 @@ export function MessagesPageClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [needsLogin, setNeedsLogin] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const isOwner = user?.role === "owner" || user?.view_mode === "owner";
 
   useEffect(() => {
     if (authLoading) return;
@@ -80,9 +101,7 @@ export function MessagesPageClient() {
           const err = res.error || "Söhbətlər yüklənmədi";
           setError(err);
           setItems([]);
-          if (isAuthError(err)) {
-            setNeedsLogin(true);
-          }
+          if (isAuthError(err)) setNeedsLogin(true);
         } else {
           setItems(res.data.items);
           setError("");
@@ -110,11 +129,32 @@ export function MessagesPageClient() {
     };
   }, [authLoading, user]);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((item) => {
+      const hay = [
+        item.property_title,
+        peerName(item),
+        item.last_message,
+        item.guest_name,
+        item.owner_name,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [items, query]);
+
+  const unreadTotal = useMemo(
+    () => items.reduce((sum, item) => sum + (item.unread_count || 0), 0),
+    [items],
+  );
+
   if (authLoading || (user && loading)) {
     return (
-      <section className="chat-page">
-        <div className="chat-page-glow" aria-hidden />
-        <div className="chat-panel chat-panel--status">
+      <section className="msg-page">
+        <div className="msg-shell msg-shell--status">
           <Loader2 className="chat-spinner" size={28} aria-hidden />
           <p>{t("common.wait")}</p>
         </div>
@@ -136,30 +176,45 @@ export function MessagesPageClient() {
     );
   }
 
-  const backHref = user.role === "owner" || user.role === "admin" ? "/my-houses" : "/";
+  const backHref = isOwner ? "/my-houses" : "/";
   const loginHref = `/login?return=${encodeURIComponent("/messages")}`;
 
-  return (
-    <section className="chat-page">
-      <div className="chat-page-glow" aria-hidden />
-      <div className="chat-panel chat-panel--inbox">
-        <header className="chat-inbox-head">
-          <Link href={backHref} className="chat-back-btn">
-            <ArrowLeft size={18} aria-hidden />
-            <span>{t("common.back")}</span>
-          </Link>
-          <div className="chat-inbox-title">
-            <p className="chat-kicker">{t("messages.contactKicker")}</p>
+  const content = (
+    <section className={`msg-page${isOwner ? " msg-page--owner" : ""}`}>
+      <div className="msg-shell">
+        <header className="msg-head">
+          <div className="msg-head-top">
+            <Link href={backHref} className="msg-back">
+              <ArrowLeft size={18} aria-hidden />
+              <span>{isOwner ? t("messages.backToPanel") : t("common.back")}</span>
+            </Link>
+            {unreadTotal > 0 ? (
+              <span className="msg-unread-total">
+                {t("messages.unreadCount", { count: unreadTotal })}
+              </span>
+            ) : null}
+          </div>
+          <div className="msg-head-copy">
             <h1>{t("messages.title")}</h1>
             <p>{t("messages.subtitle")}</p>
           </div>
+          <label className="msg-search">
+            <Search size={18} aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("messages.searchPlaceholder")}
+              aria-label={t("messages.searchPlaceholder")}
+            />
+          </label>
         </header>
 
         {error ? (
-          <div className="chat-alert chat-alert--with-action" role="alert">
+          <div className="msg-alert" role="alert">
             <p>{error}</p>
             {isAuthError(error) ? (
-              <Link href={loginHref} className="chat-btn chat-btn--primary">
+              <Link href={loginHref} className="msg-btn msg-btn--primary">
                 <LogIn size={18} aria-hidden />
                 {t("common.login")}
               </Link>
@@ -167,57 +222,80 @@ export function MessagesPageClient() {
           </div>
         ) : null}
 
-        {!error && items.length === 0 ? (
-          <div className="chat-empty">
-            <MessageCircle size={28} aria-hidden />
-            <p>{t("messages.empty")}</p>
-            <Link href="/chat?to_admin=1" className="chat-btn chat-btn--primary" style={{ marginTop: 8 }}>
-              {t("footer.messageAdmin")}
-            </Link>
-            <Link href="/#properties" className="chat-btn" style={{ marginTop: 8 }}>
-              Evlərə bax
-            </Link>
+        {!error && filtered.length === 0 ? (
+          <div className="msg-empty">
+            <span className="msg-empty-icon" aria-hidden>
+              <MessageCircle size={28} />
+            </span>
+            <strong>
+              {items.length === 0 ? t("messages.empty") : t("messages.emptySearch")}
+            </strong>
+            <p>{t("messages.emptyHint")}</p>
+            <div className="msg-empty-actions">
+              <Link href="/chat?to_admin=1" className="msg-btn msg-btn--primary">
+                <Shield size={16} aria-hidden />
+                {t("footer.messageAdmin")}
+              </Link>
+              {!isOwner ? (
+                <Link href="/homes" className="msg-btn">
+                  <Building2 size={16} aria-hidden />
+                  {t("common.browseHomes")}
+                </Link>
+              ) : null}
+            </div>
           </div>
         ) : null}
 
-        {items.length > 0 ? (
-          <div className="chat-inbox-list">
-            {items.map((item) => {
-              const peer =
-                item.peer_name ||
-                (item.viewer_is_owner
-                  ? item.guest_name || "Qonaq"
-                  : item.owner_name || "Ev sahibi");
+        {filtered.length > 0 ? (
+          <ul className="msg-list">
+            {filtered.map((item) => {
+              const peer = peerName(item);
               const unread = item.unread_count || 0;
               return (
-                <Link
-                  key={item.id}
-                  href={`/chat?conversation_id=${item.id}${item.property_id ? `&property_id=${item.property_id}` : ""}`}
-                  className={`chat-inbox-item${unread > 0 ? " is-unread" : ""}`}
-                >
-                  <span className="chat-inbox-avatar" aria-hidden>
-                    {initials(peer)}
-                  </span>
-                  <span className="chat-inbox-body">
-                    <span className="chat-inbox-row">
-                      <strong>{item.property_title || "Söhbət"}</strong>
-                      <time>{formatListTime(item.updated_at)}</time>
+                <li key={item.id}>
+                  <Link
+                    href={`/chat?conversation_id=${item.id}${item.property_id ? `&property_id=${item.property_id}` : ""}`}
+                    className={`msg-item${unread > 0 ? " is-unread" : ""}`}
+                  >
+                    <span className="msg-avatar" aria-hidden>
+                      {initials(peer)}
+                      {unread > 0 ? <em className="msg-avatar-dot" /> : null}
                     </span>
-                    <span className="chat-inbox-row chat-inbox-row--sub">
-                      <em>{peer}</em>
-                      {unread > 0 ? <span className="chat-unread-pill">{unread} yeni</span> : null}
+                    <span className="msg-item-main">
+                      <span className="msg-item-row">
+                        <strong>{item.property_title || "Söhbət"}</strong>
+                        <time>{formatListTime(item.updated_at)}</time>
+                      </span>
+                      <span className="msg-item-row msg-item-row--peer">
+                        <span>{peer}</span>
+                        {unread > 0 ? (
+                          <span className="msg-count">{unread}</span>
+                        ) : null}
+                      </span>
+                      <span className="msg-preview">
+                        {item.last_message || t("messages.noMessage")}
+                      </span>
                     </span>
-                    <span className="chat-inbox-preview">
-                      {item.last_message || "Mesaj yoxdur"}
-                    </span>
-                  </span>
-                  <ChevronRight className="chat-inbox-chevron" size={18} aria-hidden />
-                </Link>
+                  </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
         ) : null}
+
+        <footer className="msg-foot">
+          <Link href="/chat?to_admin=1" className="msg-foot-link">
+            <Shield size={15} aria-hidden />
+            {t("footer.messageAdmin")}
+          </Link>
+        </footer>
       </div>
     </section>
   );
+
+  if (isOwner) {
+    return <OwnerShell>{content}</OwnerShell>;
+  }
+
+  return content;
 }

@@ -319,9 +319,13 @@ export function AdminPropertyForm({
     setDeliveryBusy(true);
     setDeliveryActive(value);
     const res = await adminApi.setPropertyDelivery(activeId, { is_active: value });
-    if (res.success) {
+    const saved =
+      res.success &&
+      (res.data?.delivery_active === value ||
+        res.data?.house?.is_active === value);
+    if (saved) {
       toast.success(value ? "Delivery aktiv edildi" : "Delivery deaktiv edildi");
-      setDeliveryActive(Boolean(res.data?.delivery_active));
+      setDeliveryActive(value);
     } else {
       setDeliveryActive(!value);
       toast.error(res.error || "Delivery status yenilənmədi");

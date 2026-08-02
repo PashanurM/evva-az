@@ -518,6 +518,12 @@ export const ru = {
     subtitle: "Следите за своими диалогами здесь.",
     loginRequired: "Сначала войди, чтобы пользоваться сообщениями.",
     empty: "Пока нет диалогов.",
+    emptySearch: "Поиск не дал результатов.",
+    emptyHint: "Начните чат со страницы объявления или напишите админу.",
+    searchPlaceholder: "Поиск дома, имени или сообщения...",
+    noMessage: "Нет сообщений",
+    unreadCount: "{count} непрочитанных",
+    backToPanel: "Назад в панель",
   },
   comingSoon: {
     myBookingsTitle: "Мои брони",

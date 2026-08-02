@@ -517,6 +517,12 @@ export const en = {
     subtitle: "Track your conversations here.",
     loginRequired: "Log in first to use messaging.",
     empty: "No conversations yet.",
+    emptySearch: "No conversations match your search.",
+    emptyHint: "Start a chat from a listing page or by messaging admin.",
+    searchPlaceholder: "Search home, name, or message...",
+    noMessage: "No messages",
+    unreadCount: "{count} unread",
+    backToPanel: "Back to panel",
   },
   comingSoon: {
     myBookingsTitle: "My bookings",

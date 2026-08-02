@@ -518,6 +518,12 @@ export const az = {
     subtitle: "Söhbətlərinizi buradan izləyin.",
     loginRequired: "Mesajlaşma üçün əvvəlcə daxil olun.",
     empty: "Hələ söhbət yoxdur.",
+    emptySearch: "Axtarışa uyğun söhbət tapılmadı.",
+    emptyHint: "Elan səhifəsindən və ya adminə yazaraq söhbətə başlaya bilərsiniz.",
+    searchPlaceholder: "Ev, ad və ya mesaj axtar...",
+    noMessage: "Mesaj yoxdur",
+    unreadCount: "{count} oxunmamış",
+    backToPanel: "Panelə qayıt",
   },
   comingSoon: {
     myBookingsTitle: "Rezervlərim",
