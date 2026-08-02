@@ -7011,7 +7011,7 @@ a.property-owner-card:hover .property-owner-copy strong {
   position: relative;
   min-height: 0;
   display: block;
-  padding: clamp(12px, 2vw, 28px) 0 clamp(36px, 5vw, 64px);
+  padding: clamp(28px, 4vw, 44px) 0 clamp(36px, 5vw, 64px);
   overflow: hidden;
 }
 .hub-hero-bg {
@@ -7237,7 +7237,7 @@ a.property-owner-card:hover .property-owner-copy strong {
 @media (max-width: 640px) {
   .hub-hero {
     min-height: auto;
-    padding: 8px 0 28px;
+    padding: 20px 0 28px;
   }
   .hub-hero h1 {
     max-width: none;
